@@ -11,7 +11,7 @@ export default function NavBar(){
     <View style={{paddingTop:insets.top, backgroundColor:'#111827'}}>
       <View style={{height:52, paddingHorizontal:16, flexDirection:'row', alignItems:'center', justifyContent:'space-between'}}>
         <Pressable onPress={()=>nav.navigate('Home')}>
-          <Text style={{color:'#fff', fontSize:20, fontWeight:'800'}}>MyApp</Text>
+          <Text style={{color:'#fff', fontSize:20, fontWeight:'800'}}>영양실조</Text>
         </Pressable>
         <View style={{flexDirection:'row', alignItems:'center'}}>
           <Pressable onPress={()=>nav.navigate('Camera')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
