@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native'
+import {
+  View, Text, TextInput, TouchableOpacity, Alert,
+  ScrollView, KeyboardAvoidingView, Platform
+} from 'react-native'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginScreen({navigation}){
@@ -14,13 +17,19 @@ export default function LoginScreen({navigation}){
   }
 
   return (
-    <View style={{flex:1,justifyContent:'center',padding:20,gap:12}}>
-      <Text style={{fontSize:24,fontWeight:'700'}}>Login</Text>
-      <TextInput value={id} onChangeText={setId} placeholder="ID" autoCapitalize="none" style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
-      <TextInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
-      <TouchableOpacity onPress={onSubmit} style={{backgroundColor:'#2563eb',padding:14,borderRadius:10}}>
-        <Text style={{color:'#fff',textAlign:'center'}}>Login</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={{flex:1}}
+      behavior={Platform.OS==='ios'?'padding':undefined}
+      keyboardVerticalOffset={80}
+    >
+      <ScrollView contentContainerStyle={{padding:20,gap:12}}>
+        <Text style={{fontSize:24,fontWeight:'700'}}>Login</Text>
+        <TextInput value={id} onChangeText={setId} placeholder="ID" autoCapitalize="none" style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
+        <TextInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
+        <TouchableOpacity onPress={onSubmit} style={{backgroundColor:'#2563eb',padding:14,borderRadius:10}}>
+          <Text style={{color:'#fff',textAlign:'center'}}>Login</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
