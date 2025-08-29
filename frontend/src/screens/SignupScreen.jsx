@@ -30,9 +30,6 @@ export default function SignupScreen({navigation}){
         <TouchableOpacity onPress={()=>setGender('male')} style={{flex:1,backgroundColor:gender==='male'?'#111827':'#e5e7eb',padding:12,borderRadius:10}}>
           <Text style={{color:gender==='male'?'#fff':'#111',textAlign:'center'}}>남성</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={()=>setGender('other')} style={{flex:1,backgroundColor:gender==='other'?'#111827':'#e5e7eb',padding:12,borderRadius:10}}>
-          <Text style={{color:gender==='other'?'#fff':'#111',textAlign:'center'}}>기타</Text>
-        </TouchableOpacity>
       </View>
       <TextInput value={weight} onChangeText={setWeight} placeholder="Weight (kg)" keyboardType="numeric" style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
       <TextInput value={height} onChangeText={setHeight} placeholder="Height (cm)" keyboardType="numeric" style={{borderWidth:1,borderColor:'#ddd',borderRadius:10,padding:12}}/>
