@@ -28,7 +28,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(SWAGGER_WHITELIST).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/**").permitAll() 
+                .requestMatchers(HttpMethod.POST, "/**").permitAll() 
                 .anyRequest().authenticated()
             )
             .httpBasic(b -> b.disable())
