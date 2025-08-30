@@ -23,13 +23,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/**").permitAll() // 현재 로그인 없어서 그냥 뚫리게 설정.
-                        .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults());
+            .cors(Customizer.withDefaults())
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/**").permitAll() 
+                .anyRequest().authenticated()
+            )
+            .httpBasic(b -> b.disable())
+            .formLogin(f -> f.disable());
+
         return http.build();
     }
 

@@ -1,4 +1,3 @@
-// CorsConfig.java (새 파일)
 package com.example.health_care.config;
 
 import org.springframework.context.annotation.Bean;
