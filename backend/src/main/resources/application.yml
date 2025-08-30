@@ -19,7 +19,7 @@ spring:
 
   devtools:
     restart:
-      enabled: true
+      enabled: true 
     livereload:
       enabled: true
 
