@@ -8,6 +8,7 @@ CREATE TABLE customers (
 );
 
 
+
 -- gender 
 ALTER TABLE customers DROP CONSTRAINT SYS_C007401;
 
