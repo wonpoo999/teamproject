@@ -4,13 +4,8 @@ import com.example.health_care.entity.CustomersEntity.Gender;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class SignupRequest {
-
     @NotBlank
     private String id;
 
@@ -19,7 +14,7 @@ public class SignupRequest {
     private String password;
 
     @Positive
-    @Digits(integer = 3, fraction = 2)
+    @Digits(integer = 3, fraction = 1)
     private Double weight;
 
     @Positive
@@ -29,6 +24,6 @@ public class SignupRequest {
     private Gender gender;
 
     @Positive
-    @Digits(integer = 3, fraction = 2)
+    @Digits(integer = 3, fraction = 1)
     private Double height;
 }

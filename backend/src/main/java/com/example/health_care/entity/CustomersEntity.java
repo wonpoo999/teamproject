@@ -3,20 +3,15 @@ package com.example.health_care.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "customers")
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Entity @Table(name = "customers")
 public class CustomersEntity {
 
     @Id
-    @Column(name = "id", length = 255, nullable = false, updatable = false)
+    @Column(name = "id", length = 100, nullable = false, updatable = false)
     private String id;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", length = 60, nullable = false)
     private String password;
 
     @Column(name = "weight")
@@ -26,13 +21,11 @@ public class CustomersEntity {
     private Integer age;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 16)
+    @Column(name = "gender", length = 1)
     private Gender gender;
 
     @Column(name = "height")
     private Double height;
 
-    public enum Gender {
-        MALE, FEMALE, OTHER
-    }
+    public enum Gender { M, F }
 }

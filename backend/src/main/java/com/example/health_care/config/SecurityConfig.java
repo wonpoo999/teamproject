@@ -14,14 +14,21 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    private static final String[] SWAGGER_WHITELIST = {
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/**").permitAll() // 현재 로그인 없어서 그냥 뚫리게 설정.
+                        .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
