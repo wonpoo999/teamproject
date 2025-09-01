@@ -17,7 +17,10 @@ export default function NavBar(){
           <Pressable onPress={()=>nav.navigate('Camera')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
             <Text style={{color:'#fff', fontSize:16}}>Camera</Text>
           </Pressable>
-          {!user && (
+          <Pressable onPress={()=>nav.navigate('Settings')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
+            <Text style={{color:'#fff', fontSize:16}}>Settings</Text>
+          </Pressable>
+          {!user ? (
             <>
               <Pressable onPress={()=>nav.navigate('Login')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
                 <Text style={{color:'#fff', fontSize:16}}>Login</Text>
@@ -26,8 +29,7 @@ export default function NavBar(){
                 <Text style={{color:'#fff', fontSize:16}}>Sign Up</Text>
               </Pressable>
             </>
-          )}
-          {!!user && (
+          ) : (
             <Pressable onPress={logout} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
               <Text style={{color:'#fff', fontSize:16}}>Logout</Text>
             </Pressable>
