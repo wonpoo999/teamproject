@@ -1,14 +1,6 @@
 package com.example.health_care.controller;
 
-import com.example.health_care.dto.LoginRequest;
-import com.example.health_care.dto.LoginResponse;
-import com.example.health_care.dto.SignupRequest;
-import com.example.health_care.entity.CustomersEntity;
-import com.example.health_care.security.JwtTokenProvider;
-import com.example.health_care.service.CustomersService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,15 +8,28 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import com.example.health_care.dto.LoginRequest;
+import com.example.health_care.dto.LoginResponse;
+import com.example.health_care.dto.SignupRequest;
+import com.example.health_care.entity.CustomersEntity;
+import com.example.health_care.security.JwtTokenProvider;
+import com.example.health_care.service.CustomersService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
 
     private final CustomersService customersService;
     private final AuthenticationManager authenticationManager;
@@ -39,7 +44,8 @@ public class AuthController {
                 .body(saved);
     }
 
-    @PostMapping("/login")
+
+ @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
             // 사용자 인증
@@ -64,6 +70,7 @@ public class AuthController {
 
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Invalid credentials");
+
         }
     }
 }
