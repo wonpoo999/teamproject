@@ -755,3 +755,115 @@ This generated password is for development use only. Your security configuration
 2025-09-01T16:38:33.226+09:00  INFO 16164 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
 2025-09-01T16:38:33.275+09:00  INFO 16164 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
 2025-09-01T16:38:33.284+09:00  INFO 16164 --- [restartedMain] c.e.health_care.HealthCareApplication    : Started HealthCareApplication in 9.049 seconds (process running for 9.91)
+2025-09-01T16:49:52.679+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-01T16:49:52.681+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-09-01T16:49:52.682+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-09-01T16:49:52.682+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-09-01T16:49:52.683+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-09-01T16:49:52.685+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@630e2605
+2025-09-01T16:49:52.686+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@303c11fe
+2025-09-01T16:49:52.687+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-09-01T16:49:52.687+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2025-09-01T16:49:52.715+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T16:49:52.726+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T16:49:52.729+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T16:49:52.733+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T16:49:52.735+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T16:49:52.850+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@154e9c97]
+2025-09-01T16:49:52.908+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-1] c.e.h.controller.AuthController          : [SIGNUP] request id = yy@naver.com, weight = 436.0, age = 42, gender = M, height = 77.0
+2025-09-01T16:49:53.538+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T16:49:53.539+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [yy@naver.com]
+2025-09-01T16:49:53.687+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.SQL                        : 
+    select
+        ce1_0.id,
+        ce1_0.age,
+        ce1_0.gender,
+        ce1_0.height,
+        ce1_0.password,
+        ce1_0.weight 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T16:49:53.690+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [yy@naver.com]
+2025-09-01T16:49:53.731+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.SQL                        : 
+    insert 
+    into
+        customers
+        (age, gender, height, password, weight, id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2025-09-01T16:49:53.735+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [42]
+2025-09-01T16:49:53.737+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (2:CHAR) <- [M]
+2025-09-01T16:49:53.738+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (3:DOUBLE) <- [77.0]
+2025-09-01T16:49:53.739+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [$2a$10$kL7iBQUieAtqsaRvbkcc0uo74KeBzCqDkJL5cHEJk.Ry.r/VOjQjK]
+2025-09-01T16:49:53.739+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (5:DOUBLE) <- [436.0]
+2025-09-01T16:49:53.739+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-1] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [yy@naver.com]
+2025-09-01T16:49:53.759+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-1] c.e.h.controller.AuthController          : [SIGNUP] saved id = yy@naver.com
+2025-09-01T16:49:53.805+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T16:49:53.807+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.example.health_care.entity.CustomersEntity@6e10db18]
+2025-09-01T16:49:53.826+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2025-09-01T17:26:58.202+09:00  WARN 16164 --- [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3m27s427ms425?s800ns).
+2025-09-01T17:48:52.915+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T17:48:52.917+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T17:48:52.918+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T17:48:52.918+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T17:48:52.919+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T17:48:52.921+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@f9da9c7]
+2025-09-01T17:48:52.923+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-8] c.e.h.controller.AuthController          : [SIGNUP] request id = popple103@naver.com, weight = 63.0, age = 29, gender = F, height = 163.0
+2025-09-01T17:48:52.928+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T17:48:52.929+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple103@naver.com]
+2025-09-01T17:48:53.010+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.SQL                        : 
+    select
+        ce1_0.id,
+        ce1_0.age,
+        ce1_0.gender,
+        ce1_0.height,
+        ce1_0.password,
+        ce1_0.weight 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T17:48:53.011+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple103@naver.com]
+2025-09-01T17:48:53.015+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.SQL                        : 
+    insert 
+    into
+        customers
+        (age, gender, height, password, weight, id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2025-09-01T17:48:53.016+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [29]
+2025-09-01T17:48:53.017+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (2:CHAR) <- [F]
+2025-09-01T17:48:53.017+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (3:DOUBLE) <- [163.0]
+2025-09-01T17:48:53.017+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [$2a$10$0Nj3WuVpUwzvR90d1FqQ5udSg1BDSOKImwaiDswti8XGlFHxCJuE6]
+2025-09-01T17:48:53.017+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (5:DOUBLE) <- [63.0]
+2025-09-01T17:48:53.018+09:00 TRACE 16164 --- [http-nio-0.0.0.0-8080-exec-8] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [popple103@naver.com]
+2025-09-01T17:48:53.021+09:00  INFO 16164 --- [http-nio-0.0.0.0-8080-exec-8] c.e.h.controller.AuthController          : [SIGNUP] saved id = popple103@naver.com
+2025-09-01T17:48:53.023+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T17:48:53.023+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.example.health_care.entity.CustomersEntity@7d93d99d]
+2025-09-01T17:48:53.024+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2025-09-01T17:49:14.403+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/ping
+2025-09-01T17:49:14.405+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T17:49:14.406+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/ping
+2025-09-01T17:49:14.407+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/ping", parameters={}
+2025-09-01T17:49:14.408+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController$PingController#ping()
+2025-09-01T17:49:14.421+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'text/plain', given [*/*] and supported [text/plain, */*, application/json, application/*+json, application/yaml]
+2025-09-01T17:49:14.422+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Writing ["pong"]
+2025-09-01T17:49:14.425+09:00 DEBUG 16164 --- [http-nio-0.0.0.0-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T17:54:35.599+09:00  WARN 16164 --- [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2m29s677ms554?s800ns).
+2025-09-01T18:20:22.377+09:00  WARN 16164 --- [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=4m46s601ms774?s500ns).
+2025-09-01T18:38:15.586+09:00  WARN 16164 --- [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2m16s85ms339?s700ns).
+2025-09-01T18:51:06.357+09:00  WARN 16164 --- [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=9m20s762ms704?s800ns).
