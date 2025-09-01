@@ -13,7 +13,7 @@ export default function SettingsScreen() {
   const ping = async () => {
     try {
       setLoading(true);
-      const r = await apiGet('/ping');
+      const r = await apiGet('/api/ping');
       Alert.alert('PING', typeof r === 'string' ? r : JSON.stringify(r));
     } catch (e) {
       Alert.alert('실패', String(e?.message || e));

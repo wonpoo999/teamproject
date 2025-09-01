@@ -1,53 +1,67 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { apiPost } from '../config/api'
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiPost } from "../config/api";
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
-export function AuthProvider({children}){
-  const [user,setUser]=useState(null)
-  const [token,setToken]=useState(null)
-  const [ready,setReady]=useState(false)
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [ready, setReady] = useState(false);
 
-  useEffect(()=>{
-    ;(async()=>{
-      const t=await AsyncStorage.getItem('token')
-      const u=await AsyncStorage.getItem('user')
-      if(t&&u){ setToken(t); setUser(JSON.parse(u)) }
-      setReady(true)
-    })()
-  },[])
+  useEffect(() => {
+    (async () => {
+      const t = await AsyncStorage.getItem("token");
+      const u = await AsyncStorage.getItem("user");
+      if (t && u) {
+        setToken(t);
+        setUser(JSON.parse(u));
+      }
+      setReady(true);
+    })();
+  }, []);
 
-  const login=async(id,password)=>{
-    const fauxUser={id}
-    await AsyncStorage.setItem('token','local')
-    await AsyncStorage.setItem('user',JSON.stringify(fauxUser))
-    setToken('local'); setUser(fauxUser)
-    return true
-  }
+  const login = async (id, password) => {
+    const fauxUser = { id: String(id || "").trim() };
+    await AsyncStorage.setItem("token", "local");
+    await AsyncStorage.setItem("user", JSON.stringify(fauxUser));
+    setToken("local");
+    setUser(fauxUser);
+    return true;
+  };
 
-  const signup=async(form)=>{
-    const data = await apiPost('/api/auth/signup', {
-      id: String(form.id||'').trim(),
-      password: String(form.password||''),
+  const signup = async (form) => {
+    const data = await apiPost("/api/auth/signup", {
+      id: String(form.id || "").trim(),
+      password: String(form.password || ""),
       weight: Number(form.weight),
       age: Number(form.age),
-      gender: form.gender,
-      height: Number(form.height)
-    })
-    await AsyncStorage.setItem('token','local')
-    await AsyncStorage.setItem('user', JSON.stringify(data))
-    setToken('local'); setUser(data)
-    return true
-  }
+      gender: String(form.gender || "F").toUpperCase(),
+      height: Number(form.height),
+    });
+    await AsyncStorage.setItem("token", "local");
+    await AsyncStorage.setItem("user", JSON.stringify(data));
+    setToken("local");
+    setUser(data);
+    return true;
+  };
 
-  const logout=async()=>{
-    await AsyncStorage.multiRemove(['token','user'])
-    setToken(null); setUser(null)
-  }
+  const logout = async () => {
+    await AsyncStorage.multiRemove(["token", "user"]);
+    setToken(null);
+    setUser(null);
+  };
 
-  const value=useMemo(()=>({user,token,ready,login,logout,signup}),[user,token,ready])
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, token, ready, login, logout, signup }),
+    [user, token, ready]
+  );
+
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 }
 
-export function useAuth(){ return useContext(AuthContext) }
+export function useAuth() {
+  return useContext(AuthContext);
+}
