@@ -11,7 +11,7 @@ public class CustomersEntity {
     @Column(name = "id", length = 100, nullable = false, updatable = false)
     private String id;
 
-    @Column(name = "password", length = 60, nullable = false)
+    @Column(name = "password", length = 50, nullable = false) // length 60 -> 50 수정
     private String password;
 
     @Column(name = "weight")
