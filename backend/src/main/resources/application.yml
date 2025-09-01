@@ -16,6 +16,7 @@ spring:
         format_sql: true
         show_sql: true
     open-in-view: false
+    
 
 
   devtools:
@@ -31,3 +32,13 @@ springdoc:
     try-it-out-enabled: true
   api-docs:
     path: /v3/api-docs
+
+logging:
+  file:
+    name: logs/app.log
+  level:
+    root: info
+    org.springframework.web: debug
+    org.springframework.security: debug
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
