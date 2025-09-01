@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { apiPost } from '../config/api'
 
 const AuthContext = createContext(null)
 
@@ -17,19 +18,30 @@ export function AuthProvider({children}){
     })()
   },[])
 
-  const login=async (id,password,profile)=>{
-    const t='demo-token'
-    const u=profile||{id}
-    await AsyncStorage.setItem('token',t)
-    await AsyncStorage.setItem('user',JSON.stringify(u))
-    setToken(t); setUser(u)
+  const login=async(id,password)=>{
+    const fauxUser={id}
+    await AsyncStorage.setItem('token','local')
+    await AsyncStorage.setItem('user',JSON.stringify(fauxUser))
+    setToken('local'); setUser(fauxUser)
+    return true
   }
 
-  const signup=async (form)=>{
-    await login(form.id, form.password, form)
+  const signup=async(form)=>{
+    const data = await apiPost('/api/auth/signup', {
+      id: String(form.id||'').trim(),
+      password: String(form.password||''),
+      weight: Number(form.weight),
+      age: Number(form.age),
+      gender: form.gender,
+      height: Number(form.height)
+    })
+    await AsyncStorage.setItem('token','local')
+    await AsyncStorage.setItem('user', JSON.stringify(data))
+    setToken('local'); setUser(data)
+    return true
   }
 
-  const logout=async ()=>{
+  const logout=async()=>{
     await AsyncStorage.multiRemove(['token','user'])
     setToken(null); setUser(null)
   }
