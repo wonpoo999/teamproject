@@ -7,3 +7,4 @@ ALTER TABLE customers DROP CONSTRAINT SYS_;
 ALTER TABLE customers
   ADD CONSTRAINT ck_customers_gender
   CHECK (gender IN ('M', 'F'));
+  
