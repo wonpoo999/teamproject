@@ -6,8 +6,8 @@ function getMetroHost() {
   if (scriptURL) {
     try {
       const u = new URL(scriptURL);
-      return u.hostname; 
-    } catch (e) {}
+      return u.hostname;
+    } catch (e) { }
   }
   return undefined;
 }
@@ -17,11 +17,11 @@ function getDevBase() {
   if (Platform.OS === 'android') {
     const host = getMetroHost();
     if (host && host !== 'localhost') {
-      return `http://${host}:8080/api`;   
+      return `http://${host}:8080/api`;
     }
-    return 'http://10.0.2.2:8080/api';     
+    return 'http://10.0.2.2:8080/api';
   }
-  const host = getMetroHost() || 'localhost'; 
+  const host = getMetroHost() || 'localhost';
   return `http://${host}:8080/api`;
 }
 
@@ -29,7 +29,7 @@ const DEFAULT_BASE = __DEV__ ? getDevBase() : 'https://your-prod.example.com/api
 
 
 const join = (base, path) =>
-  `${String(base).replace(/\/+$/,'')}/${String(path).replace(/^\/+/,'')}`;
+  `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
 
 
 export async function apiGet(path, init) {
@@ -49,7 +49,7 @@ export async function apiGet(path, init) {
 }
 
 export async function apiPost(path, body, init) {
-  const url = join(DEFAULT_BASE, path);
+  const url = join(DEFAULT_BASE,path);
   const ctrl = new AbortController();
   const to = setTimeout(() => ctrl.abort(), 12000);
 
