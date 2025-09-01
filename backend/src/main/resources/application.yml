@@ -34,8 +34,6 @@ springdoc:
     path: /v3/api-docs
 
 logging:
-  file:
-    name: logs/app.log
   level:
     root: info
     org.springframework.web: debug
