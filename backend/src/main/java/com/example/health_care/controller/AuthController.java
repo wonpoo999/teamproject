@@ -20,6 +20,7 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<CustomersEntity> signup(@Valid @RequestBody SignupRequest request) {
         CustomersEntity saved = customersService.signup(request);
-        return ResponseEntity.created(URI.create("/api/users/" + saved.getId())).body(saved);
+        return ResponseEntity.created(URI.create("/api/users/" + saved.getId()))
+        .body(saved);
     }
 }

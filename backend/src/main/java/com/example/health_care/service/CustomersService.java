@@ -23,7 +23,7 @@ public class CustomersService {
 
         CustomersEntity user = CustomersEntity.builder()
                 .id(req.getId())
-                .password(passwordEncoder.encode(req.getPassword()))
+                .password(passwordEncoder.encode(req.getPassword())) // 비밀번호 암호화
                 .weight(req.getWeight())
                 .age(req.getAge())
                 .gender(req.getGender())
