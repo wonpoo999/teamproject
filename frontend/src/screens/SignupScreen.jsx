@@ -33,7 +33,7 @@ export default function SignupScreen({ navigation }) {
     try {
       setLoading(true)
       const ok = await signup(payload)
-      if (ok) navigation.replace('Main')
+      if (ok) navigation.replace('Login')
     } catch (e) {
       Alert.alert('가입 실패', e?.message ?? '잠시 후 다시 시도해 주세요.')
     } finally {
