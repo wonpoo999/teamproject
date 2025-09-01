@@ -23,16 +23,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(SWAGGER_WHITELIST).permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/**").permitAll() 
-                .anyRequest().authenticated()
-            )
-            .httpBasic(b -> b.disable())
-            .formLogin(f -> f.disable());
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/ping", "/db/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/**").permitAll()
+                        .anyRequest().authenticated())
+                .httpBasic(b -> b.disable())
+                .formLogin(f -> f.disable());
 
         return http.build();
     }
