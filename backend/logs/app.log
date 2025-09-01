@@ -1,0 +1,505 @@
+2025-09-01T14:31:36.179+09:00  INFO 15720 --- [restartedMain] c.e.health_care.HealthCareApplication    : Starting HealthCareApplication using Java 17 with PID 15720 (C:\Users\poppl\Desktop\TeamProject\health_care\jonullist\backend\build\classes\java\main started by poppl in c:\Users\poppl\Desktop\TeamProject\health_care\jonullist\backend)
+2025-09-01T14:31:36.182+09:00  INFO 15720 --- [restartedMain] c.e.health_care.HealthCareApplication    : No active profile set, falling back to 1 default profile: "default"
+2025-09-01T14:31:36.240+09:00  INFO 15720 --- [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\poppl\.gradle\caches\modules-2\files-2.1\com.oracle.database.jdbc\ojdbc11\23.4.0.24.05\239c6f65f74ebdf08bf0da234815fc757a13224c\ojdbc11-23.4.0.24.05.jar referenced one or more files that do not exist: file:/C:/Users/poppl/.gradle/caches/modules-2/files-2.1/com.oracle.database.jdbc/ojdbc11/23.4.0.24.05/239c6f65f74ebdf08bf0da234815fc757a13224c/oraclepki.jar
+2025-09-01T14:31:36.241+09:00  INFO 15720 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-09-01T14:31:36.242+09:00  INFO 15720 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-09-01T14:31:37.461+09:00  INFO 15720 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-09-01T14:31:37.554+09:00  INFO 15720 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 79 ms. Found 1 JPA repository interface.
+2025-09-01T14:31:38.409+09:00  INFO 15720 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-09-01T14:31:38.428+09:00  INFO 15720 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-09-01T14:31:38.429+09:00  INFO 15720 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-01T14:31:38.503+09:00  INFO 15720 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-09-01T14:31:38.504+09:00  INFO 15720 --- [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2261 ms
+2025-09-01T14:31:38.825+09:00  INFO 15720 --- [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-09-01T14:31:38.976+09:00  INFO 15720 --- [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.26.Final
+2025-09-01T14:31:39.072+09:00  INFO 15720 --- [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-09-01T14:31:39.511+09:00  INFO 15720 --- [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-09-01T14:31:39.557+09:00  INFO 15720 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-09-01T14:31:40.013+09:00  INFO 15720 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection oracle.jdbc.driver.T4CConnection@60b6b911
+2025-09-01T14:31:40.015+09:00  INFO 15720 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-09-01T14:31:40.209+09:00  WARN 15720 --- [restartedMain] org.hibernate.dialect.Dialect            : HHH000511: The 18.0.0 version for [org.hibernate.dialect.OracleDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 19.0.0. Check the community dialects project for available legacy versions.
+2025-09-01T14:31:40.418+09:00  INFO 15720 --- [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 18.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-09-01T14:31:41.357+09:00  INFO 15720 --- [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-09-01T14:31:42.006+09:00 DEBUG 15720 --- [restartedMain] org.hibernate.SQL                        : 
+    alter table customers 
+       modify password varchar2(50 char)
+2025-09-01T14:31:42.074+09:00  WARN 15720 --- [restartedMain] o.h.t.s.i.ExceptionHandlerLoggedImpl     : GenerationTarget encountered exception accepting command : Error executing DDL "
+    alter table customers 
+       modify password varchar2(50 char)" via JDBC [ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/]
+
+org.hibernate.tool.schema.spi.CommandAcceptanceException: Error executing DDL "
+    alter table customers 
+       modify password varchar2(50 char)" via JDBC [ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:94) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.applySqlString(AbstractSchemaMigrator.java:576) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.applySqlStrings(AbstractSchemaMigrator.java:516) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.migrateTable(AbstractSchemaMigrator.java:334) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.GroupedSchemaMigratorImpl.performTablesMigration(GroupedSchemaMigratorImpl.java:84) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.performMigration(AbstractSchemaMigrator.java:233) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.doMigration(AbstractSchemaMigrator.java:112) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.performDatabaseAction(SchemaManagementToolCoordinator.java:280) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.lambda$process$5(SchemaManagementToolCoordinator.java:144) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at java.base/java.util.HashMap.forEach(HashMap.java:1420) ~[na:na]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.process(SchemaManagementToolCoordinator.java:141) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.boot.internal.SessionFactoryObserverForSchemaExport.sessionFactoryCreated(SessionFactoryObserverForSchemaExport.java:37) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.internal.SessionFactoryObserverChain.sessionFactoryCreated(SessionFactoryObserverChain.java:35) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:324) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:463) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1517) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:66) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:419) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:400) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970) ~[spring-context-6.2.10.jar:6.2.10]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627) ~[spring-context-6.2.10.jar:6.2.10]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350) ~[spring-boot-3.5.5.jar:3.5.5]
+	at com.example.health_care.HealthCareApplication.main(HealthCareApplication.java:10) ~[main/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50) ~[spring-boot-devtools-3.5.5.jar:3.5.5]
+Caused by: java.sql.SQLException: ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:709) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:609) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4C8Oall.processError(T4C8Oall.java:1347) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:1101) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:409) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4C8Oall.doOALL(T4C8Oall.java:499) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CStatement.doOall8(T4CStatement.java:190) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CStatement.executeForRows(T4CStatement.java:1384) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.executeSQLStatement(OracleStatement.java:1995) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.doExecuteWithTimeout(OracleStatement.java:1608) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.executeInternal(OracleStatement.java:2673) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.execute(OracleStatement.java:2622) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatementWrapper.execute(OracleStatementWrapper.java:336) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95) ~[HikariCP-6.3.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-6.3.2.jar:na]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	... 42 common frames omitted
+Caused by: oracle.jdbc.OracleDatabaseException: ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:717) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	... 57 common frames omitted
+
+2025-09-01T14:31:42.092+09:00  INFO 15720 --- [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-09-01T14:31:42.582+09:00  WARN 15720 --- [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 747eb2dd-3eba-4be2-860a-2a99e05e56d7
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-09-01T14:31:42.593+09:00  INFO 15720 --- [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-09-01T14:31:42.794+09:00 DEBUG 15720 --- [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 8 mappings in 'requestMappingHandlerMapping'
+2025-09-01T14:31:42.932+09:00 DEBUG 15720 --- [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /swagger-ui/swagger-ui*/*swagger-initializer.js, /swagger-ui/swagger-ui*/**] in 'resourceHandlerMapping'
+2025-09-01T14:31:43.021+09:00 DEBUG 15720 --- [restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-09-01T14:31:43.105+09:00 DEBUG 15720 --- [restartedMain] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-09-01T14:31:43.212+09:00 DEBUG 15720 --- [restartedMain] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-09-01T14:31:43.533+09:00  INFO 15720 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-09-01T14:31:43.589+09:00  INFO 15720 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-09-01T14:31:43.603+09:00  INFO 15720 --- [restartedMain] c.e.health_care.HealthCareApplication    : Started HealthCareApplication in 8.11 seconds (process running for 8.885)
+2025-09-01T14:51:23.373+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-01T14:51:23.373+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-09-01T14:51:23.374+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-09-01T14:51:23.374+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-09-01T14:51:23.374+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-09-01T14:51:23.376+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@174e2d71
+2025-09-01T14:51:23.377+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@386ab5d7
+2025-09-01T14:51:23.377+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-09-01T14:51:23.378+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+2025-09-01T14:51:23.402+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:51:23.413+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:51:23.415+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:51:23.418+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:51:23.530+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@37c9ac8]
+2025-09-01T14:51:23.616+09:00  WARN 15720 --- [http-nio-0.0.0.0-8080-exec-2] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<com.example.health_care.entity.CustomersEntity> com.example.health_care.controller.AuthController.signup(com.example.health_care.dto.SignupRequest): [Field error in object 'signupRequest' on field 'password': rejected value [1234]; codes [Size.signupRequest.password,Size.password,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupRequest.password,password]; arguments []; default message [password],72,8]; default message [크기가 8에서 72 사이여야 합니다]] ]
+2025-09-01T14:51:23.618+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 400 BAD_REQUEST
+2025-09-01T14:51:23.619+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:51:23.627+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing POST /error
+2025-09-01T14:51:23.628+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured POST /error
+2025-09-01T14:51:23.629+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for POST "/error", parameters={}
+2025-09-01T14:51:23.630+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+2025-09-01T14:51:23.653+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:51:23.655+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Mon Sep 01 14:51:23 KST 2025, status=400, error=Bad Request, trace=org.springframework.we (truncated)...]
+2025-09-01T14:51:23.702+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 400
+2025-09-01T14:51:23.702+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.858+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/index.html
+2025-09-01T14:53:21.859+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/index.html
+2025-09-01T14:53:21.860+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/index.html", parameters={}
+2025-09-01T14:53:21.862+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.893+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.894+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.924+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/swagger-ui.css
+2025-09-01T14:53:21.925+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/swagger-ui.css
+2025-09-01T14:53:21.926+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui.css", parameters={}
+2025-09-01T14:53:21.928+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.937+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/index.css
+2025-09-01T14:53:21.939+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/index.css
+2025-09-01T14:53:21.939+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/swagger-ui-standalone-preset.js
+2025-09-01T14:53:21.940+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/swagger-ui-bundle.js
+2025-09-01T14:53:21.941+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/swagger-initializer.js
+2025-09-01T14:53:21.942+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.944+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/swagger-initializer.js
+2025-09-01T14:53:21.943+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/index.css", parameters={}
+2025-09-01T14:53:21.944+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/swagger-ui-standalone-preset.js
+2025-09-01T14:53:21.944+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/swagger-ui-bundle.js
+2025-09-01T14:53:21.944+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.945+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-initializer.js", parameters={}
+2025-09-01T14:53:21.945+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui-standalone-preset.js", parameters={}
+2025-09-01T14:53:21.946+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.946+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui-bundle.js", parameters={}
+2025-09-01T14:53:21.947+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.947+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.954+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.957+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:21.959+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-5] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.968+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.992+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-7] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.976+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.993+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:21.995+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-6] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:21.997+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:22.179+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /v3/api-docs/swagger-config
+2025-09-01T14:53:22.181+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /v3/api-docs/swagger-config
+2025-09-01T14:53:22.182+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/v3/api-docs/swagger-config", parameters={}
+2025-09-01T14:53:22.182+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springdoc.webmvc.ui.SwaggerConfigResource#openapiJson(HttpServletRequest)
+2025-09-01T14:53:22.183+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /swagger-ui/swagger-ui/favicon-32x32.png
+2025-09-01T14:53:22.185+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /swagger-ui/swagger-ui/favicon-32x32.png
+2025-09-01T14:53:22.185+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/favicon-32x32.png", parameters={}
+2025-09-01T14:53:22.187+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-09-01T14:53:22.188+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [*/*] and supported [application/json]
+2025-09-01T14:53:22.190+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Writing [{configUrl=/v3/api-docs/swagger-config, displayRequestDuration=true, oauth2RedirectUrl=http://localh (truncated)...]
+2025-09-01T14:53:22.192+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:22.192+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:22.193+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:22.194+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-9] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:22.222+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /v3/api-docs
+2025-09-01T14:53:22.224+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /v3/api-docs
+2025-09-01T14:53:22.224+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/v3/api-docs", parameters={}
+2025-09-01T14:53:22.225+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springdoc.webmvc.api.OpenApiWebMvcResource#openapiJson(HttpServletRequest, String, Locale)
+2025-09-01T14:53:22.550+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 313 ms
+2025-09-01T14:53:22.591+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, */*] and supported [application/json]
+2025-09-01T14:53:22.592+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [{123, 34, 111, 112, 101, 110, 97, 112, 105, 34, 58, 34, 51, 46, 49, 46, 48, 34, 44, 34, 105, 110, 10 (truncated)...]
+2025-09-01T14:53:22.593+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-09-01T14:53:22.593+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:53:41.096+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:53:41.107+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:53:41.109+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:53:41.109+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:53:41.111+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@6eb6fc0e]
+2025-09-01T14:53:41.113+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] c.e.h.controller.AuthController          : [SIGNUP] request id = kkk@naver.com, weight = 0.1, age = 150, gender = M, height = 0.1
+2025-09-01T14:53:41.783+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:53:41.788+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [kkk@naver.com]
+2025-09-01T14:53:41.941+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    select
+        ce1_0.id,
+        ce1_0.age,
+        ce1_0.gender,
+        ce1_0.height,
+        ce1_0.password,
+        ce1_0.weight 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:53:41.943+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [kkk@naver.com]
+2025-09-01T14:53:42.014+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    insert 
+    into
+        customers
+        (age, gender, height, password, weight, id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2025-09-01T14:53:42.019+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [150]
+2025-09-01T14:53:42.021+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (2:CHAR) <- [M]
+2025-09-01T14:53:42.023+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (3:DOUBLE) <- [0.1]
+2025-09-01T14:53:42.023+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [$2a$10$pmFjSaJl01F.go7E.yFL8.L5UsVedFxLBgPLLalZrFM.oZWunlTz6]
+2025-09-01T14:53:42.024+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (5:DOUBLE) <- [0.1]
+2025-09-01T14:53:42.024+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [kkk@naver.com]
+2025-09-01T14:53:42.064+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] c.e.h.controller.AuthController          : [SIGNUP] saved id = kkk@naver.com
+2025-09-01T14:53:42.083+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:53:42.084+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.example.health_care.entity.CustomersEntity@557fed1d]
+2025-09-01T14:53:42.087+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2025-09-01T14:53:42.088+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:56:01.226+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:56:01.227+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:56:01.228+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:56:01.229+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:56:01.231+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@577cd8dc]
+2025-09-01T14:56:01.236+09:00  WARN 15720 --- [http-nio-0.0.0.0-8080-exec-8] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<com.example.health_care.entity.CustomersEntity> com.example.health_care.controller.AuthController.signup(com.example.health_care.dto.SignupRequest): [Field error in object 'signupRequest' on field 'password': rejected value [1234]; codes [Size.signupRequest.password,Size.password,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupRequest.password,password]; arguments []; default message [password],72,8]; default message [크기가 8에서 72 사이여야 합니다]] ]
+2025-09-01T14:56:01.238+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 400 BAD_REQUEST
+2025-09-01T14:56:01.239+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:56:01.240+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing POST /error
+2025-09-01T14:56:01.241+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured POST /error
+2025-09-01T14:56:01.241+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for POST "/error", parameters={}
+2025-09-01T14:56:01.242+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+2025-09-01T14:56:01.245+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:56:01.246+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Mon Sep 01 14:56:01 KST 2025, status=400, error=Bad Request, trace=org.springframework.we (truncated)...]
+2025-09-01T14:56:01.250+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 400
+2025-09-01T14:56:01.254+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:56:09.663+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:56:09.664+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:56:09.665+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:56:09.665+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:56:09.666+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@3d2ad4dd]
+2025-09-01T14:56:09.668+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-10] c.e.h.controller.AuthController          : [SIGNUP] request id = popple@test.com, weight = 63.5, age = 29, gender = M, height = 163.0
+2025-09-01T14:56:09.671+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:56:09.673+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple@test.com]
+2025-09-01T14:56:09.741+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.SQL                        : 
+    select
+        ce1_0.id,
+        ce1_0.age,
+        ce1_0.gender,
+        ce1_0.height,
+        ce1_0.password,
+        ce1_0.weight 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:56:09.742+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple@test.com]
+2025-09-01T14:56:09.744+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.SQL                        : 
+    insert 
+    into
+        customers
+        (age, gender, height, password, weight, id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2025-09-01T14:56:09.746+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [29]
+2025-09-01T14:56:09.746+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (2:CHAR) <- [M]
+2025-09-01T14:56:09.746+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (3:DOUBLE) <- [163.0]
+2025-09-01T14:56:09.747+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [$2a$10$TtB80bgNIWHw5E/ci43ifOAFBwK/A0JaDM8M2NGYqiToO3QSzgn/C]
+2025-09-01T14:56:09.747+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (5:DOUBLE) <- [63.5]
+2025-09-01T14:56:09.748+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-10] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [popple@test.com]
+2025-09-01T14:56:09.749+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-10] c.e.h.controller.AuthController          : [SIGNUP] saved id = popple@test.com
+2025-09-01T14:56:09.750+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:56:09.751+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.example.health_care.entity.CustomersEntity@4c32e194]
+2025-09-01T14:56:09.752+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2025-09-01T14:56:09.753+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-10] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:56:49.081+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:56:49.082+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:56:49.083+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:56:49.084+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:56:49.086+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@135964a6]
+2025-09-01T14:56:49.088+09:00  WARN 15720 --- [http-nio-0.0.0.0-8080-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MethodArgumentNotValidException: Validation failed for argument [0] in public org.springframework.http.ResponseEntity<com.example.health_care.entity.CustomersEntity> com.example.health_care.controller.AuthController.signup(com.example.health_care.dto.SignupRequest): [Field error in object 'signupRequest' on field 'password': rejected value [1234]; codes [Size.signupRequest.password,Size.password,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [signupRequest.password,password]; arguments []; default message [password],72,8]; default message [크기가 8에서 72 사이여야 합니다]] ]
+2025-09-01T14:56:49.090+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 400 BAD_REQUEST
+2025-09-01T14:56:49.091+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:56:49.093+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /error
+2025-09-01T14:56:49.093+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /error
+2025-09-01T14:56:49.094+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for POST "/error", parameters={}
+2025-09-01T14:56:49.095+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+2025-09-01T14:56:49.096+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:56:49.097+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Mon Sep 01 14:56:49 KST 2025, status=400, error=Bad Request, trace=org.springframework.we (truncated)...]
+2025-09-01T14:56:49.100+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 400
+2025-09-01T14:56:49.102+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T14:57:03.927+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/signup
+2025-09-01T14:57:03.928+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/signup
+2025-09-01T14:57:03.928+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/auth/signup", parameters={}
+2025-09-01T14:57:03.929+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.health_care.controller.AuthController#signup(SignupRequest)
+2025-09-01T14:57:03.930+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.example.health_care.dto.SignupRequest@58e0f25a]
+2025-09-01T14:57:03.931+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] c.e.h.controller.AuthController          : [SIGNUP] request id = popple103@naver.com, weight = 63.5, age = 29, gender = M, height = 163.0
+2025-09-01T14:57:03.933+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:57:03.934+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple103@naver.com]
+2025-09-01T14:57:04.014+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    select
+        ce1_0.id,
+        ce1_0.age,
+        ce1_0.gender,
+        ce1_0.height,
+        ce1_0.password,
+        ce1_0.weight 
+    from
+        customers ce1_0 
+    where
+        ce1_0.id=?
+2025-09-01T14:57:04.016+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [popple103@naver.com]
+2025-09-01T14:57:04.019+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.SQL                        : 
+    insert 
+    into
+        customers
+        (age, gender, height, password, weight, id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+2025-09-01T14:57:04.021+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (1:INTEGER) <- [29]
+2025-09-01T14:57:04.021+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (2:CHAR) <- [M]
+2025-09-01T14:57:04.022+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (3:DOUBLE) <- [163.0]
+2025-09-01T14:57:04.022+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [$2a$10$h.mgNs9LQ9b14r9UVNCpZeRvYmaTddmOkbnFzNGjbGrED3RLpYcQO]
+2025-09-01T14:57:04.022+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (5:DOUBLE) <- [63.5]
+2025-09-01T14:57:04.022+09:00 TRACE 15720 --- [http-nio-0.0.0.0-8080-exec-2] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [popple103@naver.com]
+2025-09-01T14:57:04.025+09:00  INFO 15720 --- [http-nio-0.0.0.0-8080-exec-2] c.e.h.controller.AuthController          : [SIGNUP] saved id = popple103@naver.com
+2025-09-01T14:57:04.026+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2025-09-01T14:57:04.026+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.example.health_care.entity.CustomersEntity@4a885c22]
+2025-09-01T14:57:04.027+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2025-09-01T14:57:04.027+09:00 DEBUG 15720 --- [http-nio-0.0.0.0-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-09-01T15:12:40.072+09:00  INFO 24348 --- [restartedMain] c.e.health_care.HealthCareApplication    : Starting HealthCareApplication using Java 17 with PID 24348 (C:\Users\poppl\Desktop\TeamProject\health_care\jonullist\backend\build\classes\java\main started by poppl in c:\Users\poppl\Desktop\TeamProject\health_care\jonullist\backend)
+2025-09-01T15:12:40.075+09:00  INFO 24348 --- [restartedMain] c.e.health_care.HealthCareApplication    : No active profile set, falling back to 1 default profile: "default"
+2025-09-01T15:12:40.136+09:00  INFO 24348 --- [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\poppl\.gradle\caches\modules-2\files-2.1\com.oracle.database.jdbc\ojdbc11\23.4.0.24.05\239c6f65f74ebdf08bf0da234815fc757a13224c\ojdbc11-23.4.0.24.05.jar referenced one or more files that do not exist: file:/C:/Users/poppl/.gradle/caches/modules-2/files-2.1/com.oracle.database.jdbc/ojdbc11/23.4.0.24.05/239c6f65f74ebdf08bf0da234815fc757a13224c/oraclepki.jar
+2025-09-01T15:12:40.137+09:00  INFO 24348 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-09-01T15:12:40.137+09:00  INFO 24348 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-09-01T15:12:41.445+09:00  INFO 24348 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-09-01T15:12:41.522+09:00  INFO 24348 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 61 ms. Found 1 JPA repository interface.
+2025-09-01T15:12:42.826+09:00  INFO 24348 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-09-01T15:12:42.859+09:00  INFO 24348 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-09-01T15:12:42.861+09:00  INFO 24348 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-01T15:12:43.091+09:00  INFO 24348 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-09-01T15:12:43.095+09:00  INFO 24348 --- [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2957 ms
+2025-09-01T15:12:43.643+09:00  INFO 24348 --- [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-09-01T15:12:43.723+09:00  INFO 24348 --- [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.26.Final
+2025-09-01T15:12:43.781+09:00  INFO 24348 --- [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-09-01T15:12:44.185+09:00  INFO 24348 --- [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-09-01T15:12:44.223+09:00  INFO 24348 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-09-01T15:12:44.665+09:00  INFO 24348 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection oracle.jdbc.driver.T4CConnection@252f4b26
+2025-09-01T15:12:44.668+09:00  INFO 24348 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-09-01T15:12:44.894+09:00  WARN 24348 --- [restartedMain] org.hibernate.dialect.Dialect            : HHH000511: The 18.0.0 version for [org.hibernate.dialect.OracleDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 19.0.0. Check the community dialects project for available legacy versions.
+2025-09-01T15:12:45.067+09:00  INFO 24348 --- [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 18.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-09-01T15:12:46.179+09:00  INFO 24348 --- [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-09-01T15:12:46.834+09:00 DEBUG 24348 --- [restartedMain] org.hibernate.SQL                        : 
+    alter table customers 
+       modify password varchar2(50 char)
+2025-09-01T15:12:46.913+09:00  WARN 24348 --- [restartedMain] o.h.t.s.i.ExceptionHandlerLoggedImpl     : GenerationTarget encountered exception accepting command : Error executing DDL "
+    alter table customers 
+       modify password varchar2(50 char)" via JDBC [ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/]
+
+org.hibernate.tool.schema.spi.CommandAcceptanceException: Error executing DDL "
+    alter table customers 
+       modify password varchar2(50 char)" via JDBC [ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:94) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.applySqlString(AbstractSchemaMigrator.java:576) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.applySqlStrings(AbstractSchemaMigrator.java:516) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.migrateTable(AbstractSchemaMigrator.java:334) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.GroupedSchemaMigratorImpl.performTablesMigration(GroupedSchemaMigratorImpl.java:84) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.performMigration(AbstractSchemaMigrator.java:233) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.internal.AbstractSchemaMigrator.doMigration(AbstractSchemaMigrator.java:112) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.performDatabaseAction(SchemaManagementToolCoordinator.java:280) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.lambda$process$5(SchemaManagementToolCoordinator.java:144) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at java.base/java.util.HashMap.forEach(HashMap.java:1420) ~[na:na]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.process(SchemaManagementToolCoordinator.java:141) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.boot.internal.SessionFactoryObserverForSchemaExport.sessionFactoryCreated(SessionFactoryObserverForSchemaExport.java:37) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.internal.SessionFactoryObserverChain.sessionFactoryCreated(SessionFactoryObserverChain.java:35) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:324) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:463) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1517) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:66) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:419) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:400) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366) ~[spring-orm-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207) ~[spring-beans-6.2.10.jar:6.2.10]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970) ~[spring-context-6.2.10.jar:6.2.10]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627) ~[spring-context-6.2.10.jar:6.2.10]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350) ~[spring-boot-3.5.5.jar:3.5.5]
+	at com.example.health_care.HealthCareApplication.main(HealthCareApplication.java:10) ~[main/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50) ~[spring-boot-devtools-3.5.5.jar:3.5.5]
+Caused by: java.sql.SQLException: ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+https://docs.oracle.com/error-help/db/ora-01441/
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:709) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:609) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4C8Oall.processError(T4C8Oall.java:1347) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:1101) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:409) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4C8Oall.doOALL(T4C8Oall.java:499) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CStatement.doOall8(T4CStatement.java:190) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.T4CStatement.executeForRows(T4CStatement.java:1384) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.executeSQLStatement(OracleStatement.java:1995) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.doExecuteWithTimeout(OracleStatement.java:1608) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.executeInternal(OracleStatement.java:2673) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatement.execute(OracleStatement.java:2622) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at oracle.jdbc.driver.OracleStatementWrapper.execute(OracleStatementWrapper.java:336) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:95) ~[HikariCP-6.3.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-6.3.2.jar:na]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.6.26.Final.jar:6.6.26.Final]
+	... 42 common frames omitted
+Caused by: oracle.jdbc.OracleDatabaseException: ORA-01441: 일부 값이 너무 커서 열 길이를 줄일 수 없음
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:717) ~[ojdbc11-23.4.0.24.05.jar:23.4.0.24.05]
+	... 57 common frames omitted
+
+2025-09-01T15:12:46.929+09:00  INFO 24348 --- [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-09-01T15:12:47.388+09:00  WARN 24348 --- [restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 6d7db0f0-a92e-4fc2-860d-35d8cba0c945
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-09-01T15:12:47.398+09:00  INFO 24348 --- [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-09-01T15:12:47.579+09:00 DEBUG 24348 --- [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 8 mappings in 'requestMappingHandlerMapping'
+2025-09-01T15:12:47.711+09:00 DEBUG 24348 --- [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /swagger-ui/swagger-ui*/*swagger-initializer.js, /swagger-ui/swagger-ui*/**] in 'resourceHandlerMapping'
+2025-09-01T15:12:47.792+09:00 DEBUG 24348 --- [restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-09-01T15:12:47.896+09:00 DEBUG 24348 --- [restartedMain] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-09-01T15:12:47.964+09:00 DEBUG 24348 --- [restartedMain] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-09-01T15:12:48.258+09:00  INFO 24348 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-09-01T15:12:48.328+09:00  INFO 24348 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-09-01T15:12:48.343+09:00  INFO 24348 --- [restartedMain] c.e.health_care.HealthCareApplication    : Started HealthCareApplication in 8.871 seconds (process running for 10.013)
