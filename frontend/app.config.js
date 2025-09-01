@@ -1,12 +1,4 @@
 export default ({ config }) => {
-  const teamHosts = {
-    me: "http://10.94.9.1:8080",           // 네 PC
-    member1: "http://192.168.138.43:8080", // 팀원1
-    // 필요하면 계속 추가
-  };
-
-  const target = process.env.TEAM_TARGET || "me";
-
   return {
     ...config,
     name: "frontend",
@@ -41,7 +33,7 @@ export default ({ config }) => {
       favicon: "./assets/favicon.png"
     },
     extra: {
-      apiOrigin: teamHosts[target],
+      apiOrigin: "http://10.94.9.1:8080", // << 여기에 각자 아이피 넣은 후에 실행 해보세요
       eas: {
         projectId: "replace-with-your-project-id-if-using-eas"
       }
