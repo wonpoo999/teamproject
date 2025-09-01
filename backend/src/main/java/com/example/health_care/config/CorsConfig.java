@@ -13,7 +13,11 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8081")); // Native PORT - 8081
+        c.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8081","http://127.0.0.1:*",
+                "http://192.168.*.*:*",
+                "http://10.*.*.*:*",
+                "https://*.ngrok.io",
+                "https://*.trycloudflare.com")); // Native PORT - 8081
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(List.of("*"));
         c.setAllowCredentials(false);
