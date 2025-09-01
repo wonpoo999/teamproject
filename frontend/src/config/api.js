@@ -1,26 +1,73 @@
-import { Platform } from 'react-native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Platform, NativeModules } from 'react-native';
 
-const EMU = Platform.OS==='android' ? '10.0.2.2' : 'localhost'
-const DEFAULT_BASE = __DEV__ ? (process.env.EXPO_PUBLIC_API_BASE || `http://${EMU}:8080`) : process.env.EXPO_PUBLIC_API_BASE
 
-export async function getApiBase(){ const v=await AsyncStorage.getItem('api_base'); return v||DEFAULT_BASE }
-export async function setApiBase(v){ await AsyncStorage.setItem('api_base', v) }
-
-export async function apiGet(path){
-  const base=await getApiBase()
-  const res=await fetch(`${base}${path}`)
-  const t=await res.text()
-  const d=t?JSON.parse(t):null
-  if(!res.ok) throw new Error(d?.message||t||String(res.status))
-  return d
+function getMetroHost() {
+  const scriptURL = NativeModules?.SourceCode?.scriptURL;
+  if (scriptURL) {
+    try {
+      const u = new URL(scriptURL);
+      return u.hostname; 
+    } catch (e) {}
+  }
+  return undefined;
 }
 
-export async function apiPost(path, body){
-  const base=await getApiBase()
-  const res=await fetch(`${base}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-  const t=await res.text()
-  const d=t?JSON.parse(t):null
-  if(!res.ok) throw new Error(d?.message||t||String(res.status))
-  return d
+
+function getDevBase() {
+  if (Platform.OS === 'android') {
+    const host = getMetroHost();
+    if (host && host !== 'localhost') {
+      return `http://${host}:8080/api`;   
+    }
+    return 'http://10.0.2.2:8080/api';     
+  }
+  const host = getMetroHost() || 'localhost'; 
+  return `http://${host}:8080/api`;
 }
+
+const DEFAULT_BASE = __DEV__ ? getDevBase() : 'https://your-prod.example.com/api';
+
+
+const join = (base, path) =>
+  `${String(base).replace(/\/+$/,'')}/${String(path).replace(/^\/+/,'')}`;
+
+
+export async function apiGet(path, init) {
+  const url = join(DEFAULT_BASE, path);
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 8000);
+
+  try {
+    const res = await fetch(url, { ...(init || {}), method: 'GET', signal: ctrl.signal });
+    const text = await res.text();
+    if (__DEV__) console.log('GET', url, '->', res.status, text);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
+    try { return JSON.parse(text); } catch (e) { return text; }
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+export async function apiPost(path, body, init) {
+  const url = join(DEFAULT_BASE, path);
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 12000);
+
+  try {
+    const res = await fetch(url, {
+      ...(init || {}),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...((init && init.headers) || {}) },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    if (__DEV__) console.log('POST', url, '->', res.status, text);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
+    try { return JSON.parse(text); } catch (e) { return text; }
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+export const API_BASE_DEBUG = DEFAULT_BASE;
