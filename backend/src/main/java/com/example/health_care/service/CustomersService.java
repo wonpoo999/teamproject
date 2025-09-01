@@ -5,7 +5,9 @@ import com.example.health_care.entity.CustomersEntity;
 import com.example.health_care.repository.CustomersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class CustomersService {
+public class CustomersService implements UserDetailsService {
 
     private final CustomersRepository customersRepository;
     private final PasswordEncoder passwordEncoder;
@@ -36,5 +38,17 @@ public class CustomersService {
                 .build();
                 
         return customersRepository.save(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
+        CustomersEntity user = customersRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다 : " + id));
+
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getId())
+                .password(user.getPassword())
+                .roles("USER")
+                .build();
     }
 }
