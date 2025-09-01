@@ -23,21 +23,22 @@ export function AuthProvider({children}){
     await AsyncStorage.setItem('token','local')
     await AsyncStorage.setItem('user',JSON.stringify(fauxUser))
     setToken('local'); setUser(fauxUser)
+    return true
   }
 
   const signup=async(form)=>{
-    const payload={
-      id: form.id,
-      password: form.password,
+    const data = await apiPost('/api/auth/signup', {
+      id: String(form.id||'').trim(),
+      password: String(form.password||''),
       weight: Number(form.weight),
       age: Number(form.age),
       gender: form.gender,
       height: Number(form.height)
-    }
-    const data = await apiPost('/api/auth/signup', payload)
+    })
     await AsyncStorage.setItem('token','local')
     await AsyncStorage.setItem('user', JSON.stringify(data))
     setToken('local'); setUser(data)
+    return true
   }
 
   const logout=async()=>{
