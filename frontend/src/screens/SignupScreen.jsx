@@ -51,6 +51,12 @@ export default function SignupScreen({ navigation }) {
         <TouchableOpacity onPress={onSubmit} disabled={loading} style={{ backgroundColor: '#10b981', padding: 14, borderRadius: 10, opacity: loading ? 0.6 : 1 }}>
           <Text style={{ color: '#fff', textAlign: 'center' }}>{loading ? 'Submitting…' : 'Create Account'}</Text>
         </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
+          <Text style={{ color: '#6b7280' }}>이미 계정이 있나요? </Text>
+          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+            <Text style={{ color: '#2563eb', fontWeight: '700' }}>로그인</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
