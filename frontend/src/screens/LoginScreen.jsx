@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert,
