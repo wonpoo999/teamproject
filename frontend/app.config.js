@@ -34,7 +34,7 @@ export default ({ config }) => {
     },
     extra: {
 
-      apiOrigin: "http://10.94.9.1:8080", // << 여기에 각자 아이피 넣은 후에 실행 해보세요 유나 아이피 10.94.9.1:8080
+      apiOrigin: "http://10.227.206.1:8080", // << 여기에 각자 아이피 넣은 후에 실행 해보세요
 
       eas: {
         projectId: "replace-with-your-project-id-if-using-eas"

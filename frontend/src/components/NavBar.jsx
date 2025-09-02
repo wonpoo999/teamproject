@@ -19,7 +19,8 @@ export default function NavBar(){
           </Pressable>
           {/* <Pressable onPress={()=>nav.navigate('Settings')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
             <Text style={{color:'#fff', fontSize:16}}>Settings</Text>
-          </Pressable> */}
+          </Pressable> */} 
+          {/* 위에 주석은 핑 테스트 때만 풀어서 하면 됩니당 */}
           {!user ? (
             <>
               <Pressable onPress={()=>nav.navigate('Login')} style={{paddingHorizontal:8, paddingVertical:6, marginLeft:8}}>
