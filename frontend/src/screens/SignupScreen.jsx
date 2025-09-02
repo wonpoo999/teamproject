@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import {
-  View, Text, TextInput, TouchableOpacity, Alert,
-  ScrollView, KeyboardAvoidingView, Platform
-} from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 
 export default function SignupScreen({ navigation }) {
@@ -19,14 +16,7 @@ export default function SignupScreen({ navigation }) {
     if (!id || !password || !weight || !age || !gender || !height) {
       return Alert.alert('필수 입력', '모든 항목을 입력해 주세요.')
     }
-    const payload = {
-      id: id.trim(),
-      password,
-      weight: Number(weight),
-      age: Number(age),
-      gender,
-      height: Number(height)
-    }
+    const payload = { id: id.trim(), password, weight: Number(weight), age: Number(age), gender, height: Number(height) }
     if (Number.isNaN(payload.age) || Number.isNaN(payload.weight) || Number.isNaN(payload.height)) {
       return Alert.alert('형식 오류', '나이/체중/키는 숫자로 입력하세요.')
     }
