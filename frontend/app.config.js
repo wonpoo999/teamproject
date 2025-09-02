@@ -33,8 +33,8 @@ export default ({ config }) => {
       favicon: "./assets/favicon.png"
     },
     extra: {
-
-      apiOrigin: "http://10.227.206.1:8080", // << 여기에 각자 아이피 넣은 후에 실행 해보세요
+      apiOrigin: "http://192.168.0.160:8080", // << 여기에 각자 아이피 넣은 후에 실행 해보세요
+      //이부분 아이피는 제 아이피로 설정되어있으니 참고 바랍니다.
 
       eas: {
         projectId: "replace-with-your-project-id-if-using-eas"
