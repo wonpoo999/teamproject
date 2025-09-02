@@ -5,7 +5,6 @@ import com.example.health_care.entity.CustomersEntity;
 import com.example.health_care.repository.CustomersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,7 +39,7 @@ public class CustomersService implements UserDetailsService {
                 
         return customersRepository.save(user);
     }
-    
+
     @Override
     public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
         CustomersEntity user = customersRepository.findById(id)

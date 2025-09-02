@@ -29,7 +29,7 @@ const login = async (id, password) => {
         // 응답으로 받은 토큰과 사용자 정보를 저장합니다.
         await AsyncStorage.setItem("token", response.token);
 
-        // response.id를 user 객체로 저장
+        // response.id를 user 객체로 저장 X
         const userData = { id: response.id };
         await AsyncStorage.setItem("user", JSON.stringify(userData));
 
