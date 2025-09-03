@@ -21,26 +21,21 @@ export function AuthProvider({ children }) {
     })();
   }, []);
 
-const login = async (id, password) => {
+  const login = async (id, password) => {
     try {
-        // 백엔드 로그인 API로 POST 요청을 보냅니다.
-        const response = await apiPost("/api/auth/login", { id, password });
-        
-        // 응답으로 받은 토큰과 사용자 정보를 저장합니다.
-        await AsyncStorage.setItem("token", response.token);
-
-        // response.id를 user 객체로 저장 X
-        const userData = { id: response.id };
-        await AsyncStorage.setItem("user", JSON.stringify(userData));
-
-        setToken(response.token);
-        setUser(userData);
-        return true;
+      const res = await apiPost("/api/auth/login", { id, password });
+      const bearer = `${res.tokenType || "Bearer"} ${res.token}`;
+      await AsyncStorage.setItem("token", bearer);
+      const userData = { id: res.id };
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      setToken(bearer);
+      setUser(userData);
+      return true;
     } catch (error) {
-        console.error("Login failed:", error);
-        return false;
+      return false;
     }
-};
+  };
+
   const signup = async (form) => {
     try {
       await apiPost("/api/auth/signup", {
@@ -51,10 +46,9 @@ const login = async (id, password) => {
         gender: String(form.gender || "F").toUpperCase(),
         height: Number(form.height),
       });
-      const loginSuccess = await login(form.id, form.password);
-      return loginSuccess;
+      const ok = await login(form.id, form.password);
+      return ok;
     } catch (error) {
-      console.error("Signup failed:", error);
       return false;
     }
   };

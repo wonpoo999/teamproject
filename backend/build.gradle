@@ -46,6 +46,7 @@ dependencies {
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11:23.4.0.24.05'
 
 
+
     // Devtools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -58,7 +59,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
 }
 
 tasks.named('test') {

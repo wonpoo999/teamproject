@@ -13,7 +13,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
-import com.example.health_care.service.CustomersService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 public class SecurityConfig {
 
-    private CustomersService customersService;
     private final CorsConfig corsConfig;
 
     // swagger 문서 접근 허용 목록
@@ -52,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.POST, "/**").permitAll()
+                        .requestMatchers("/api/auth/logout").authenticated() // 로그아웃 추가
                         .anyRequest().authenticated()
                 )
                 // 폼/베이직 로그인 비활성
