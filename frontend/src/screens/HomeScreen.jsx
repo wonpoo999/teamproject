@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 
 const ICON_SIZE = 96
 const LABEL_SIZE = 70
-const OVERLAP = 32   // 숫자 키우면 글씨가 아이콘 쪽으로 겹쳐 올라옴
+const OVERLAP = 50
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
@@ -25,7 +25,7 @@ export default function HomeScreen() {
           width: ICON_SIZE + 24,
           height: LABEL_SIZE,
           resizeMode: 'contain',
-          marginTop: -OVERLAP, // 겹침
+          marginTop: -OVERLAP,
         }}
       />
     </Pressable>
