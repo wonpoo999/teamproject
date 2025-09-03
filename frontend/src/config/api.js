@@ -36,7 +36,7 @@ function normalizeOrigin(v) {
 
 const EXTRA = getExtra();
 const ENV_ORIGIN = normalizeOrigin(process.env.EXPO_PUBLIC_API_ORIGIN || EXTRA.apiOrigin || null);
-const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 8080);
+const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 3000);
 
 function getDevOrigin() {
   if (ENV_ORIGIN) return ENV_ORIGIN;
@@ -51,7 +51,8 @@ function getDevOrigin() {
     host = metroHost;
   } else {
     if (Platform.OS === 'android') {
-      host = '10.0.2.2';
+      host = '192.168.0.6';
+      // host = '10.217.85.1';
     } else if (Platform.OS === 'ios') {
       host = 'localhost';
     } else {
