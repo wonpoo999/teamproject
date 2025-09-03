@@ -1,4 +1,3 @@
-// src/screens/SignupScreen.js
 import { useState, useMemo } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, Alert,
