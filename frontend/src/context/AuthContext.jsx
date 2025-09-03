@@ -49,11 +49,29 @@ export function AuthProvider({ children }) {
       const body = { id: String(id || '').trim(), password: String(password || '') };
       if (!body.id || !body.password) return false;
       const res = await apiPost('/api/auth/login', body);
-      const tok = res?.token || res?.accessToken;
-      const type = res?.tokenType || res?.token_type || 'Bearer';
+
+      const tok =
+        res?.token ??
+        res?.accessToken ??
+        res?.access_token ??
+        res?.jwt ??
+        res?.jwtToken ??
+        res?.authorization;
+
+      const type =
+        res?.tokenType ??
+        res?.token_type ??
+        res?.type ??
+        'Bearer';
+
       if (!tok) return false;
+
       const bearer = `${type} ${tok}`;
-      const userData = { id: res?.id ?? body.id };
+
+      const userData = {
+        id: res?.id ?? res?.userId ?? res?.username ?? body.id,
+      };
+
       await persistAuth(bearer, userData);
       return true;
     } catch {
