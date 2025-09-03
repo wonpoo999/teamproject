@@ -52,6 +52,7 @@ function getDevOrigin() {
   } else {
     if (Platform.OS === 'android') {
       host = '10.0.2.2';
+      // host = '10.217.85.1';
     } else if (Platform.OS === 'ios') {
       host = 'localhost';
     } else {

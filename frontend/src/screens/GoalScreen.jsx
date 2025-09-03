@@ -20,7 +20,7 @@ export default function GoalScreen({ navigation }) {
     try {
       setSaving(true)
 
-      if (__DEV__) console.log('POST to:', ORIGIN + '/api/body')
+      if (__DEV__) console.log('POST to:', ORIGIN + '/body')
 
       const payload = {
         target_weight: targetWeight ? Number(targetWeight) : null,
