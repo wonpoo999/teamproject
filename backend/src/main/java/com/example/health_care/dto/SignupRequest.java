@@ -1,8 +1,9 @@
 package com.example.health_care.dto;
 
-import com.example.health_care.entity.CustomersEntity.Gender;
+import com.example.health_care.entity.Gender;
 import jakarta.validation.constraints.*;
 import lombok.*;
+
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class SignupRequest {

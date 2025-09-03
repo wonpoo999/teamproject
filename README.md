@@ -6,7 +6,7 @@
 ---------------------------------
 ### 팀명 - 영양실조;
 ## Project 주제 - 2안 다이어트/ 식단 관리 앱
-### 프로젝트 명 : 이 돈이면 치킨 안먹지
+### 프로젝트 명 : 다이어트 바벨몬
 
 Ports : 8080
 
@@ -20,10 +20,6 @@ frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니�
 - npx expo install expo-camera expo-image-manipulator
 - npx expo install @react-native-async-storage/async-storage
 - npx expo start
-
-
-front server
-- 김준우 set TEAM_TARGET=member1 && npx expo start
 
 
 #### 사진 인식 및 분석 API

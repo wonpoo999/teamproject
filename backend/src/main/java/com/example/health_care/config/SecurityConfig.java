@@ -1,8 +1,5 @@
 package com.example.health_care.config;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,14 +11,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.CorsFilter;
 
 import com.example.health_care.service.CustomersService;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
 public class SecurityConfig {
+
     private CustomersService customersService;
     private final CorsConfig corsConfig;
+
     // swagger 문서 접근 허용 목록
     private static final String[] SWAGGER_WHITELIST = {
             "/v3/api-docs/**",
@@ -50,7 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.POST, "/**").permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
                 // 폼/베이직 로그인 비활성
                 .httpBasic(b -> b.disable())
                 .formLogin(f -> f.disable());
@@ -68,5 +71,6 @@ public class SecurityConfig {
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
+
 
 }

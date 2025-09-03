@@ -1,10 +1,14 @@
 package com.example.health_care.service;
 
 import com.example.health_care.dto.SignupRequest;
+import com.example.health_care.entity.BodyEntity;
 import com.example.health_care.entity.CustomersEntity;
+import com.example.health_care.repository.BodyRepository;
 import com.example.health_care.repository.CustomersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Date;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,6 +24,7 @@ public class CustomersService implements UserDetailsService {
 
     private final CustomersRepository customersRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BodyRepository bodyRepository;
 
     @Transactional
     public CustomersEntity signup(SignupRequest req) {
@@ -37,10 +42,23 @@ public class CustomersService implements UserDetailsService {
                 .gender(req.getGender())
                 .height(req.getHeight())
                 .build();
+
+        CustomersEntity savedUser = customersRepository.save(user);
+        
+        BodyEntity bodyEntity = BodyEntity.builder()
+                .customerId(savedUser.getIdx()) // ★ 새로 생성된 idx를 외래 키로 사용
+                .weight(savedUser.getWeight())
+                .height(savedUser.getHeight())
+                .age(savedUser.getAge())
+                .gender(savedUser.getGender())
+                .recordDate(new Date()) // 현재 날짜 기록
+                .build();
                 
-        return customersRepository.save(user);
+        bodyRepository.save(bodyEntity);
+
+        return savedUser;
     }
-    
+
     @Override
     public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
         CustomersEntity user = customersRepository.findById(id)

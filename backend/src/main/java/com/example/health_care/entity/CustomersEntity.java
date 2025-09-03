@@ -2,16 +2,27 @@ package com.example.health_care.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.example.health_care.entity.Gender;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-@Entity @Table(name = "customers")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "customers")
 public class CustomersEntity {
 
     @Id
-    @Column(name = "id", length = 100, nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customers_seq_generator")
+    @SequenceGenerator(name = "customers_seq_generator", sequenceName = "CUSTOMERS_SEQ", allocationSize = 1)
+    @Column(name = "idx")
+    private Integer idx;
+
+    @Column(name = "id", length = 100, nullable = false, updatable = false, unique = true)
     private String id;
 
-    @Column(name = "password", length = 50, nullable = false) // length 60 -> 50 수정
+    @Column(name = "password", length = 255, nullable = false) // length 60 -> 50 수정
     private String password;
 
     @Column(name = "weight")
@@ -26,6 +37,4 @@ public class CustomersEntity {
 
     @Column(name = "height")
     private Double height;
-
-    public enum Gender { M, F }
 }
