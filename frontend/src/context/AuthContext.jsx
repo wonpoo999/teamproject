@@ -7,61 +7,113 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(false);      
+  const [loading, setLoading] = useState(false);  
+  const safeParse = (str) => {
+    try { return JSON.parse(str); } catch { return null; }
+  };
+
 
   useEffect(() => {
     (async () => {
-      const t = await AsyncStorage.getItem("token");
-      const u = await AsyncStorage.getItem("user");
-      if (t && u) {
-        setToken(t);
-        setUser(JSON.parse(u));
+      try {
+        const [t, u] = await AsyncStorage.multiGet(["token", "user"]);
+        const tokenVal = t?.[1] || null;
+        const userVal = u?.[1] ? safeParse(u[1]) : null;
+
+        if (tokenVal && userVal?.id) {
+          setToken(tokenVal);
+          setUser(userVal);
+        } else {
+          await AsyncStorage.multiRemove(["token", "user"]);
+        }
+      } finally {
+        setReady(true);
       }
-      setReady(true);
     })();
   }, []);
 
+  const persistAuth = async (bearer, userData) => {
+    await AsyncStorage.multiSet([
+      ["token", bearer],
+      ["user", JSON.stringify(userData)],
+    ]);
+    setToken(bearer);
+    setUser(userData);
+  };
+
   const login = async (id, password) => {
+    setLoading(true);
     try {
-      const res = await apiPost("/api/auth/login", { id, password });
-      const bearer = `${res.tokenType || "Bearer"} ${res.token}`;
-      await AsyncStorage.setItem("token", bearer);
-      const userData = { id: res.id };
-      await AsyncStorage.setItem("user", JSON.stringify(userData));
-      setToken(bearer);
-      setUser(userData);
+      const body = { id: String(id || "").trim(), password: String(password || "") };
+      if (!body.id || !body.password) return false;
+
+      const res = await apiPost("/api/auth/login", body);
+      const tok = res?.token || res?.accessToken;
+      const type = res?.tokenType || res?.token_type || "Bearer";
+      if (!tok) return false;
+
+      const bearer = `${type} ${tok}`;
+      const userData = { id: res?.id ?? body.id };
+
+      await persistAuth(bearer, userData);
       return true;
-    } catch (error) {
+    } catch {
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signup = async (form) => {
+    setLoading(true);
     try {
+      const id = String(form?.id || "").trim();
+      const password = String(form?.password || "");
+      const age = Number(form?.age);
+      const height = Number(form?.height);
+      const weight = Number(form?.weight);
+      const genderRaw = String(form?.gender || "F").toUpperCase();
+      const gender = genderRaw === "M" ? "M" : "F";
+
+      if (!id || !password || Number.isNaN(age) || Number.isNaN(height) || Number.isNaN(weight)) {
+        return false;
+      }
+
       await apiPost("/api/auth/signup", {
-        id: String(form.id || "").trim(),
-        password: String(form.password || ""),
-        weight: Number(form.weight),
-        age: Number(form.age),
-        gender: String(form.gender || "F").toUpperCase(),
-        height: Number(form.height),
+        id, password, age, height, weight, gender,
       });
-      const ok = await login(form.id, form.password);
+
+      const ok = await login(id, password);
       return ok;
-    } catch (error) {
+    } catch {
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
-    await AsyncStorage.multiRemove(["token", "user"]);
-    setToken(null);
-    setUser(null);
+    try {
+      await AsyncStorage.multiRemove(["token", "user"]);
+    } finally {
+      setToken(null);
+      setUser(null);
+    }
   };
 
   const value = useMemo(
-    () => ({ user, token, ready, login, logout, signup }),
-    [user, token, ready]
+    () => ({
+      user,
+      token,
+      ready,
+      loading,
+      isAuthenticated: !!user && !!token,
+      login,
+      logout,
+      signup,
+    }),
+    [user, token, ready, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
