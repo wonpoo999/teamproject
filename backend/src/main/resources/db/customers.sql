@@ -1,10 +1,23 @@
--- gender 제약 조건 수정 및 추가
+CREATE TABLE customers (
+    id VARCHAR2(100) PRIMARY KEY NOT NULL,
+    password VARCHAR2(255) NOT NULL,
+    weight NUMBER(4, 1),
+    age NUMBER(3),
+    gender CHAR(1) CHECK (gender IN ('M', 'F')),
+    height NUMBER(3)
+);
 
--- ✅ 각자 gender 제약 조건 gender CONSTRAINT_NAME SYS_XXXX 값 넣어서 DROP하기
-ALTER TABLE customers DROP CONSTRAINT SYS_;
 
--- gender 컬럼의 값 : M or F 만 허용
-ALTER TABLE customers
-  ADD CONSTRAINT ck_customers_gender
-  CHECK (gender IN ('M', 'F'));
-  
+DROP TABLE CUSTOMERS;
+DROP TABLE BODY;
+DROP TABLE foodInfo;
+DROP TABLE CUSTOMERS;
+DROP TABLE GOAL;
+
+
+commit;
+SELECT * FROM customers;
+SELECT * FROM goal;
+SELECT * FROM foodInfo;
+
+SELECT * FROM V$VERSION;
