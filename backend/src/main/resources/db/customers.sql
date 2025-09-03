@@ -1,6 +1,6 @@
 -- SELECT
 SELECT * FROM customers;
-
+SELECT * FROM USER_CONSTRAINTS WHERE TABLE_NAME = "tabnam";
 -- DROP
 DROP TABLE customers;
 DROP TABLE body;
