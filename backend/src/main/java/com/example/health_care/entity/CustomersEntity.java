@@ -3,12 +3,21 @@ package com.example.health_care.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-@Entity @Table(name = "customers")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "customers")
 public class CustomersEntity {
 
     @Id
-    @Column(name = "id", length = 100, nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customers_seq")
+    @SequenceGenerator(name = "customers_seq", sequenceName = "customers_seq", allocationSize = 1)
+    private Long idx;
+
+    @Column(name = "id", length = 100, nullable = false, unique = true)
     private String id;
 
     @Column(name = "password", length = 255, nullable = false) // length 60 -> 50 수정
@@ -27,5 +36,8 @@ public class CustomersEntity {
     @Column(name = "height")
     private Double height;
 
-    public enum Gender { M, F }
+    public enum Gender {
+        M, F
+    }
 }
+/*tlqkf */

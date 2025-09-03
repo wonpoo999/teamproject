@@ -1,4 +1,5 @@
 CREATE SEQUENCE body_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE body (
     idx NUMBER PRIMARY KEY,
     customer_id VARCHAR2(100) NOT NULL,
@@ -12,3 +13,5 @@ CREATE TABLE body (
     record_date DATE NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
+
+SELECT * FROM body;
