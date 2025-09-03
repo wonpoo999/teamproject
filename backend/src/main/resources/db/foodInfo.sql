@@ -3,3 +3,5 @@ CREATE TABLE foodInfo (
     calories NUMBER(5),
     count NUMBER(5)
 );
+
+SELECT * FROM foodInfo;

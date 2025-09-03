@@ -4,3 +4,6 @@ CREATE TABLE goal (
     target_calories NUMBER(5) NOT NULL,
     FOREIGN KEY (id) REFERENCES customers(id) ON DELETE CASCADE
 );
+
+SELECT * FROM goal;
+

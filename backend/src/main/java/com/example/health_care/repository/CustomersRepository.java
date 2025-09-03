@@ -6,6 +6,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CustomersRepository extends JpaRepository<CustomersEntity, String> {
-     Optional<CustomersEntity> findById(String id);
+public interface CustomersRepository extends JpaRepository<CustomersEntity, Long> {
+     
+     boolean existsByIdIgnoreCase(String id);
+
+     Optional<CustomersEntity> findByIdIgnoreCase(String id);
 }

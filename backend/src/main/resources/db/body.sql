@@ -13,3 +13,5 @@ CREATE TABLE body (
     record_date DATE NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
+
+SELECT * FROM body;
