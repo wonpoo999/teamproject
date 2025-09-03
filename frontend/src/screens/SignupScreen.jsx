@@ -1,34 +1,33 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, Alert,
   ScrollView, KeyboardAvoidingView, Platform
-} from 'react-native';
-import { useAuth } from '../context/AuthContext';
-import { apiPost, API_BASE_DEBUG } from '../config/api.js';
+} from 'react-native'
+import { useAuth } from '../context/AuthContext'
+import { apiPost, API_BASE_DEBUG } from '../config/api.js'
 
 export default function SignupScreen({ navigation }) {
-  let auth = null;
-  try { auth = useAuth?.(); } catch { auth = null; }
+  let auth = null
+  try { auth = useAuth?.() } catch { auth = null }
 
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
-  const [weight, setWeight] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('F');
-  const [height, setHeight] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [id, setId] = useState('')
+  const [password, setPassword] = useState('')
+  const [weight, setWeight] = useState('')
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('F')
+  const [height, setHeight] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const endpoint = useMemo(() => `${API_BASE_DEBUG}/api/auth/signup`, []);
+  const endpoint = useMemo(() => `${API_BASE_DEBUG}/api/auth/signup`, [])
 
   async function signupFallback(payload) {
-    const res = await apiPost('/api/auth/signup', payload);
-    return !!res;
+    const res = await apiPost('/api/auth/signup', payload)
+    return !!res
   }
 
   const onSubmit = async () => {
     if (!id || !password || !weight || !age || !gender || !height) {
-      Alert.alert('필수 입력', '모든 항목을 입력해 주세요.');
-      return;
+      return Alert.alert('필수 입력', '모든 항목을 입력해 주세요.')
     }
 
     const payload = {
@@ -38,35 +37,37 @@ export default function SignupScreen({ navigation }) {
       age: Number(age),
       gender,
       height: Number(height)
-    };
+    }
 
-    if (Number.isNaN(payload.age) || Number.isNaN(payload.weight) || Number.isNaN(payload.height)) {
-      Alert.alert('형식 오류', '나이/체중/키는 숫자로 입력하세요.');
-      return;
+    if (
+      Number.isNaN(payload.age) ||
+      Number.isNaN(payload.weight) ||
+      Number.isNaN(payload.height)
+    ) {
+      return Alert.alert('형식 오류', '나이/체중/키는 숫자로 입력하세요.')
     }
 
     try {
-      setLoading(true);
+      setLoading(true)
+      console.log('▶ 요청 URL:', endpoint)
+      console.log('▶ 보낼 데이터:', payload)
 
-      let ok = false;
-      if (typeof auth?.signup === 'function') {
-        ok = await auth.signup(payload);
-      } else {
-        ok = await signupFallback(payload);
-      }
+      const ok = auth?.signup
+        ? await auth.signup(payload)
+        : await signupFallback(payload)
 
       if (ok) {
-        Alert.alert('성공', '회원가입 완료!');
-        navigation.replace('Login');
+        Alert.alert('성공', '회원가입 완료!')
+        navigation.replace('Login')
       } else {
-        Alert.alert('가입 실패', '다시 시도해 주세요.');
+        Alert.alert('가입 실패', '다시 시도해 주세요.')
       }
     } catch (e) {
-      Alert.alert('가입 실패', e?.message ?? '잠시 후 다시 시도해 주세요.');
+      Alert.alert('가입 실패', e?.message ?? '잠시 후 다시 시도해 주세요.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <KeyboardAvoidingView
@@ -147,5 +148,5 @@ export default function SignupScreen({ navigation }) {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
+  )
 }

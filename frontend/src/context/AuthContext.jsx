@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiPost, setAuthToken, clearAuthToken } from "../config/api.js";
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiPost, setAuthToken, clearAuthToken } from '../config/api.js';
 
 const AuthContext = createContext(null);
 
@@ -15,15 +15,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const [t, u] = await AsyncStorage.multiGet(["token", "user"]);
-        const tokenVal = t?.[1] || null;
-        const userVal = u?.[1] ? safeParse(u[1]) : null;
-        if (tokenVal && userVal?.id) {
+        const kv = await AsyncStorage.multiGet(['token', 'user']);
+        const tokenVal = kv.find(([k]) => k === 'token')?.[1] ?? null;
+        const userVal = kv.find(([k]) => k === 'user')?.[1] ?? null;
+        const parsedUser = userVal ? safeParse(userVal) : null;
+        if (tokenVal && parsedUser?.id) {
           setToken(tokenVal);
-          setUser(userVal);
+          setUser(parsedUser);
           setAuthToken(tokenVal);
         } else {
-          await AsyncStorage.multiRemove(["token", "user"]);
+          await AsyncStorage.multiRemove(['token', 'user']);
           clearAuthToken();
         }
       } finally {
@@ -34,8 +35,8 @@ export function AuthProvider({ children }) {
 
   const persistAuth = async (bearer, userData) => {
     await AsyncStorage.multiSet([
-      ["token", bearer],
-      ["user", JSON.stringify(userData)],
+      ['token', bearer],
+      ['user', JSON.stringify(userData)],
     ]);
     setToken(bearer);
     setUser(userData);
@@ -45,11 +46,11 @@ export function AuthProvider({ children }) {
   const login = async (id, password) => {
     setLoading(true);
     try {
-      const body = { id: String(id || "").trim(), password: String(password || "") };
+      const body = { id: String(id || '').trim(), password: String(password || '') };
       if (!body.id || !body.password) return false;
-      const res = await apiPost("/api/auth/login", body);
+      const res = await apiPost('/api/auth/login', body);
       const tok = res?.token || res?.accessToken;
-      const type = res?.tokenType || res?.token_type || "Bearer";
+      const type = res?.tokenType || res?.token_type || 'Bearer';
       if (!tok) return false;
       const bearer = `${type} ${tok}`;
       const userData = { id: res?.id ?? body.id };
@@ -65,17 +66,16 @@ export function AuthProvider({ children }) {
   const signup = async (form) => {
     setLoading(true);
     try {
-      const id = String(form?.id || "").trim();
-      const password = String(form?.password || "");
+      const id = String(form?.id || '').trim();
+      const password = String(form?.password || '');
       const age = Number(form?.age);
       const height = Number(form?.height);
       const weight = Number(form?.weight);
-      const genderRaw = String(form?.gender || "F").toUpperCase();
-      const gender = genderRaw === "M" ? "M" : "F";
+      const genderRaw = String(form?.gender || 'F').toUpperCase();
+      const gender = genderRaw === 'M' ? 'M' : 'F';
       if (!id || !password || Number.isNaN(age) || Number.isNaN(height) || Number.isNaN(weight)) return false;
-      await apiPost("/api/auth/signup", { id, password, age, height, weight, gender });
-      const ok = await login(id, password);
-      return ok;
+      await apiPost('/api/auth/signup', { id, password, age, height, weight, gender });
+      return await login(id, password);
     } catch {
       return false;
     } finally {
@@ -85,7 +85,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await AsyncStorage.multiRemove(["token", "user"]);
+      await AsyncStorage.multiRemove(['token', 'user']);
     } finally {
       setToken(null);
       setUser(null);
@@ -93,20 +93,17 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      token,
-      ready,
-      loading,
-      isAuthenticated: !!user && !!token,
-      login,
-      logout,
-      signup,
-      setUser,
-    }),
-    [user, token, ready, loading]
-  );
+  const value = useMemo(() => ({
+    user,
+    token,
+    ready,
+    loading,
+    isAuthenticated: !!(user?.id && token),
+    login,
+    logout,
+    signup,
+    setUser,
+  }), [user, token, ready, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
