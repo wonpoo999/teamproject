@@ -1,26 +1,35 @@
 package com.example.health_care.controller;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.util.StringUtils;
 import com.example.health_care.dto.LoginRequest;
 import com.example.health_care.dto.LoginResponse;
+import com.example.health_care.dto.LogoutResponse;
 import com.example.health_care.dto.SignupRequest;
 import com.example.health_care.dto.SignupResponse;
 import com.example.health_care.entity.CustomersEntity;
 import com.example.health_care.security.JwtTokenProvider;
 import com.example.health_care.service.CustomersService;
+import com.example.health_care.service.TokenBlacklistService;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +43,7 @@ public class AuthController {
     private final CustomersService customersService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
@@ -76,5 +86,43 @@ public class AuthController {
             throw new RuntimeException("Invalid credentials");
 
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout(
+            @Parameter(in = ParameterIn.HEADER, name = HttpHeaders.AUTHORIZATION, description = "Bearer <JWT>", required = false) @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @AuthenticationPrincipal UserDetails user,
+            HttpServletRequest request) {
+        // 전역 Authorize가 안 붙거나 프록시에서 빠질 수 있어 추가 확인
+        if (!StringUtils.hasText(authorization)) {
+            authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        }
+
+        // Bearer 접두사 유무 모두 허용
+        String token = null;
+        if (StringUtils.hasText(authorization)) {
+            token = authorization.startsWith("Bearer ")
+                    ? authorization.substring(7)
+                    : authorization.trim();
+        }
+
+        if (!StringUtils.hasText(token)) {
+            return ResponseEntity.badRequest()
+                    .body(LogoutResponse.builder()
+                            .message("Missing Authorization header (expected: Bearer <token>)")
+                            .build());
+        }
+
+        // 토큰에서 사용자/만료시각 추출 (메서드명은 현재 구현과 동일 사용)
+        String userId = (user != null) ? user.getUsername() : jwtTokenProvider.getUsernameFromToken(token);
+        LocalDateTime exp = jwtTokenProvider.getExpiry(token);
+
+        if (!StringUtils.hasText(userId) || exp == null) {
+            return ResponseEntity.badRequest()
+                    .body(LogoutResponse.builder().message("Invalid token").build());
+        }
+
+        tokenBlacklistService.blacklist(token, userId, exp, "USER_LOGOUT");
+        return ResponseEntity.ok(LogoutResponse.builder().message("Logged out").build());
     }
 }
