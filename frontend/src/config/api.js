@@ -50,18 +50,11 @@ function getDevOrigin() {
   } else if (isPrivateIp(metroHost)) {
     host = metroHost;
   } else {
-<<<<<<< HEAD
-    if (Platform.OS === "android") {
-      host = "192.168.156.43";
-    } else if (Platform.OS === "ios") {
-      host = "localhost";
-=======
     if (Platform.OS === 'android') {
-      host = '192.168.0.6';
+      host = '192.168.0.7';
       // host = '10.217.85.1';
     } else if (Platform.OS === 'ios') {
       host = 'localhost';
->>>>>>> ee6cf69ddef726ddd7f2690653518bca0e313886
     } else {
       host = 'localhost';
     }
