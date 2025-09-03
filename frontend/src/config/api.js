@@ -40,26 +40,13 @@ const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 808
 
 function getDevOrigin() {
   if (ENV_ORIGIN) return ENV_ORIGIN;
-
   const expoHost = getHostFromExpo();
   const metroHost = getHostFromScriptURL();
-
-  let host;
-  if (isPrivateIp(expoHost)) {
-    host = expoHost;
-  } else if (isPrivateIp(metroHost)) {
-    host = metroHost;
-  } else {
-    if (Platform.OS === 'android') {
-      host = '10.0.2.2';
-      // host = '10.217.85.1';
-    } else if (Platform.OS === 'ios') {
-      host = 'localhost';
-    } else {
-      host = 'localhost';
-    }
-  }
-  return `http://${host}:${ENV_PORT}`;
+  if (isPrivateIp(expoHost)) return `http://${expoHost}:${ENV_PORT}`;
+  if (isPrivateIp(metroHost)) return `http://${metroHost}:${ENV_PORT}`;
+  if (Platform.OS === 'android') return `http://10.0.2.2:${ENV_PORT}`;
+  if (Platform.OS === 'ios') return `http://localhost:${ENV_PORT}`;
+  return `http://localhost:${ENV_PORT}`;
 }
 
 const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || 'https://your-prod.example.com');
@@ -67,8 +54,7 @@ const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || 'https://your-prod.ex
 export const ORIGIN = __DEV__ ? getDevOrigin() : PROD_ORIGIN;
 export const API_BASE_DEBUG = ORIGIN;
 
-const join = (base, path) =>
-  `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
+const join = (base, path) => `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
 
 let CURRENT_TOKEN = null;
 
@@ -82,9 +68,14 @@ export function clearAuthToken() {
 
 function withAuthHeaders(init) {
   const base = init?.headers || {};
-  return CURRENT_TOKEN
-    ? { ...base, Authorization: `Bearer ${CURRENT_TOKEN}` }
-    : base;
+  return CURRENT_TOKEN ? { ...base, Authorization: `Bearer ${CURRENT_TOKEN}` } : base;
+}
+
+async function handle(res, url) {
+  const text = await res.text();
+  if (__DEV__) console.log(res.request?.method || 'REQ', url, '->', res.status, text);
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${text || ''}`.trim());
+  try { return JSON.parse(text); } catch { return text; }
 }
 
 export async function apiGet(path, init) {
@@ -93,10 +84,7 @@ export async function apiGet(path, init) {
   const to = setTimeout(() => ctrl.abort(), 20000);
   try {
     const res = await fetch(url, { ...(init || {}), method: 'GET', signal: ctrl.signal, headers: withAuthHeaders(init) });
-    const text = await res.text();
-    if (__DEV__) console.log('GET', url, '->', res.status, text);
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
-    try { return JSON.parse(text); } catch { return text; }
+    return await handle(res, url);
   } finally { clearTimeout(to); }
 }
 
@@ -112,9 +100,10 @@ export async function apiPost(path, body, init) {
       body: JSON.stringify(body),
       signal: ctrl.signal
     });
-    const text = await res.text();
-    if (__DEV__) console.log('POST', url, '->', res.status, text);
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
-    try { return JSON.parse(text); } catch { return text; }
+    return await handle(res, url);
   } finally { clearTimeout(to); }
+}
+
+export async function ping() {
+  try { return await apiGet('/actuator/health'); } catch { return await apiGet('/ping'); }
 }

@@ -1,18 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiPost } from "../config/api";
+import { apiPost, setAuthToken, clearAuthToken } from "../config/api.js";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [ready, setReady] = useState(false);      
-  const [loading, setLoading] = useState(false);  
-  const safeParse = (str) => {
-    try { return JSON.parse(str); } catch { return null; }
-  };
+  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  const safeParse = (str) => { try { return JSON.parse(str); } catch { return null; } };
 
   useEffect(() => {
     (async () => {
@@ -20,12 +18,13 @@ export function AuthProvider({ children }) {
         const [t, u] = await AsyncStorage.multiGet(["token", "user"]);
         const tokenVal = t?.[1] || null;
         const userVal = u?.[1] ? safeParse(u[1]) : null;
-
         if (tokenVal && userVal?.id) {
           setToken(tokenVal);
           setUser(userVal);
+          setAuthToken(tokenVal);
         } else {
           await AsyncStorage.multiRemove(["token", "user"]);
+          clearAuthToken();
         }
       } finally {
         setReady(true);
@@ -40,6 +39,7 @@ export function AuthProvider({ children }) {
     ]);
     setToken(bearer);
     setUser(userData);
+    setAuthToken(bearer);
   };
 
   const login = async (id, password) => {
@@ -47,15 +47,12 @@ export function AuthProvider({ children }) {
     try {
       const body = { id: String(id || "").trim(), password: String(password || "") };
       if (!body.id || !body.password) return false;
-
       const res = await apiPost("/api/auth/login", body);
       const tok = res?.token || res?.accessToken;
       const type = res?.tokenType || res?.token_type || "Bearer";
       if (!tok) return false;
-
       const bearer = `${type} ${tok}`;
       const userData = { id: res?.id ?? body.id };
-
       await persistAuth(bearer, userData);
       return true;
     } catch {
@@ -75,15 +72,8 @@ export function AuthProvider({ children }) {
       const weight = Number(form?.weight);
       const genderRaw = String(form?.gender || "F").toUpperCase();
       const gender = genderRaw === "M" ? "M" : "F";
-
-      if (!id || !password || Number.isNaN(age) || Number.isNaN(height) || Number.isNaN(weight)) {
-        return false;
-      }
-
-      await apiPost("/api/auth/signup", {
-        id, password, age, height, weight, gender,
-      });
-
+      if (!id || !password || Number.isNaN(age) || Number.isNaN(height) || Number.isNaN(weight)) return false;
+      await apiPost("/api/auth/signup", { id, password, age, height, weight, gender });
       const ok = await login(id, password);
       return ok;
     } catch {
@@ -99,6 +89,7 @@ export function AuthProvider({ children }) {
     } finally {
       setToken(null);
       setUser(null);
+      clearAuthToken();
     }
   };
 
@@ -112,6 +103,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       signup,
+      setUser,
     }),
     [user, token, ready, loading]
   );
