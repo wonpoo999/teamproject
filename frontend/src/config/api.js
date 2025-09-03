@@ -1,6 +1,5 @@
-// src/lib/api.js
-import { Platform, NativeModules } from "react-native";
-import Constants from "expo-constants";
+import { Platform, NativeModules } from 'react-native';
+import Constants from 'expo-constants';
 
 function isPrivateIp(h) {
   return !!h && /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(h);
@@ -30,8 +29,9 @@ function getExtra() {
     {}
   );
 }
+
 function normalizeOrigin(v) {
-  return v ? String(v).replace(/\/+$/, "") : v;
+  return v ? String(v).replace(/\/+$/, '') : v;
 }
 
 const EXTRA = getExtra();
@@ -40,32 +40,34 @@ const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 808
 
 function getDevOrigin() {
   if (ENV_ORIGIN) return ENV_ORIGIN;
+
   const expoHost = getHostFromExpo();
   const metroHost = getHostFromScriptURL();
+
   let host;
   if (isPrivateIp(expoHost)) {
     host = expoHost;
   } else if (isPrivateIp(metroHost)) {
     host = metroHost;
   } else {
-    if (Platform.OS === "android") {
-      host = "10.0.2.2";
-    } else if (Platform.OS === "ios") {
-      host = "localhost";
+    if (Platform.OS === 'android') {
+      host = '10.0.2.2';
+    } else if (Platform.OS === 'ios') {
+      host = 'localhost';
     } else {
-      host = "localhost";
+      host = 'localhost';
     }
   }
   return `http://${host}:${ENV_PORT}`;
 }
 
-const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || "https://your-prod.example.com");
+const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || 'https://your-prod.example.com');
 
 export const ORIGIN = __DEV__ ? getDevOrigin() : PROD_ORIGIN;
 export const API_BASE_DEBUG = ORIGIN;
 
 const join = (base, path) =>
-  `${String(base).replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
+  `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
 
 let CURRENT_TOKEN = null;
 
@@ -89,9 +91,9 @@ export async function apiGet(path, init) {
   const ctrl = new AbortController();
   const to = setTimeout(() => ctrl.abort(), 20000);
   try {
-    const res = await fetch(url, { ...(init || {}), method: "GET", signal: ctrl.signal, headers: withAuthHeaders(init) });
+    const res = await fetch(url, { ...(init || {}), method: 'GET', signal: ctrl.signal, headers: withAuthHeaders(init) });
     const text = await res.text();
-    if (__DEV__) console.log("GET", url, "->", res.status, text);
+    if (__DEV__) console.log('GET', url, '->', res.status, text);
     if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
     try { return JSON.parse(text); } catch { return text; }
   } finally { clearTimeout(to); }
@@ -104,13 +106,13 @@ export async function apiPost(path, body, init) {
   try {
     const res = await fetch(url, {
       ...(init || {}),
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json", ...withAuthHeaders(init) },
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...withAuthHeaders(init) },
       body: JSON.stringify(body),
       signal: ctrl.signal
     });
     const text = await res.text();
-    if (__DEV__) console.log("POST", url, "->", res.status, text);
+    if (__DEV__) console.log('POST', url, '->', res.status, text);
     if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
     try { return JSON.parse(text); } catch { return text; }
   } finally { clearTimeout(to); }
