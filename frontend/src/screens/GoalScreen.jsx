@@ -23,8 +23,8 @@ export default function GoalScreen({ navigation }) {
       setSaving(true)
       if (__DEV__) console.log('POST to:', ORIGIN + '/body')
       const payload = {
-        target_weight: targetWeight ? Number(targetWeight) : null,
-        target_calories: targetCalories ? Number(targetCalories) : null,
+        targetWeight: targetWeight ? Number(targetWeight) : null,
+        targetCalories: targetCalories ? Number(targetCalories) : null,
         weight: Number(weight),
         height: Number(height),
         age: age ? Number(age) : null,
