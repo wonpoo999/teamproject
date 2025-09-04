@@ -46,12 +46,12 @@ public class CustomersService implements UserDetailsService {
         CustomersEntity savedUser = customersRepository.save(user);
 
         BodyEntity bodyEntity = BodyEntity.builder()
-                .customerId(savedUser.getIdx()) // ★ 새로 생성된 idx를 외래 키로 사용
+                .customer(savedUser)
                 .weight(savedUser.getWeight())
                 .height(savedUser.getHeight())
                 .age(savedUser.getAge())
                 .gender(savedUser.getGender())
-                .recordDate(new Date()) // 현재 날짜 기록
+                .recordDate(new Date())
                 .build();
 
         bodyRepository.save(bodyEntity);
