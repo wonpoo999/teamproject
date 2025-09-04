@@ -1,10 +1,10 @@
 import { Image } from 'react-native'
 
 const CHAR = {
-  thin: require('../assets/characters/thin.png'),
-  normal: require('../assets/characters/normal.png'),
-  chuby: require('../assets/characters/chuby.png'),
-  muscle: require('../assets/characters/muscle.png'),
+  thin: require('../../assets/characters/thin.png'),
+  normal: require('../../assets/characters/normal.png'),
+  chuby: require('../../assets/characters/chubby.png'),
+  muscle: require('../../assets/characters/muscle.png'),
 }
 
 export default function AvatarByBMI({ category = 'normal', size = 260, style }) {
