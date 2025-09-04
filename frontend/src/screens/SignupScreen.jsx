@@ -48,7 +48,7 @@ export default function SignupScreen({ navigation }) {
         const bmi = calcBMI(payload.weight, payload.height)
         const category = classifyBMI(bmi)
         Alert.alert('성공', `회원가입 완료! BMI: ${bmi}`)
-        navigation.replace('Home', { bmi, category })
+        navigation.replace('Login', { bmi, category })
       } else {
         Alert.alert('가입 실패', '다시 시도해 주세요.')
       }
