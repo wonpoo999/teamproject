@@ -6,7 +6,9 @@ import { apiPost, setAuthToken, clearAuthToken } from '../config/api'
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
 
-const goalKey = (userId) => `goalsetup:${userId}`
+// 이메일에도 안전하게 쓰이도록 키 변환
+const goalKey = (userId) =>
+  `goalsetup_${String(userId || '').replace(/[^a-zA-Z0-9._-]/g, '_')}`
 
 export default function AuthProvider({ children }) {
   const [ready, setReady] = useState(false)
@@ -32,18 +34,37 @@ export default function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let mounted = true
     ;(async () => {
-      const token = await SecureStore.getItemAsync('accessToken')
-      if (token) {
-        setAuthToken(token)
-        const payload = parseJwt(token)
-        const uid = payload.sub ?? null
-        setUser({ id: uid })
-        setAuthed(true)
-        setNeedsGoalSetup(await loadGoalFlag(uid))
+      try {
+        const token = await SecureStore.getItemAsync('accessToken')
+        if (!mounted) return
+        if (token) {
+          setAuthToken(token)
+          let uid = null
+          try {
+            const payload = parseJwt(token)
+            uid = payload.sub ?? null
+          } catch {}
+          if (!mounted) return
+          setUser({ id: uid })
+          setAuthed(true)
+          try {
+            const need = await loadGoalFlag(uid)
+            if (mounted) setNeedsGoalSetup(need)
+          } catch (e) {
+            console.log('[auth] loadGoalFlag error:', e)
+          }
+        }
+      } catch (e) {
+        console.log('[auth] bootstrap error:', e)
+      } finally {
+        if (mounted) setReady(true)
       }
-      setReady(true)
     })()
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const login = async (id, password) => {
@@ -59,7 +80,9 @@ export default function AuthProvider({ children }) {
   }
 
   const logout = async () => {
-    try { await apiPost('/api/auth/logout', {}) } catch {}
+    try {
+      await apiPost('/api/auth/logout', {})
+    } catch {}
     await SecureStore.deleteItemAsync('accessToken')
     clearAuthToken()
     setUser(null)
@@ -75,7 +98,15 @@ export default function AuthProvider({ children }) {
   }
 
   const value = useMemo(
-    () => ({ ready, isAuthenticated, user, needsGoalSetup, login, logout, markGoalDone }),
+    () => ({
+      ready,
+      isAuthenticated,
+      user,
+      needsGoalSetup,
+      login,
+      logout,
+      markGoalDone,
+    }),
     [ready, isAuthenticated, user, needsGoalSetup]
   )
 
