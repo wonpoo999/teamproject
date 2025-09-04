@@ -12,8 +12,12 @@ export default function HomeScreen({ route }) {
   const nav = useNavigation()
   const category = route?.params?.category ?? 'normal'
 
-  const IconLabeled = ({ iconSrc, labelSrc, to }) => (
-    <Pressable onPress={() => nav.navigate(to)} style={{ alignItems: 'center' }}>
+  // [ADDED] onPress를 선택적으로 받아서, 없으면 기존 to로 이동
+  const IconLabeled = ({ iconSrc, labelSrc, to, onPress }) => ( // [ADDED]
+    <Pressable
+      onPress={onPress ?? (() => nav.navigate(to))}            // [ADDED]
+      style={{ alignItems: 'center' }}
+    >
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
       <Image source={labelSrc} style={{ width: ICON_SIZE + 24, height: LABEL_SIZE, resizeMode: 'contain', marginTop: -OVERLAP }} />
     </Pressable>
@@ -31,12 +35,23 @@ export default function HomeScreen({ route }) {
       </View>
 
       <View style={{ flex: 1 }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, alignItems: 'center' }}>
+        {/* [ADDED] 아바타가 터치를 가로채지 않도록 터치 통과 */}
+        <View
+          style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, alignItems: 'center' }}
+          pointerEvents="none"                                     // [ADDED]
+        >
           <AvatarByBMI category={category} size={260} />
         </View>
+
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
-            <IconLabeled iconSrc={require('../../assets/icons/profile.png')} labelSrc={require('../../assets/icons/profile_.png')} to="Home" />
+            {/* [ADDED] PROFILE만 명시적으로 Profile 화면으로 보내기 (to는 그대로 보존) */}
+            <IconLabeled
+              iconSrc={require('../../assets/icons/profile.png')}
+              labelSrc={require('../../assets/icons/profile_.png')}
+              to="Home"
+              onPress={() => nav.navigate('Profile')}              // [ADDED]
+            />
             <IconLabeled iconSrc={require('../../assets/icons/camera.png')} labelSrc={require('../../assets/icons/camera_.png')} to="Camera" />
             <IconLabeled iconSrc={require('../../assets/icons/setting.png')} labelSrc={require('../../assets/icons/setting_.png')} to="Settings" />
           </View>

@@ -11,6 +11,7 @@ import GoalScreen from '../screens/GoalScreen'
 import SettingsScreen from '../screens/SettingsScreen'
 import DietLogScreen from '../screens/DietLogScreen'
 import DataScreen from '../screens/DataScreen'
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator()
 
@@ -45,6 +46,7 @@ function AuthStack() {
 
 function AppStack({ initialRouteName = 'Home' }) {
   return (
+
     <Stack.Navigator screenOptions={commonHeader} initialRouteName={initialRouteName}>
       {/* 홈만 헤더 완전 숨김 */}
       <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
@@ -54,6 +56,7 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="DietLog" component={DietLogScreen} />
       <Stack.Screen name="Data" component={DataScreen} />
+
     </Stack.Navigator>
   )
 }
