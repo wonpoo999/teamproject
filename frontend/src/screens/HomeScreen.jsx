@@ -1,4 +1,4 @@
-import { View, Pressable, Image, ImageBackground } from 'react-native'
+import { View, Pressable, Image, ImageBackground, Text, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import AvatarByBMI from '../components/AvatarByBMI'
@@ -21,6 +21,14 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+          <View style={styles.topContainer}>
+            <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
+              <Text style={styles.boxText}>식단 기록</Text>
+            </Pressable>
+            <Pressable style={styles.box} onPress={() => nav.navigate('Data')}>
+              <Text style={styles.boxText}>체중 비교</Text>
+            </Pressable>
+          </View>
       <View style={{ flex: 1 }}>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, alignItems: 'center' }}>
           <AvatarByBMI category={category} size={260} />
@@ -36,3 +44,20 @@ export default function HomeScreen({ route }) {
     </ImageBackground>
   )
 }
+
+const styles = StyleSheet.create({
+  topContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    gap: 20,
+  },
+  box: {
+    backgroundColor: 'tomato',
+    padding: 10,
+    borderRadius: 8,
+  },
+  boxText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+})
