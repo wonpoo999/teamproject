@@ -70,6 +70,7 @@ public class CustomersService implements UserDetailsService {
                 .roles("USER")
                 .build();
     }
+    
     public CustomersProfileDTO getCustomerProfile(String customerId) {
         return customersRepository.findById(customerId)
                 .map(customer -> CustomersProfileDTO.builder()

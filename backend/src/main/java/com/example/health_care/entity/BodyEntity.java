@@ -19,7 +19,7 @@ public class BodyEntity {
     @SequenceGenerator(name = "body_seq_generator", sequenceName = "BODY_SEQ", allocationSize = 1)
     private Long idx;
 
-   @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private CustomersEntity customer;
     // @Column(name = "customer_id", nullable = false)
@@ -27,9 +27,8 @@ public class BodyEntity {
 
     @Column(name = "target_weight")
     private Double targetWeight;
-
+    
     @Column(name = "target_calories")
-
     private Double targetCalories;
 
     @Column(name = "weight")
