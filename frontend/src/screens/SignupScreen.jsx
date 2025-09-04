@@ -56,6 +56,9 @@ export default function SignupScreen({ navigation }) {
 
     try {
       setLoading(true)
+      console.log('▶ 요청:', endpoint)
+      console.log('▶ 보낼 데이터:', payload)
+
       const ok = auth?.signup ? await auth.signup(payload) : await signupFallback(payload)
       if (ok) {
         const bmi = calcBMI(payload.weight, payload.height)

@@ -50,9 +50,9 @@ function getDevOrigin() {
     host = metroHost
   } else {
     if (Platform.OS === 'android') {
-      host = '192.168.0.46' // << 그 다음은 이놈
+      host = '172.20.10.3' // << 그 다음은 이놈
     } else if (Platform.OS === 'ios') {
-      host = 'localhost'
+      host = '172.20.10.3'
     } else {
       host = 'localhost'
     }
