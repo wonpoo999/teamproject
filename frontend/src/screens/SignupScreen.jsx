@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext'
 import { apiPost, API_BASE_DEBUG } from '../config/api.js'
 import { calcBMI, classifyBMI } from '../utils/bmi'
 
+const isValidEmail = (v = '') => {
+  const s = String(v).trim()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+}
+
 export default function SignupScreen({ navigation }) {
   let auth = null
   try { auth = useAuth?.() } catch { auth = null }
@@ -26,6 +31,14 @@ export default function SignupScreen({ navigation }) {
   const onSubmit = async () => {
     if (!id || !password || !weight || !age || !gender || !height) {
       return Alert.alert('필수 입력', '모든 항목을 입력해 주세요.')
+    }
+
+    if (!isValidEmail(id)) {
+      return Alert.alert('형식 오류', '이메일 형식이 올바르지 않습니다.')
+    }
+
+    if (String(password).length < 8) {
+      return Alert.alert('형식 오류', '비밀번호는 8자리 이상이어야 합니다.')
     }
 
     const payload = {
@@ -63,8 +76,24 @@ export default function SignupScreen({ navigation }) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={80}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
         <Text style={{ fontSize: 24, fontWeight: '700' }}>Sign Up</Text>
-        <TextInput value={id} onChangeText={setId} placeholder="ID(이메일 등)" autoCapitalize="none" style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12 }} />
-        <TextInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12 }} />
+        <TextInput
+          value={id}
+          onChangeText={setId}
+          placeholder="이메일"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          inputMode="email"
+          style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12 }}
+        />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          placeholder="비밀번호 (8자리 이상)"
+          secureTextEntry
+          autoCapitalize="none"
+          style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12 }}
+        />
         <TextInput value={age} onChangeText={setAge} placeholder="Age" keyboardType="numeric" style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12 }} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity onPress={() => setGender('F')} style={{ flex: 1, backgroundColor: gender === 'F' ? '#111827' : '#e5e7eb', padding: 12, borderRadius: 10 }}>
@@ -89,4 +118,3 @@ export default function SignupScreen({ navigation }) {
     </KeyboardAvoidingView>
   )
 }
-// 와이라노
