@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final CorsConfig corsConfig;
-     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // swagger 문서 접근 허용 목록
     private static final String[] SWAGGER_WHITELIST = {
@@ -39,7 +38,7 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 // corsConfig 빈에서 가져온 설정을 직접 사용
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
