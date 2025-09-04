@@ -121,4 +121,4 @@ export default function SignupScreen({ navigation }) {
     </KeyboardAvoidingView>
   )
 }
-// 되나?
+// 되나? //될걸요

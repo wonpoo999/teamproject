@@ -35,12 +35,14 @@ public class GoalController {
         }
     }
 
-    @PostMapping
+@PostMapping
     public ResponseEntity<String> handlePostBody(@RequestBody BodyRequest bodyRequest, Authentication authentication) {
         log.info("Received POST request for body with data: {}", bodyRequest);
         String customerId = authentication.getName();
-        customersService.saveBodyInfo(customerId, bodyRequest); // BodyRequest로 변경
+        
+        // 🚀 수정: 새로운 트랜잭션 메서드 호출
+        customersService.updateProfileAndSaveGoal(customerId, bodyRequest);
 
-        return ResponseEntity.ok("Body data received successfully!");
+        return ResponseEntity.ok("목표설정 ");
     }
 }
