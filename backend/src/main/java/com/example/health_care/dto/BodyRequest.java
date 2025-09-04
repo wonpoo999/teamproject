@@ -28,7 +28,7 @@ public class BodyRequest {
     @NotNull
     @Positive
     @Digits(integer = 3, fraction = 0)
-    private Integer height;
+    private Double height;
 
     @NotNull
     @Positive

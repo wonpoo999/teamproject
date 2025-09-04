@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
+import com.example.health_care.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,12 +38,13 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 // corsConfig 빈에서 가져온 설정을 직접 사용
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new CorsFilter(corsConfig.corsConfigurationSource()),
                         UsernamePasswordAuthenticationFilter.class) // 추가된 부분
                 .authorizeHttpRequests(auth -> auth
@@ -50,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup").permitAll()
-                        .requestMatchers("/api/auth/logout", "/body").authenticated() // 로그아웃 추가
+                        .requestMatchers("/api/auth/logout","/body").authenticated() // 로그아웃, 바디프로필 추가
                         .anyRequest().authenticated()
                 )
                 // 폼/베이직 로그인 비활성
