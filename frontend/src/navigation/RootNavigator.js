@@ -10,6 +10,7 @@ import GoalScreen from '../screens/GoalScreen'
 import SettingsScreen from '../screens/SettingsScreen'
 import DietLogScreen from '../screens/DietLogScreen'
 import DataScreen from '../screens/DataScreen'
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator()
 
@@ -32,6 +33,10 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="DietLog" component={DietLogScreen} />
       <Stack.Screen name="Data" component={DataScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="My" component={ProfileScreen} />
+      <Stack.Screen name="MyPage" component={ProfileScreen} />
     </Stack.Navigator>
   )
 }
