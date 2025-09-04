@@ -1,131 +1,83 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiPost, setAuthToken, clearAuthToken } from '../config/api.js';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import * as SecureStore from 'expo-secure-store'
+import { decode as atob } from 'base-64'
+import { apiPost, setAuthToken, clearAuthToken } from '../config/api'
 
-const AuthContext = createContext(null);
+const Ctx = createContext(null)
+export const useAuth = () => useContext(Ctx)
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [ready, setReady] = useState(false);
-  const [loading, setLoading] = useState(false);
+const goalKey = (userId) => `goalsetup:${userId}`
 
-  const safeParse = (str) => { try { return JSON.parse(str); } catch { return null; } };
+export default function AuthProvider({ children }) {
+  const [ready, setReady] = useState(false)
+  const [isAuthenticated, setAuthed] = useState(false)
+  const [user, setUser] = useState(null)
+  const [needsGoalSetup, setNeedsGoalSetup] = useState(false)
+
+  const parseJwt = (tokenWithPrefix) => {
+    try {
+      const raw = String(tokenWithPrefix || '').replace(/^Bearer\s+/i, '')
+      const payload = raw.split('.')[1]
+      const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+      return json || {}
+    } catch {
+      return {}
+    }
+  }
+
+  const loadGoalFlag = async (userId) => {
+    if (!userId) return false
+    const v = await SecureStore.getItemAsync(goalKey(userId))
+    return v !== '1'
+  }
 
   useEffect(() => {
-    (async () => {
-      try {
-        const kv = await AsyncStorage.multiGet(['token', 'user']);
-        const tokenVal = kv.find(([k]) => k === 'token')?.[1] ?? null;
-        const userVal = kv.find(([k]) => k === 'user')?.[1] ?? null;
-        const parsedUser = userVal ? safeParse(userVal) : null;
-        if (tokenVal && parsedUser?.id) {
-          setToken(tokenVal);
-          setUser(parsedUser);
-          setAuthToken(tokenVal);
-        } else {
-          await AsyncStorage.multiRemove(['token', 'user']);
-          clearAuthToken();
-        }
-      } finally {
-        setReady(true);
+    ;(async () => {
+      const token = await SecureStore.getItemAsync('accessToken')
+      if (token) {
+        setAuthToken(token)
+        const payload = parseJwt(token)
+        const uid = payload.sub ?? null
+        setUser({ id: uid })
+        setAuthed(true)
+        setNeedsGoalSetup(await loadGoalFlag(uid))
       }
-    })();
-  }, []);
-
-  const persistAuth = async (bearer, userData) => {
-    await AsyncStorage.multiSet([
-      ['token', bearer],
-      ['user', JSON.stringify(userData)],
-    ]);
-    setToken(bearer);
-    setUser(userData);
-    setAuthToken(bearer);
-  };
+      setReady(true)
+    })()
+  }, [])
 
   const login = async (id, password) => {
-    setLoading(true);
-    try {
-      const body = { id: String(id || '').trim(), password: String(password || '') };
-      if (!body.id || !body.password) return false;
-      const res = await apiPost('/api/auth/login', body);
-
-      const tok =
-        res?.token ??
-        res?.accessToken ??
-        res?.access_token ??
-        res?.jwt ??
-        res?.jwtToken ??
-        res?.authorization;
-
-      const type =
-        res?.tokenType ??
-        res?.token_type ??
-        res?.type ??
-        'Bearer';
-
-      if (!tok) return false;
-
-      const bearer = `${type} ${tok}`;
-
-      const userData = {
-        id: res?.id ?? res?.userId ?? res?.username ?? body.id,
-      };
-
-      await persistAuth(bearer, userData);
-      return true;
-    } catch {
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (form) => {
-    setLoading(true);
-    try {
-      const id = String(form?.id || '').trim();
-      const password = String(form?.password || '');
-      const age = Number(form?.age);
-      const height = Number(form?.height);
-      const weight = Number(form?.weight);
-      const genderRaw = String(form?.gender || 'F').toUpperCase();
-      const gender = genderRaw === 'M' ? 'M' : 'F';
-      if (!id || !password || Number.isNaN(age) || Number.isNaN(height) || Number.isNaN(weight)) return false;
-      await apiPost('/api/auth/signup', { id, password, age, height, weight, gender });
-      return await login(id, password);
-    } catch {
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+    const res = await apiPost('/api/auth/login', { id, password })
+    const token = `${res.tokenType} ${res.token}`
+    await SecureStore.setItemAsync('accessToken', token)
+    setAuthToken(token)
+    const userId = res.id ?? parseJwt(token).sub ?? id
+    setUser({ id: userId })
+    setAuthed(true)
+    setNeedsGoalSetup(await loadGoalFlag(userId))
+    return true
+  }
 
   const logout = async () => {
-    try {
-      await AsyncStorage.multiRemove(['token', 'user']);
-    } finally {
-      setToken(null);
-      setUser(null);
-      clearAuthToken();
-    }
-  };
+    try { await apiPost('/api/auth/logout', {}) } catch {}
+    await SecureStore.deleteItemAsync('accessToken')
+    clearAuthToken()
+    setUser(null)
+    setAuthed(false)
+    setNeedsGoalSetup(false)
+  }
 
-  const value = useMemo(() => ({
-    user,
-    token,
-    ready,
-    loading,
-    isAuthenticated: !!(user?.id && token),
-    login,
-    logout,
-    signup,
-    setUser,
-  }), [user, token, ready, loading]);
+  const markGoalDone = async () => {
+    const uid = user?.id
+    if (!uid) return
+    await SecureStore.setItemAsync(goalKey(uid), '1')
+    setNeedsGoalSetup(false)
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  const value = useMemo(
+    () => ({ ready, isAuthenticated, user, needsGoalSetup, login, logout, markGoalDone }),
+    [ready, isAuthenticated, user, needsGoalSetup]
+  )
 
-export function useAuth() {
-  return useContext(AuthContext);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
