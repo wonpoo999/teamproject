@@ -21,9 +21,9 @@ function AuthStack() {
   )
 }
 
-function AppStack() {
+function AppStack({ initialRouteName = 'Home' }) {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRouteName}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Goal" component={GoalScreen} />
       <Stack.Screen name="Camera" component={CameraScreen} />
@@ -33,7 +33,7 @@ function AppStack() {
 }
 
 export default function RootNavigator() {
-  const { ready, isAuthenticated } = useAuth()
+  const { ready, isAuthenticated, needsGoalSetup } = useAuth()
 
   if (!ready) {
     return (
@@ -43,5 +43,6 @@ export default function RootNavigator() {
     )
   }
 
-  return isAuthenticated ? <AppStack /> : <AuthStack />
+  if (!isAuthenticated) return <AuthStack />
+  return <AppStack initialRouteName={needsGoalSetup ? 'Goal' : 'Home'} />
 }

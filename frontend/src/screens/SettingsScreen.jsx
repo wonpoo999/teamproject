@@ -1,16 +1,13 @@
 import { View, ScrollView, TouchableOpacity, Text } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../context/AuthContext'
-import { useNavigation } from '@react-navigation/native'
 
 export default function SettingsScreen() {
   const { logout } = useAuth()
-  const nav = useNavigation()
   const insets = useSafeAreaInsets()
 
   const onLogout = async () => {
     await logout()
-    nav.reset({ index: 0, routes: [{ name: 'Welcome' }] })
   }
 
   return (

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { apiPost, ORIGIN } from '../config/api.js'
+import { useAuth } from '../context/AuthContext'
 
 export default function GoalScreen({ navigation }) {
+  const { markGoalDone } = useAuth()
   const [targetWeight, setTargetWeight] = useState('')
   const [targetCalories, setTargetCalories] = useState('')
   const [weight, setWeight] = useState('')
@@ -19,9 +21,7 @@ export default function GoalScreen({ navigation }) {
     }
     try {
       setSaving(true)
-
       if (__DEV__) console.log('POST to:', ORIGIN + '/body')
-
       const payload = {
         target_weight: targetWeight ? Number(targetWeight) : null,
         target_calories: targetCalories ? Number(targetCalories) : null,
@@ -30,9 +30,9 @@ export default function GoalScreen({ navigation }) {
         age: age ? Number(age) : null,
         gender
       }
-
       await apiPost('/body', payload)
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
+      await markGoalDone()
+      navigation.replace('Home')
     } catch (e) {
       Alert.alert('네트워크 오류', String(e?.message ?? e))
     } finally {
@@ -40,11 +40,15 @@ export default function GoalScreen({ navigation }) {
     }
   }
 
+  const skip = async () => {
+    await markGoalDone()
+    navigation.replace('Home')
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ flex: 1, padding: 24, gap: 14, justifyContent: 'center' }}>
         <Text style={{ fontSize: 22, fontWeight: '800', textAlign: 'center' }}>목표 설정</Text>
-
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Text>현재 체중(kg)</Text>
@@ -55,7 +59,6 @@ export default function GoalScreen({ navigation }) {
             <TextInput value={height} onChangeText={setHeight} keyboardType="numeric" style={{ borderWidth: 1, borderRadius: 8, padding: 12 }} />
           </View>
         </View>
-
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Text>목표 체중(kg)</Text>
@@ -66,7 +69,6 @@ export default function GoalScreen({ navigation }) {
             <TextInput value={targetCalories} onChangeText={setTargetCalories} keyboardType="numeric" style={{ borderWidth: 1, borderRadius: 8, padding: 12 }} />
           </View>
         </View>
-
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Text>나이</Text>
@@ -84,12 +86,10 @@ export default function GoalScreen({ navigation }) {
             </View>
           </View>
         </View>
-
         <TouchableOpacity onPress={submit} disabled={saving} style={{ backgroundColor: '#ef4444', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 }}>
           <Text style={{ color: 'white', fontWeight: '800' }}>{saving ? '저장 중...' : '저장하고 시작하기'}</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} style={{ alignItems: 'center', padding: 10 }}>
+        <TouchableOpacity onPress={skip} style={{ alignItems: 'center', padding: 10 }}>
           <Text>나중에 설정</Text>
         </TouchableOpacity>
       </View>
