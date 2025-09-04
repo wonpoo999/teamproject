@@ -10,12 +10,20 @@ import {
   Platform,
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
+import { useFonts } from 'expo-font'
+
+const FONT = 'DungGeunMo'
 
 export default function LoginScreen({ navigation }) {
   const { login, needsGoalSetup } = useAuth()
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [fontsLoaded] = useFonts({
+    [FONT]: require('../../assets/fonts/DungGeunMo.otf'),
+  })
+  if (!fontsLoaded) return null
 
   const onSubmit = async () => {
     if (loading) return
@@ -28,7 +36,6 @@ export default function LoginScreen({ navigation }) {
       const ok = await login(id.trim(), password)
       if (!ok) throw new Error('로그인 실패')
 
-
       if (needsGoalSetup) {
         navigation.reset({ index: 0, routes: [{ name: 'Goal' }] })
       } else {
@@ -39,6 +46,14 @@ export default function LoginScreen({ navigation }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const inputStyle = {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    fontFamily: FONT,
   }
 
   return (
@@ -58,13 +73,13 @@ export default function LoginScreen({ navigation }) {
       >
         <Text
           style={{
-            fontSize: 24,
-            fontWeight: '700',
+            fontSize: 28,
             textAlign: 'center',
             marginBottom: 8,
+            fontFamily: FONT,
           }}
         >
-          Login
+          LOGIN
         </Text>
 
         <TextInput
@@ -74,12 +89,7 @@ export default function LoginScreen({ navigation }) {
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="username"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
           returnKeyType="next"
         />
 
@@ -89,12 +99,7 @@ export default function LoginScreen({ navigation }) {
           placeholder="Password"
           secureTextEntry
           textContentType="password"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
           returnKeyType="done"
           onSubmitEditing={onSubmit}
         />
@@ -110,7 +115,11 @@ export default function LoginScreen({ navigation }) {
           }}
         >
           <Text
-            style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}
+            style={{
+              color: '#fff',
+              textAlign: 'center',
+              fontFamily: FONT,
+            }}
           >
             {loading ? '로그인 중…' : 'Login'}
           </Text>

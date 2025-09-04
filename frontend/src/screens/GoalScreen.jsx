@@ -194,3 +194,4 @@ export default function GoalScreen({ navigation }) {
     </KeyboardAvoidingView>
   );
 }
+// 이게 되네
