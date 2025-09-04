@@ -1,4 +1,3 @@
-// 여기 '안' 건드는 쪽으로 합시다 우리.
 import { Platform, NativeModules } from 'react-native'
 import Constants from 'expo-constants'
 
@@ -37,8 +36,8 @@ function normalizeOrigin(v) {
 
 const EXTRA = getExtra()
 const ENV_ORIGIN = normalizeOrigin(process.env.EXPO_PUBLIC_API_ORIGIN || EXTRA.apiOrigin || null)
-const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 3000) // << 안 된다면 이놈을 의심하시길
- 
+const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 3000)
+
 function getDevOrigin() {
   if (ENV_ORIGIN) return ENV_ORIGIN
   const expoHost = getHostFromExpo()
@@ -50,7 +49,7 @@ function getDevOrigin() {
     host = metroHost
   } else {
     if (Platform.OS === 'android') {
-      host = '192.168.0.46' // << 그 다음은 이놈
+      host = '192.168.0.46'
     } else if (Platform.OS === 'ios') {
       host = 'localhost'
     } else {
