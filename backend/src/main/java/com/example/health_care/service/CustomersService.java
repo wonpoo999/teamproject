@@ -13,8 +13,10 @@ import com.example.health_care.dto.CustomersProfileDTO;
 import com.example.health_care.dto.SignupRequest;
 import com.example.health_care.entity.BodyEntity;
 import com.example.health_care.entity.CustomersEntity;
+import com.example.health_care.entity.GoalEntity;
 import com.example.health_care.repository.BodyRepository;
 import com.example.health_care.repository.CustomersRepository;
+import com.example.health_care.repository.GoalRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class CustomersService implements UserDetailsService {
         private final CustomersRepository customersRepository;
         private final PasswordEncoder passwordEncoder;
         private final BodyRepository bodyRepository;
+        private final GoalRepository goalRepository;
 
         @Transactional
         public CustomersEntity signup(SignupRequest req) {
@@ -109,6 +112,28 @@ public class CustomersService implements UserDetailsService {
 
                 // 3. Repository를 사용하여 데이터베이스에 저장
                 bodyRepository.save(bodyEntity);
+        }
+
+        @Transactional
+        public void updateProfileAndSaveGoal(String customerId, BodyRequest bodyRequest) {
+                // 1. 고객 엔티티를 찾아서 업데이트
+                CustomersEntity customer = customersRepository.findById(customerId)
+                                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+                // DTO에서 받은 데이터로 Customers 테이블의 정보 업데이트
+                customer.setWeight(bodyRequest.getWeight());
+                customer.setHeight(bodyRequest.getHeight());
+                customer.setAge(bodyRequest.getAge());
+                customer.setGender(bodyRequest.getGender());
+
+                // 2. Goal 엔티티 생성 및 저장
+                GoalEntity goalEntity = GoalEntity.builder()
+                                .customer(customer)
+                                .targetWeight(bodyRequest.getTargetWeight())
+                                .targetCalories(bodyRequest.getTargetCalories())
+                                .build();
+
+                goalRepository.save(goalEntity);
         }
 }
 // 와이라노..
