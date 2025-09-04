@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup").permitAll()
-                        .requestMatchers("/api/auth/logout").authenticated() // 로그아웃 추가
+                        .requestMatchers("/api/auth/logout","/body").authenticated() // 로그아웃, 바디프로필 추가
                         .anyRequest().authenticated()
                 )
                 // 폼/베이직 로그인 비활성
