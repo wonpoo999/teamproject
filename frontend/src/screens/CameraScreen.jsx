@@ -1,70 +1,92 @@
-import { useRef, useState } from 'react'
-import { View, Text, TouchableOpacity, Image } from 'react-native'
-import * as CameraKit from 'expo-camera'
-import * as ImageManipulator from 'expo-image-manipulator'
-import { forwardRef } from 'react'
+import React, { useRef, useState } from "react";
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, Alert, Button } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import * as ImageManipulator from "expo-image-manipulator";
+import { analyzeFoodImageWithGemini } from "../api/gemini";
 
-const Cam = forwardRef(({ facing, flash, style }, ref) => {
-  const isNew = !!CameraKit.CameraView
-  if (isNew) {
-    return <CameraKit.CameraView ref={ref} style={style} facing={facing} flash={flash} enableZoomGesture />
-  } else {
-    const type = facing === 'back' ? CameraKit.CameraType.back : CameraKit.CameraType.front
-    const flashMode = flash === 'on' ? CameraKit.Camera.Constants.FlashMode.on : CameraKit.Camera.Constants.FlashMode.off
-    return <CameraKit.Camera ref={ref} style={style} type={type} flashMode={flashMode} />
+export default function CameraScreen() {
+  const cameraRef = useRef(null);
+  const [permission, requestPermission] = useCameraPermissions();
+
+  const [busy, setBusy] = useState(false);
+  const [shotUri, setShotUri] = useState(null);
+  const [food, setFood] = useState(null);
+
+  if (!permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  if (!permission.granted) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>카메라 권한이 필요합니다</Text>
+        <Button title="권한 허용" onPress={requestPermission} />
+      </View>
+    );
   }
-})
 
-export default function CameraScreen(){
-  const [perm, requestPerm] = CameraKit.useCameraPermissions()
-  const camRef = useRef(null)
-  const [facing,setFacing]=useState('back')
-  const [flash,setFlash]=useState('off')
-  const [preview,setPreview]=useState(null)
+  const takeAndAnalyze = async () => {
+    try {
+      if (!cameraRef.current) return;
+      setBusy(true);
+      setFood(null);
 
-  if(!perm) return <View style={{flex:1}}/>
-  if(!perm.granted) return (
-    <View style={{flex:1,alignItems:'center',justifyContent:'center',gap:12}}>
-      <Text>카메라 권한이 필요합니다</Text>
-      <TouchableOpacity onPress={requestPerm} style={{padding:12,backgroundColor:'#111',borderRadius:10}}>
-        <Text style={{color:'#fff'}}>권한 허용</Text>
-      </TouchableOpacity>
-    </View>
-  )
+      const photo = await cameraRef.current.takePictureAsync();
+      const manipulated = await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{ resize: { width: 1280 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      setShotUri(manipulated.uri);
 
-  const take = async ()=>{
-    const photo = await camRef.current.takePictureAsync({ quality:0.8, skipProcessing:true })
-    const small = await ImageManipulator.manipulateAsync(photo.uri,[{resize:{width:1200}}],{compress:0.75,format:ImageManipulator.SaveFormat.JPEG})
-    setPreview({uri:small.uri})
-  }
+      const result = await analyzeFoodImageWithGemini(manipulated.uri);
+      setFood(result);
+    } catch (e) {
+      Alert.alert("오류", e?.message ?? "분석 중 문제가 발생했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <View style={{flex:1,backgroundColor:'#000'}}>
-      {!preview ? (
-        <>
-          <Cam ref={camRef} style={{flex:1}} facing={facing} flash={flash} />
-          <View style={{position:'absolute',bottom:24,width:'100%',alignItems:'center',gap:14}}>
-            <View style={{flexDirection:'row',gap:12}}>
-              <TouchableOpacity onPress={()=>setFacing(facing==='back'?'front':'back')} style={{padding:10,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:10}}>
-                <Text style={{color:'#fff'}}>전환</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={()=>setFlash(flash==='off'?'on':'off')} style={{padding:10,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:10}}>
-                <Text style={{color:'#fff'}}>플래시 {flash}</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={take} style={{width:80,height:80,borderRadius:40,backgroundColor:'#fff'}}/>
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" />
+
+      <View style={{ padding: 16, backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <TouchableOpacity
+          onPress={busy ? undefined : takeAndAnalyze}
+          style={{
+            backgroundColor: busy ? "#333" : "#111",
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 16 }}>{busy ? "분석 중…" : "📸 찍고 칼로리 추정"}</Text>
+        </TouchableOpacity>
+
+        {busy && (
+          <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center" }}>
+            <ActivityIndicator color="#fff" />
+            <Text style={{ color: "#fff", marginLeft: 8 }}>Gemini 분석 중…</Text>
           </View>
-        </>
-      ) : (
-        <View style={{flex:1}}>
-          <Image source={{uri:preview.uri}} style={{flex:1,resizeMode:'contain',backgroundColor:'#111'}}/>
-          <View style={{padding:16,backgroundColor:'#000',gap:12}}>
-            <TouchableOpacity onPress={()=>setPreview(null)} style={{padding:14,backgroundColor:'#374151',borderRadius:10}}>
-              <Text style={{color:'#fff',textAlign:'center'}}>다시 찍기</Text>
-            </TouchableOpacity>
+        )}
+
+        {shotUri && !busy && (
+          <Image source={{ uri: shotUri }} style={{ width: "100%", height: 220, marginTop: 12, borderRadius: 10 }} resizeMode="cover" />
+        )}
+
+        {food && !busy && (
+          <View style={{ marginTop: 10 }}>
+            <Text style={{ color: "white", fontSize: 18 }}>
+              🍽 음식: <Text style={{ fontWeight: "700" }}>{food.dish}</Text>
+            </Text>
+            <Text style={{ color: "white", fontSize: 16 }}>
+              🔥 칼로리: {food.calories} kcal
+            </Text>
+            <Text style={{ color: "white", marginTop: 4 }}>
+              ⚖️ P/F/C: {food.protein}g / {food.fat}g / {food.carbs}g
+            </Text>
           </View>
-        </View>
-      )}
+        )}
+      </View>
     </View>
-  )
+  );
 }

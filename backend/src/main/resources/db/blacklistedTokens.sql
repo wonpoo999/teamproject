@@ -7,6 +7,7 @@ CREATE TABLE blacklisted_tokens (
   reason       VARCHAR2(100)
 );
 
+
 CREATE SEQUENCE BLK_TOK_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 
 SELECT * FROM blacklisted_tokens;
