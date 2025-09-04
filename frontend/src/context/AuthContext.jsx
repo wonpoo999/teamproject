@@ -6,7 +6,6 @@ import { apiPost, setAuthToken, clearAuthToken } from '../config/api'
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
 
-// 이메일에도 안전하게 쓰이도록 키 변환
 const goalKey = (userId) =>
   `goalsetup_${String(userId || '').replace(/[^a-zA-Z0-9._-]/g, '_')}`
 
