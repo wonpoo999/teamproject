@@ -1,25 +1,25 @@
-import { Platform, NativeModules } from 'react-native';
-import Constants from 'expo-constants';
+import { Platform, NativeModules } from 'react-native'
+import Constants from 'expo-constants'
 
 function isPrivateIp(h) {
-  return !!h && /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(h);
+  return !!h && /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(h)
 }
 
 function getHostFromExpo() {
-  const c = Constants || {};
+  const c = Constants || {}
   const uri =
     (c.expoConfig && c.expoConfig.hostUri) ||
     (c.manifest2 && c.manifest2.extra && c.manifest2.extra.expoClient && c.manifest2.extra.expoClient.hostUri) ||
-    (c.manifest && c.manifest.hostUri);
-  if (!uri) return undefined;
-  const m = String(uri).match(/^([^:\/?#]+)(?::\d+)?/);
-  return m ? m[1] : undefined;
+    (c.manifest && c.manifest.hostUri)
+  if (!uri) return undefined
+  const m = String(uri).match(/^([^:\/?#]+)(?::\d+)?/)
+  return m ? m[1] : undefined
 }
 
 function getHostFromScriptURL() {
-  const u = NativeModules?.SourceCode?.scriptURL;
-  if (!u) return undefined;
-  try { return new URL(u).hostname; } catch { return undefined; }
+  const u = NativeModules?.SourceCode?.scriptURL
+  if (!u) return undefined
+  try { return new URL(u).hostname } catch { return undefined }
 }
 
 function getExtra() {
@@ -27,94 +27,105 @@ function getExtra() {
     (Constants.expoConfig && Constants.expoConfig.extra) ||
     (Constants.manifest && Constants.manifest.extra) ||
     {}
-  );
+  )
 }
 
 function normalizeOrigin(v) {
-  return v ? String(v).replace(/\/+$/, '') : v;
+  return v ? String(v).replace(/\/+$/, '') : v
 }
 
-const EXTRA = getExtra();
-const ENV_ORIGIN = normalizeOrigin(process.env.EXPO_PUBLIC_API_ORIGIN || EXTRA.apiOrigin || null);
-const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 3000);
-
+const EXTRA = getExtra()
+const ENV_ORIGIN = normalizeOrigin(process.env.EXPO_PUBLIC_API_ORIGIN || EXTRA.apiOrigin || null)
+const ENV_PORT = Number(process.env.EXPO_PUBLIC_API_PORT ?? EXTRA.apiPort ?? 3000) // << 안 된다면 이놈을 의심하시길
+ 
 function getDevOrigin() {
-  if (ENV_ORIGIN) return ENV_ORIGIN;
-
-  const expoHost = getHostFromExpo();
-  const metroHost = getHostFromScriptURL();
-
-  let host;
+  if (ENV_ORIGIN) return ENV_ORIGIN
+  const expoHost = getHostFromExpo()
+  const metroHost = getHostFromScriptURL()
+  let host
   if (isPrivateIp(expoHost)) {
-    host = expoHost;
+    host = expoHost
   } else if (isPrivateIp(metroHost)) {
-    host = metroHost;
+    host = metroHost
   } else {
     if (Platform.OS === 'android') {
-      host = '192.168.0.6';
-      // host = '10.217.85.1';
+      host = '192.168.0.46' // << 그 다음은 이놈
     } else if (Platform.OS === 'ios') {
-      host = 'localhost';
+      host = 'localhost'
     } else {
-      host = 'localhost';
+      host = 'localhost'
     }
   }
-  return `http://${host}:${ENV_PORT}`;
+  return `http://${host}:${ENV_PORT}`
 }
 
-const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || 'https://your-prod.example.com');
+const PROD_ORIGIN = normalizeOrigin(EXTRA.apiProdOrigin || 'https://your-prod.example.com')
 
-export const ORIGIN = __DEV__ ? getDevOrigin() : PROD_ORIGIN;
-export const API_BASE_DEBUG = ORIGIN;
+export const ORIGIN = __DEV__ ? getDevOrigin() : PROD_ORIGIN
+export const API_BASE_DEBUG = ORIGIN
 
-const join = (base, path) =>
-  `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
+let CURRENT_TOKEN = null
 
-let CURRENT_TOKEN = null;
+function normalizeAuthHeader(raw) {
+  if (!raw) return null
+  const v = String(raw).trim()
+  return /^(Bearer|Basic|Token)\s+/i.test(v) ? v : `Bearer ${v}`
+}
 
 export function setAuthToken(t) {
-  CURRENT_TOKEN = t || null;
+  CURRENT_TOKEN = normalizeAuthHeader(t)
 }
 
 export function clearAuthToken() {
-  CURRENT_TOKEN = null;
+  CURRENT_TOKEN = null
 }
 
-function withAuthHeaders(init) {
-  const base = init?.headers || {};
-  return CURRENT_TOKEN
-    ? { ...base, Authorization: `Bearer ${CURRENT_TOKEN}` }
-    : base;
+function withAuthHeaders(customHeaders = {}) {
+  const auth = CURRENT_TOKEN ? { Authorization: CURRENT_TOKEN } : {}
+  return { ...customHeaders, ...auth }
 }
+
+const join = (base, path) =>
+  `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`
 
 export async function apiGet(path, init) {
-  const url = join(ORIGIN, path);
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 20000);
-  try {
-    const res = await fetch(url, { ...(init || {}), method: 'GET', signal: ctrl.signal, headers: withAuthHeaders(init) });
-    const text = await res.text();
-    if (__DEV__) console.log('GET', url, '->', res.status, text);
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
-    try { return JSON.parse(text); } catch { return text; }
-  } finally { clearTimeout(to); }
-}
-
-export async function apiPost(path, body, init) {
-  const url = join(ORIGIN, path);
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 25000);
+  const url = join(ORIGIN, path)
+  const ctrl = new AbortController()
+  const to = setTimeout(() => ctrl.abort(), 20000)
   try {
     const res = await fetch(url, {
       ...(init || {}),
+      method: 'GET',
+      signal: ctrl.signal,
+      headers: withAuthHeaders(init?.headers),
+    })
+    const text = await res.text()
+    if (__DEV__) console.log('GET', url, '->', res.status, text)
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`)
+    try { return JSON.parse(text) } catch { return text }
+  } finally {
+    clearTimeout(to)
+  }
+}
+
+export async function apiPost(path, body, init) {
+  const url = join(ORIGIN, path)
+  const ctrl = new AbortController()
+  const to = setTimeout(() => ctrl.abort(), 25000)
+  try {
+    const baseHeaders = { Accept: 'application/json', 'Content-Type': 'application/json' }
+    const res = await fetch(url, {
+      ...(init || {}),
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...withAuthHeaders(init) },
+      headers: withAuthHeaders({ ...baseHeaders, ...(init?.headers || {}) }),
       body: JSON.stringify(body),
-      signal: ctrl.signal
-    });
-    const text = await res.text();
-    if (__DEV__) console.log('POST', url, '->', res.status, text);
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`);
-    try { return JSON.parse(text); } catch { return text; }
-  } finally { clearTimeout(to); }
+      signal: ctrl.signal,
+    })
+    const text = await res.text()
+    if (__DEV__) console.log('POST', url, '->', res.status, text)
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`)
+    try { return JSON.parse(text) } catch { return text }
+  } finally {
+    clearTimeout(to)
+  }
 }

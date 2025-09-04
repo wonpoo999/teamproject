@@ -8,3 +8,5 @@ CREATE TABLE blacklisted_tokens (
 );
 
 CREATE SEQUENCE BLK_TOK_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
+
+SELECT * FROM blacklisted_tokens;

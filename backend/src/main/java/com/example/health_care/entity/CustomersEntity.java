@@ -14,12 +14,13 @@ import com.example.health_care.entity.Gender;
 public class CustomersEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customers_seq_generator")
-    @SequenceGenerator(name = "customers_seq_generator", sequenceName = "CUSTOMERS_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customers_seq")
+    @SequenceGenerator(name = "customers_seq", sequenceName = "CUSTOMERS_SEQ", allocationSize = 1)
     @Column(name = "idx")
-    private Integer idx;
+    private Long idx;
 
     @Column(name = "id", length = 100, nullable = false, updatable = false, unique = true)
+
     private String id;
 
     @Column(name = "password", length = 255, nullable = false) // length 60 -> 50 수정
@@ -38,3 +39,4 @@ public class CustomersEntity {
     @Column(name = "height")
     private Double height;
 }
+/*tlqkf */

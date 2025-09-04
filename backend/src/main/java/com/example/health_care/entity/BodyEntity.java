@@ -17,16 +17,17 @@ public class BodyEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "body_seq_generator")
     @SequenceGenerator(name = "body_seq_generator", sequenceName = "BODY_SEQ", allocationSize = 1)
-    @Column(name = "idx")
-    private Integer idx;
+    private Long idx;
 
-    @Column(name = "customer_id", nullable = false)
-    private Integer customerId; // ★ customers.idx를 참조하는 외래 키
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private CustomersEntity customer;
 
     @Column(name = "target_weight")
     private Double targetWeight;
 
     @Column(name = "target_calories")
+
     private Double targetCalories;
 
     @Column(name = "weight")
@@ -47,5 +48,4 @@ public class BodyEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 1)
     private Gender gender;
-
 }
