@@ -10,7 +10,35 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BodyRequest {
-@Positive
-    @Digits(integer = 5, fraction = 2) // 소수점 2자리까지
+  @NotNull
+    @Positive
+    @Digits(integer = 4, fraction = 1)
+    private Double targetWeight;
+
+    @NotNull
+    @Positive
+    @Digits(integer = 5, fraction = 0)
+    private Integer targetCalories;
+
+    @NotNull
+    @Positive
+    @Digits(integer = 4, fraction = 1)
+    private Double weight;
+
+    @NotNull
+    @Positive
+    @Digits(integer = 3, fraction = 0)
+    private Integer height;
+
+    @NotNull
+    @Positive
+    @Digits(integer = 3, fraction = 0)
+    private Integer age;
+
+    @NotNull
+    private Gender gender;
+
+    @Positive
+    @Digits(integer = 5, fraction = 2)
     private Double inbody;
 }

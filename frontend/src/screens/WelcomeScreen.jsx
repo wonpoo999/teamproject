@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, ImageBackground, Pressable, useWindowDimensions } from 'react-native';
+import { View, Image, ImageBackground, Pressable, useWindowDimensions} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
@@ -11,7 +11,6 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const nav = useNavigation();
-
   const loginMeta = Image.resolveAssetSource(LOGIN);
   const signupMeta = Image.resolveAssetSource(SIGNUP);
   const btnWidth = Math.min(420, Math.round(width * 0.48));
