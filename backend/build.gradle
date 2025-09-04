@@ -46,6 +46,7 @@ dependencies {
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11:23.4.0.24.05'
 
 
+
     // Devtools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
