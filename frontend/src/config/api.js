@@ -1,3 +1,4 @@
+// 여기 '안' 건드는 쪽으로 합시다 우리.
 import { Platform, NativeModules } from 'react-native'
 import Constants from 'expo-constants'
 

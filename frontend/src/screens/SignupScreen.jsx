@@ -118,3 +118,4 @@ export default function SignupScreen({ navigation }) {
     </KeyboardAvoidingView>
   )
 }
+// 되나?
