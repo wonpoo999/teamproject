@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
+import com.example.health_care.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final CorsConfig corsConfig;
+     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // swagger 문서 접근 허용 목록
     private static final String[] SWAGGER_WHITELIST = {
@@ -43,6 +45,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new CorsFilter(corsConfig.corsConfigurationSource()),
                         UsernamePasswordAuthenticationFilter.class) // 추가된 부분
                 .authorizeHttpRequests(auth -> auth
