@@ -1,5 +1,10 @@
 package com.example.health_care.service;
 
+<<<<<<< HEAD
+import java.util.Date;
+
+=======
+>>>>>>> main
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -7,8 +12,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+<<<<<<< HEAD
+import com.example.health_care.dto.CustomersProfileDTO;
+import com.example.health_care.dto.SignupRequest;
+import com.example.health_care.entity.BodyEntity;
+import com.example.health_care.entity.CustomersEntity;
+import com.example.health_care.repository.BodyRepository;
+=======
 import com.example.health_care.dto.SignupRequest;
 import com.example.health_care.entity.CustomersEntity;
+>>>>>>> main
 import com.example.health_care.repository.CustomersRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +34,7 @@ public class CustomersService implements UserDetailsService {
 
     private final CustomersRepository customersRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BodyRepository bodyRepository;
 
     @Transactional
     public CustomersEntity signup(SignupRequest req) {
@@ -38,8 +52,21 @@ public class CustomersService implements UserDetailsService {
                 .gender(req.getGender())
                 .height(req.getHeight())
                 .build();
-                
-        return customersRepository.save(user);
+
+        CustomersEntity savedUser = customersRepository.save(user);
+
+        BodyEntity bodyEntity = BodyEntity.builder()
+                .customerId(savedUser.getIdx()) // ★ 새로 생성된 idx를 외래 키로 사용
+                .weight(savedUser.getWeight())
+                .height(savedUser.getHeight())
+                .age(savedUser.getAge())
+                .gender(savedUser.getGender())
+                .recordDate(new Date()) // 현재 날짜 기록
+                .build();
+
+        bodyRepository.save(bodyEntity);
+
+        return savedUser;
     }
 
     @Override
@@ -53,4 +80,20 @@ public class CustomersService implements UserDetailsService {
                 .roles("USER")
                 .build();
     }
+<<<<<<< HEAD
+
+    public CustomersProfileDTO getCustomerProfile(String customerId) {
+        return customersRepository.findById(customerId)
+                .map(customer -> CustomersProfileDTO.builder()
+                        .id(customer.getId())
+                        .weight(customer.getWeight())
+                        .age(customer.getAge())
+                        .gender(customer.getGender())
+                        .height(customer.getHeight())
+                        .build())
+                .orElse(null);
+    }
 }
+=======
+}
+>>>>>>> main

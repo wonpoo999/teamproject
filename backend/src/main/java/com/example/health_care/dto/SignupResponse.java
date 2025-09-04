@@ -1,7 +1,7 @@
 package com.example.health_care.dto;
 
 import com.example.health_care.entity.CustomersEntity;
-import com.example.health_care.entity.CustomersEntity.Gender;
+import com.example.health_care.entity.Gender;
 import lombok.*;
 
 @Getter
@@ -31,4 +31,6 @@ public class SignupResponse {
                 .height(entity.getHeight())
                 .build();
     }
+
+
 }
