@@ -20,7 +20,6 @@ public class CustomersEntity {
     private Long idx;
 
     @Column(name = "id", length = 100, nullable = false, updatable = false, unique = true)
-
     private String id;
 
     @Column(name = "password", length = 255, nullable = false) // length 60 -> 50 수정
