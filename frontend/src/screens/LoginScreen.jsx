@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
       const ok = await login(id.trim(), password)
       if (!ok) throw new Error('로그인 실패')
 
-      // 로그인 성공 후 분기
+
       if (needsGoalSetup) {
         navigation.reset({ index: 0, routes: [{ name: 'Goal' }] })
       } else {
