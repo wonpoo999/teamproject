@@ -21,12 +21,12 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
-          <View style={styles.topContainer}>
+          <View style={[styles.topContainer, {marginTop: insets.top + 20}]}>
             <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
-              <Text style={styles.boxText}>식단 기록</Text>
+              <Text style={styles.boxText}>🥗 식단 기록</Text>
             </Pressable>
             <Pressable style={styles.box} onPress={() => nav.navigate('Data')}>
-              <Text style={styles.boxText}>체중 비교</Text>
+              <Text style={styles.boxText}>👀 한눈에</Text>
             </Pressable>
           </View>
       <View style={{ flex: 1 }}>
@@ -47,17 +47,25 @@ export default function HomeScreen({ route }) {
 
 const styles = StyleSheet.create({
   topContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    gap: 20,
+    flexDirection: 'row',      // 세로로 배치
+    paddingHorizontal: 11,        // 좌우 여백
+    gap: 12,                    
   },
   box: {
-    backgroundColor: 'tomato',
-    padding: 10,
-    borderRadius: 8,
+    flex: 1,                      // 세로로 반반 차지
+    height:220,
+    backgroundColor: "rgba(255,255,255,0.7)",      // 카드 배경 / '#fff'
+    borderWidth: 5,
+    borderColor: 'tomato',        
+    borderRadius: 30,             // 둥근 모서리
+    padding: 20,                  // 카드 안 여백
+    justifyContent: 'flex-start', // 위쪽부터 내용 배치
+    alignItems: 'flex-start',     // 왼쪽부터 내용 배치
   },
   boxText: {
-    color: '#fff',
+    fontSize: 22,
+    height:220,
     fontWeight: 'bold',
+    color: '#333',
   },
 })
