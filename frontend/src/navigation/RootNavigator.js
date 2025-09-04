@@ -8,6 +8,8 @@ import HomeScreen from '../screens/HomeScreen'
 import CameraScreen from '../screens/CameraScreen'
 import GoalScreen from '../screens/GoalScreen'
 import SettingsScreen from '../screens/SettingsScreen'
+import DietLogScreen from '../screens/DietLogScreen'
+import DataScreen from '../screens/DataScreen'
 
 const Stack = createNativeStackNavigator()
 
@@ -28,6 +30,8 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Goal" component={GoalScreen} />
       <Stack.Screen name="Camera" component={CameraScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="DietLog" component={DietLogScreen} />
+      <Stack.Screen name="Data" component={DataScreen} />
     </Stack.Navigator>
   )
 }
@@ -44,5 +48,11 @@ export default function RootNavigator() {
   }
 
   if (!isAuthenticated) return <AuthStack />
-  return <AppStack initialRouteName={needsGoalSetup ? 'Goal' : 'Home'} />
+
+  return (
+    <AppStack
+      key={needsGoalSetup ? 'app-goal' : 'app-home'}
+      initialRouteName={needsGoalSetup ? 'Goal' : 'Home'}
+    />
+  )
 }
