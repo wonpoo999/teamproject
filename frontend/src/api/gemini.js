@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AIzaSyC_8usSHpppWNU2fnz7MgNFpUhzYAOnrIQ";
+const GEMINI_API_KEY = "AIzaSyC5syZA0D3aq1QZSHczFQTSVV8bBQHeCSs";
 
 function toBase64Async(uri) {
   return new Promise((resolve, reject) => {
