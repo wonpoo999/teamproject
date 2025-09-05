@@ -19,7 +19,7 @@ function CalorieGauge({ current, target }) {
         <View style={[styles.gaugeFill, { left: '100%', width: `${overRatio * 100}%`, backgroundColor: '#ef4444' }]} />
       )}
       <View style={styles.gaugeTextWrap}>
-        <Text style={styles.gaugeText}>{current}/{target} kcal</Text>
+        <Text style={styles.gaugeText}>{current}/{target}</Text>
       </View>
     </View>
   )
@@ -59,10 +59,7 @@ export default function HomeScreen({ route }) {
       </View>
 
       <View style={{ flex: 1 }}>
-        <View
-          style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260, alignItems: 'center' }}
-          pointerEvents="none"
-        >
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260 + 20, alignItems: 'center' }} pointerEvents="none">
           <CalorieGauge current={current} target={target} />
         </View>
 
@@ -78,16 +75,8 @@ export default function HomeScreen({ route }) {
               to="Home"
               onPress={() => nav.navigate('Profile')}
             />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/camera.png')}
-              labelSrc={require('../../assets/icons/camera_.png')}
-              to="Camera"
-            />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/setting.png')}
-              labelSrc={require('../../assets/icons/setting_.png')}
-              to="Settings"
-            />
+            <IconLabeled iconSrc={require('../../assets/icons/camera.png')} labelSrc={require('../../assets/icons/camera_.png')} to="Camera" />
+            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} labelSrc={require('../../assets/icons/setting_.png')} to="Settings" />
           </View>
         </View>
       </View>
@@ -117,8 +106,8 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   gaugeContainer: {
-    width: '70%',
-    height: 20,
+    width: '80%',
+    height: 30,
     backgroundColor: 'white',
     borderWidth: 2,
     borderColor: 'black',
@@ -137,7 +126,6 @@ const styles = StyleSheet.create({
   },
   gaugeText: {
     color: 'gray',
-    fontWeight: 'bold',
-    fontSize: 12
+    fontWeight: 'bold'
   }
 })
