@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { View, ImageBackground, Text, Pressable, Image, StyleSheet } from 'react-native'
+import { useEffect, useState, useRef } from 'react'
+import { View, ImageBackground, Text, Pressable, Image, StyleSheet, Animated } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import AvatarByBMI from '../components/AvatarByBMI'
 import { initCalorieData } from '../utils/calorieStorage'
 import { useFonts } from 'expo-font'
@@ -12,14 +12,32 @@ const OVERLAP = 50
 const FONT = 'DungGeunMo'
 
 function CalorieGauge({ current, target }) {
-  const ratio = target > 0 ? Math.min(current / target, 1) : 0
-  const overRatio = target > 0 && current > target ? (current - target) / target : 0
+  const r = target > 0 ? current / target : 0
+  const greenTo = Math.min(Math.max(r, 0), 1)
+  const redTo = r > 1 ? Math.min(r - 1, 1) : 0
+
+  const animatedGreen = useRef(new Animated.Value(0)).current
+  const animatedRed = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (redTo > 0) {
+      animatedGreen.stopAnimation()
+      animatedGreen.setValue(1)
+      Animated.timing(animatedRed, { toValue: redTo, duration: 600, useNativeDriver: false }).start()
+    } else {
+      animatedRed.stopAnimation()
+      animatedRed.setValue(0)
+      Animated.timing(animatedGreen, { toValue: greenTo, duration: 600, useNativeDriver: false }).start()
+    }
+  }, [greenTo, redTo])
+
+  const widthGreen = animatedGreen.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
+  const widthRed = animatedRed.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
+
   return (
     <View style={styles.gaugeContainer}>
-      <View style={[styles.gaugeFill, { width: `${ratio * 100}%`, backgroundColor: '#22c55e' }]} />
-      {overRatio > 0 && (
-        <View style={[styles.gaugeFill, { left: '100%', width: `${overRatio * 100}%`, backgroundColor: '#ef4444' }]} />
-      )}
+      <Animated.View style={[styles.gaugeFill, { width: widthGreen, backgroundColor: '#22c55e' }]} />
+      <Animated.View style={[styles.gaugeFill, { right: 0, width: widthRed, backgroundColor: '#ef4444' }]} />
       <View style={styles.gaugeTextWrap}>
         <Text style={styles.gaugeText}>{current}/{target} kcal</Text>
       </View>
@@ -34,20 +52,30 @@ export default function HomeScreen({ route }) {
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
+
+  const loadData = async () => {
+    const { target, current } = await initCalorieData()
+    setTarget(target)
+    setCurrent(current)
+  }
+
   useEffect(() => {
-    ;(async () => {
-      const { target, current } = await initCalorieData()
-      setTarget(target)
-      setCurrent(current)
-    })()
+    loadData()
   }, [])
+
+  useFocusEffect(() => {
+    loadData()
+  })
+
   if (!fontsLoaded) return null
+
   const IconLabeled = ({ iconSrc, labelSrc, to, onPress }) => (
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center' }}>
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
       <Image source={labelSrc} style={{ width: ICON_SIZE + 24, height: LABEL_SIZE, resizeMode: 'contain', marginTop: -OVERLAP }} />
     </Pressable>
   )
+
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
@@ -73,16 +101,8 @@ export default function HomeScreen({ route }) {
               to="Home"
               onPress={() => nav.navigate('Profile')}
             />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/camera.png')}
-              labelSrc={require('../../assets/icons/camera_.png')}
-              to="Camera"
-            />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/setting.png')}
-              labelSrc={require('../../assets/icons/setting_.png')}
-              to="Settings"
-            />
+            <IconLabeled iconSrc={require('../../assets/icons/camera.png')} labelSrc={require('../../assets/icons/camera_.png')} to="Camera" />
+            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} labelSrc={require('../../assets/icons/setting_.png')} to="Settings" />
           </View>
         </View>
       </View>
@@ -113,7 +133,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false
   },
   gaugeContainer: {
-    width: '70%',
+    width: '65%',
     height: 20,
     backgroundColor: 'white',
     borderWidth: 2,
