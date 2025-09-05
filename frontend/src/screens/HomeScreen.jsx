@@ -36,8 +36,8 @@ function CalorieGauge({ current, target }) {
 
   return (
     <View style={styles.gaugeContainer}>
-      <Animated.View style={[styles.gaugeFill, { width: widthGreen, backgroundColor: '#22c55e' }]} />
-      <Animated.View style={[styles.gaugeFill, { right: 0, width: widthRed, backgroundColor: '#ef4444' }]} />
+      <Animated.View style={[styles.gaugeFill, { width: widthGreen, backgroundColor: 'rgba(34,197,94,0.8)' }]} />
+      <Animated.View style={[styles.gaugeFill, { right: 0, width: widthRed, backgroundColor: 'rgba(239,68,68,0.8)' }]} />
       <View style={styles.gaugeTextWrap}>
         <Text style={styles.gaugeText}>{current}/{target} kcal</Text>
       </View>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   gaugeContainer: {
     width: '65%',
     height: 20,
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     borderWidth: 2,
     borderColor: 'black',
     borderRadius: 8,
