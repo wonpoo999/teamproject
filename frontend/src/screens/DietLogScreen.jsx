@@ -11,3 +11,8 @@ export default class DietLogScreen extends Component {
   }
 }
 
+//  <IconLabeled
+//               iconSrc={require('../../assets/icons/camera.png')}
+//               labelSrc={require('../../assets/icons/camera_.png')}
+//               to="Camera"
+//             />
