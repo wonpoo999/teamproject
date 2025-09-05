@@ -74,11 +74,6 @@ export default function HomeScreen({ route }) {
               onPress={() => nav.navigate('Profile')}
             />
             <IconLabeled
-              iconSrc={require('../../assets/icons/camera.png')}
-              labelSrc={require('../../assets/icons/camera_.png')}
-              to="Camera"
-            />
-            <IconLabeled
               iconSrc={require('../../assets/icons/setting.png')}
               labelSrc={require('../../assets/icons/setting_.png')}
               to="Settings"
