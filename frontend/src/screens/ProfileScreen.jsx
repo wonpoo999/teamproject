@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'
+import { apiPost, ORIGIN } from '../config/api.js'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
