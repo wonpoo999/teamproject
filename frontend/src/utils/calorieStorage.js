@@ -4,12 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import AvatarByBMI from '../components/AvatarByBMI'
 import { initCalorieData } from '../utils/calorieStorage'
-import { useFonts } from 'expo-font'
 
 const ICON_SIZE = 96
 const LABEL_SIZE = 70
 const OVERLAP = 50
-const FONT = 'DungGeunMo'
 
 function CalorieGauge({ current, target }) {
   const ratio = target > 0 ? Math.min(current / target, 1) : 0
@@ -21,7 +19,7 @@ function CalorieGauge({ current, target }) {
         <View style={[styles.gaugeFill, { left: '100%', width: `${overRatio * 100}%`, backgroundColor: '#ef4444' }]} />
       )}
       <View style={styles.gaugeTextWrap}>
-        <Text style={styles.gaugeText}>{current}/{target} kcal</Text>
+        <Text style={styles.gaugeText}>{current}/{target}</Text>
       </View>
     </View>
   )
@@ -33,7 +31,7 @@ export default function HomeScreen({ route }) {
   const category = route?.params?.category ?? 'normal'
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
-  const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
+
   useEffect(() => {
     ;(async () => {
       const { target, current } = await initCalorieData()
@@ -41,13 +39,14 @@ export default function HomeScreen({ route }) {
       setCurrent(current)
     })()
   }, [])
-  if (!fontsLoaded) return null
+
   const IconLabeled = ({ iconSrc, labelSrc, to, onPress }) => (
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center' }}>
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
       <Image source={labelSrc} style={{ width: ICON_SIZE + 24, height: LABEL_SIZE, resizeMode: 'contain', marginTop: -OVERLAP }} />
     </Pressable>
   )
+
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
@@ -58,13 +57,16 @@ export default function HomeScreen({ route }) {
           <Text style={styles.boxText}>👀 한눈에</Text>
         </Pressable>
       </View>
+
       <View style={{ flex: 1 }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260, alignItems: 'center' }} pointerEvents="none">
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260 + 20, alignItems: 'center' }} pointerEvents="none">
           <CalorieGauge current={current} target={target} />
         </View>
+
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, alignItems: 'center' }} pointerEvents="none">
           <AvatarByBMI category={category} size={260} />
         </View>
+
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled
@@ -73,16 +75,8 @@ export default function HomeScreen({ route }) {
               to="Home"
               onPress={() => nav.navigate('Profile')}
             />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/camera.png')}
-              labelSrc={require('../../assets/icons/camera_.png')}
-              to="Camera"
-            />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/setting.png')}
-              labelSrc={require('../../assets/icons/setting_.png')}
-              to="Settings"
-            />
+            <IconLabeled iconSrc={require('../../assets/icons/camera.png')} labelSrc={require('../../assets/icons/camera_.png')} to="Camera" />
+            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} labelSrc={require('../../assets/icons/setting_.png')} to="Settings" />
           </View>
         </View>
       </View>
@@ -108,13 +102,12 @@ const styles = StyleSheet.create({
   boxText: {
     fontSize: 22,
     height: 220,
-    color: '#333',
-    fontFamily: FONT,
-    includeFontPadding: false
+    fontWeight: 'bold',
+    color: '#333'
   },
   gaugeContainer: {
-    width: '70%',
-    height: 20,
+    width: '80%',
+    height: 30,
     backgroundColor: 'white',
     borderWidth: 2,
     borderColor: 'black',
@@ -133,8 +126,6 @@ const styles = StyleSheet.create({
   },
   gaugeText: {
     color: 'gray',
-    fontSize: 12,
-    fontFamily: FONT,
-    includeFontPadding: false
+    fontWeight: 'bold'
   }
 })
