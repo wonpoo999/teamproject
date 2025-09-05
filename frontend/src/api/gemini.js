@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AIzaSyC_8usSHpppWNU2fnz7MgNFpUhzYAOnrIQ"; 
+const GEMINI_API_KEY = "AIzaSyC_8usSHpppWNU2fnz7MgNFpUhzYAOnrIQ";
 
 function toBase64Async(uri) {
   return new Promise((resolve, reject) => {
@@ -6,7 +6,7 @@ function toBase64Async(uri) {
       .then(res => res.blob())
       .then(blob => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(",")[1]);
+        reader.onloadend = () => resolve(String(reader.result).split(",")[1]);
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       })
@@ -14,52 +14,144 @@ function toBase64Async(uri) {
   });
 }
 
-export async function analyzeFoodImageWithGemini(uri) {
-  const base64 = await toBase64Async(uri);
+function hasHangul(str) {
+  return /[가-힣]/.test(String(str || ""));
+}
 
+function extractText(data) {
+  const p = data?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(p)) return "";
+  return p.map(x => x?.text).filter(Boolean).join("\n");
+}
+
+function stripToJson(text) {
+  if (!text) return "";
+  let t = String(text).replace(/```json|```/g, "").trim();
+  const s = t.indexOf("{");
+  const e = t.lastIndexOf("}");
+  if (s !== -1 && e !== -1 && e > s) t = t.slice(s, e + 1);
+  return t;
+}
+
+function safeParse(text) {
+  try {
+    return JSON.parse(stripToJson(text));
+  } catch {
+    try {
+      const only = String(text).split("\n").filter(l => /["{}\[\]:]/.test(l)).join("\n");
+      return JSON.parse(only);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function clamp(n, min, max) {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+function round(n) {
+  return Math.round(Number(n) || 0);
+}
+
+function energyFromMacros(p, f, c) {
+  return 4 * p + 9 * f + 4 * c;
+}
+
+function reconcileTotals({ portion_grams, per100g }) {
+  const pg = clamp(round(portion_grams), 1, 2000);
+  const per = {
+    calories: clamp(round(per100g?.calories), 0, 900),
+    protein: clamp(round(per100g?.protein), 0, 100),
+    fat: clamp(round(per100g?.fat), 0, 100),
+    carbs: clamp(round(per100g?.carbs), 0, 150),
+  };
+  const factor = pg / 100;
+  const protein = round(per.protein * factor);
+  const fat = round(per.fat * factor);
+  const carbs = round(per.carbs * factor);
+  let calories = round(energyFromMacros(protein, fat, carbs));
+  calories = clamp(calories, 0, 2500);
+  return { portion_grams: pg, calories, protein, fat, carbs, per100g: per };
+}
+
+function coerceShape(obj) {
+  const dish = typeof obj?.dish === "string" ? obj.dish.trim() : "";
+  const portion_grams = Number.isFinite(+obj?.portion_grams) ? +obj.portion_grams : 0;
+  const per100g = {
+    calories: Number.isFinite(+obj?.per100g?.calories) ? +obj.per100g.calories : 0,
+    protein: Number.isFinite(+obj?.per100g?.protein) ? +obj.per100g.protein : 0,
+    fat: Number.isFinite(+obj?.per100g?.fat) ? +obj.per100g.fat : 0,
+    carbs: Number.isFinite(+obj?.per100g?.carbs) ? +obj.per100g.carbs : 0,
+  };
+  return { dish, portion_grams, per100g };
+}
+
+function validShape(s) {
+  if (!s) return false;
+  if (!s.dish || !hasHangul(s.dish)) return false;
+  if (!Number.isFinite(s.portion_grams) || s.portion_grams <= 0) return false;
+  const p = s.per100g || {};
+  return ["calories", "protein", "fat", "carbs"].every(k => Number.isFinite(p[k]));
+}
+
+function prompt(strict = false) {
+  const base = `너는 영양 추정기다. 음식 사진을 보고 JSON으로만 응답해.
+규칙:
+- 키: dish(한국어 음식명), portion_grams(1~2000 정수, 1회 제공량 g), per100g(100g 당 수치: calories, protein, fat, carbs 모두 정수)
+- dish는 반드시 한글 표기만 사용(외래어도 한글, 예: 파스타, 피자, 타코)
+- per100g 수치는 일반적인 영양 데이터 상식 범위로 추정
+- 설명·단위·코멘트·마크다운 금지. JSON만 출력.
+
+형식:
+{
+  "dish": "김치볶음밥",
+  "portion_grams": 350,
+  "per100g": { "calories": 180, "protein": 4, "fat": 6, "carbs": 27 }
+}`;
+  const extra = strict ? `\n추가: dish에 알파벳이 포함되면 안 된다. 숫자는 모두 정수만 사용.` : "";
+  return base + extra;
+}
+
+async function callGemini(base64, text) {
   const body = {
     contents: [
-      {
-        parts: [
-          {
-            text: `You are a nutrition estimator. Given a food photo, respond ONLY in JSON:
-{
-  "dish": string,         
-  "calories": number,     
-  "protein": number,      
-  "fat": number,          
-  "carbs": number         
-}`
-          },
-          {
-            inlineData: {
-              mimeType: "image/jpeg",
-              data: base64,
-            },
-          },
-        ],
-      },
+      { parts: [{ text }, { inlineData: { mimeType: "image/jpeg", data: base64 } }] }
     ],
+    generationConfig: { temperature: 0.1 }
   };
-
   const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
-      GEMINI_API_KEY,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
   );
-
   if (!res.ok) {
-    const t = await res.text();
+    const t = await res.text().catch(() => "");
     throw new Error(`Gemini 호출 실패: ${res.status} ${t}`);
   }
-
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  return extractText(data);
+}
 
-  const jsonText = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(jsonText);
+export async function analyzeFoodImageWithGemini(uri) {
+  const base64 = await toBase64Async(uri);
+  let t = await callGemini(base64, prompt(false));
+  let parsed = safeParse(t);
+  let shaped = coerceShape(parsed);
+  if (!validShape(shaped)) {
+    t = await callGemini(base64, prompt(true));
+    parsed = safeParse(t);
+    shaped = coerceShape(parsed);
+  }
+  if (!validShape(shaped)) {
+    return { dish: "알 수 없음", calories: 0, protein: 0, fat: 0, carbs: 0 };
+  }
+  const totals = reconcileTotals(shaped);
+  return {
+    dish: shaped.dish,
+    calories: totals.calories,
+    protein: totals.protein,
+    fat: totals.fat,
+    carbs: totals.carbs
+  };
 }

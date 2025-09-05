@@ -13,6 +13,10 @@ import { useAuth } from '../context/AuthContext';
 import { apiPost, API_BASE_DEBUG } from '../config/api.js';
 import { calcBMI, classifyBMI } from '../utils/bmi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+
+const FONT = 'DungGeunMo';
 
 const isValidEmail = (v = '') => {
   const s = String(v).trim();
@@ -20,6 +24,11 @@ const isValidEmail = (v = '') => {
 };
 
 export default function SignupScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const [fontsLoaded] = useFonts({
+    [FONT]: require('../../assets/fonts/DungGeunMo.otf'),
+  });
+
   let auth = null;
   try {
     auth = useAuth?.();
@@ -46,11 +55,9 @@ export default function SignupScreen({ navigation }) {
     if (!id || !password || !weight || !age || !gender || !height) {
       return Alert.alert('필수 입력', '모든 항목을 입력해 주세요.');
     }
-
     if (!isValidEmail(id)) {
       return Alert.alert('형식 오류', '이메일 형식이 올바르지 않습니다.');
     }
-
     if (String(password).length < 8) {
       return Alert.alert('형식 오류', '비밀번호는 8자리 이상이어야 합니다.');
     }
@@ -78,13 +85,8 @@ export default function SignupScreen({ navigation }) {
         console.log('▶ 요청:', endpoint);
         console.log('▶ 보낼 데이터:', payload);
       }
-
-      const ok = auth?.signup
-        ? await auth.signup(payload)
-        : await signupFallback(payload);
-
+      const ok = auth?.signup ? await auth.signup(payload) : await signupFallback(payload);
       if (ok) {
-        // ✅ GoalScreen 자동 기입용 임시 저장
         await AsyncStorage.setItem(
           'goal_draft',
           JSON.stringify({
@@ -94,7 +96,6 @@ export default function SignupScreen({ navigation }) {
             gender: payload.gender,
           })
         );
-
         const bmi = calcBMI(payload.weight, payload.height);
         const category = classifyBMI(bmi);
         Alert.alert('성공', `회원가입 완료! BMI: ${bmi}`);
@@ -109,14 +110,41 @@ export default function SignupScreen({ navigation }) {
     }
   };
 
+  if (!fontsLoaded) return null;
+
+  const inputStyle = {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    fontFamily: FONT,
+  };
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: '#fff' }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 24, fontWeight: '700' }}>Sign Up</Text>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 24,
+          paddingTop: insets.top + 80,
+          gap: 12,
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text
+          style={{
+            fontSize: 36,
+            fontFamily: FONT,
+            marginBottom: 20,
+            textAlign: 'center',
+          }}
+        >
+          SIGNUP
+        </Text>
 
         <TextInput
           value={id}
@@ -126,12 +154,7 @@ export default function SignupScreen({ navigation }) {
           autoCorrect={false}
           keyboardType="email-address"
           inputMode="email"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
         />
 
         <TextInput
@@ -140,25 +163,15 @@ export default function SignupScreen({ navigation }) {
           placeholder="비밀번호 (8자리 이상)"
           secureTextEntry
           autoCapitalize="none"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
         />
 
         <TextInput
           value={age}
           onChangeText={setAge}
-          placeholder="Age"
+          placeholder="나이"
           keyboardType="numeric"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
         />
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -173,6 +186,7 @@ export default function SignupScreen({ navigation }) {
           >
             <Text
               style={{
+                fontFamily: FONT,
                 color: gender === 'F' ? '#fff' : '#111',
                 textAlign: 'center',
               }}
@@ -191,6 +205,7 @@ export default function SignupScreen({ navigation }) {
           >
             <Text
               style={{
+                fontFamily: FONT,
                 color: gender === 'M' ? '#fff' : '#111',
                 textAlign: 'center',
               }}
@@ -203,27 +218,17 @@ export default function SignupScreen({ navigation }) {
         <TextInput
           value={weight}
           onChangeText={setWeight}
-          placeholder="Weight (kg)"
+          placeholder="체중 (kg)"
           keyboardType="numeric"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
         />
 
         <TextInput
           value={height}
           onChangeText={setHeight}
-          placeholder="Height (cm)"
+          placeholder="키 (cm)"
           keyboardType="numeric"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 10,
-            padding: 12,
-          }}
+          style={inputStyle}
         />
 
         <TouchableOpacity
@@ -236,8 +241,8 @@ export default function SignupScreen({ navigation }) {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          <Text style={{ color: '#fff', textAlign: 'center' }}>
-            {loading ? 'Submitting…' : 'Create Account'}
+          <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>
+            {loading ? '처리 중…' : '계정 만들기'}
           </Text>
         </TouchableOpacity>
 
@@ -249,9 +254,9 @@ export default function SignupScreen({ navigation }) {
             marginTop: 8,
           }}
         >
-          <Text style={{ color: '#6b7280' }}>이미 계정이 있나요? </Text>
+          <Text style={{ color: '#6b7280', fontFamily: FONT }}>이미 계정이 있나요? </Text>
           <TouchableOpacity onPress={() => navigation.replace('Login')}>
-            <Text style={{ color: '#2563eb', fontWeight: '700' }}>로그인</Text>
+            <Text style={{ color: '#2563eb', fontFamily: FONT }}>로그인</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
