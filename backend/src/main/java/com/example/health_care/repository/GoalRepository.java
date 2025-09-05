@@ -10,7 +10,7 @@ public interface GoalRepository extends JpaRepository <GoalEntity, Long> {
     // 고객이 목표를 최초 설정 한 후 다시 수정했을 때 최신 목표 가져오기
     List<GoalEntity> findByCustomer_IdxOrderByIdxDesc(Long customerIdx);
 
-    Optional<GoalEntity> findByCustomer_Id(String customerId);
+    Optional<GoalEntity> findByCustomer_Idx(Long idx);
     
     boolean existsByCustomer_Id(String customerId);
 

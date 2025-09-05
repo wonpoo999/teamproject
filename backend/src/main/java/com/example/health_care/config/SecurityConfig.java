@@ -44,15 +44,14 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new CorsFilter(corsConfig.corsConfigurationSource()),
-                        UsernamePasswordAuthenticationFilter.class) // 추가된 부분
+                .addFilter(new CorsFilter(corsConfig.corsConfigurationSource()))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)// 추가된 부분
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup").permitAll()
-                        .requestMatchers("/api/auth/logout","/body").authenticated() // 로그아웃, 바디프로필 추가
+                        .requestMatchers("/api/auth/logout","/body","/api/profile").authenticated() // 로그아웃, 바디프로필, 프로필 추가
                         .anyRequest().authenticated()
                 )
                 // 폼/베이직 로그인 비활성
