@@ -16,6 +16,9 @@ const TAUNTS = {
   unavailable: ['위치 권한부터 허락하고 훈수 두자','GPS가 못 잡아도 핑계는 잘 잡네','체감 10km? 체감은 자유, 기록은 냉정','장비 탓 금지, 본인 탓 가능','설정 안 열면 거리도 안 열림']
 }
 
+
+
+
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function dayKey(d=new Date()){const t=new Date(d);t.setHours(0,0,0,0);return `dist:${t.toISOString().slice(0,10)}`}
 function haversine(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
@@ -82,7 +85,7 @@ export default function QuestScreen(){
       <View style={{paddingTop:insets.top+80,paddingHorizontal:18,gap:16}}>
         <View style={styles.card}>
           <Text style={styles.title}>오늘의 퀘스트</Text>
-          <Text style={styles.questMain}>{goalKm}km 걷으시오</Text>
+          <Text style={styles.questMain}>{goalKm}km 걸으시오</Text>
           <View style={styles.barWrap}>
             <Animated.View style={[styles.barFill,{width}]}/>
             <Text style={styles.barText}>{km} / {goalKm} km</Text>
