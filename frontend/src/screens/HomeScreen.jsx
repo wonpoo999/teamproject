@@ -101,8 +101,11 @@ export default function HomeScreen({ route }) {
               to="Home"
               onPress={() => nav.navigate('Profile')}
             />
-            <IconLabeled iconSrc={require('../../assets/icons/camera.png')} labelSrc={require('../../assets/icons/camera_.png')} to="Camera" />
-            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} labelSrc={require('../../assets/icons/setting_.png')} to="Settings" />
+            <IconLabeled
+              iconSrc={require('../../assets/icons/setting.png')}
+              labelSrc={require('../../assets/icons/setting_.png')}
+              to="Settings"
+            />
           </View>
         </View>
       </View>
