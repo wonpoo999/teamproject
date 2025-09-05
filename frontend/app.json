@@ -1,5 +1,13 @@
 {
-  "plugins": [
-    "expo-secure-store"
-  ]
+  "expo": {
+    "plugins": ["expo-secure-store"],
+    "android": {
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "ios": {
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "산책 거리 측정을 위해 위치를 사용합니다."
+      }
+    }
+  }
 }

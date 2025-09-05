@@ -69,10 +69,10 @@ export default function HomeScreen({ route }) {
 
   if (!fontsLoaded) return null
 
-  const IconLabeled = ({ iconSrc, labelSrc, to, onPress }) => (
+  const IconLabeled = ({ iconSrc, label, to, onPress }) => (
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center' }}>
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
-      <Image source={labelSrc} style={{ width: ICON_SIZE + 24, height: LABEL_SIZE, resizeMode: 'contain', marginTop: -OVERLAP }} />
+      <Text style={styles.labelText}>{label}</Text>
     </Pressable>
   )
 
@@ -97,13 +97,17 @@ export default function HomeScreen({ route }) {
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled
               iconSrc={require('../../assets/icons/profile.png')}
-              labelSrc={require('../../assets/icons/profile_.png')}
-              to="Home"
-              onPress={() => nav.navigate('Profile')}
+              label="PROFILE"
+              to="Profile"
+            />
+            <IconLabeled
+              iconSrc={require('../../assets/icons/quest.png')}
+              label="QUEST"
+              to="Quest"
             />
             <IconLabeled
               iconSrc={require('../../assets/icons/setting.png')}
-              labelSrc={require('../../assets/icons/setting_.png')}
+              label="SETTINGS"
               to="Settings"
             />
           </View>
@@ -138,7 +142,6 @@ const styles = StyleSheet.create({
   gaugeContainer: {
     width: '65%',
     height: 20,
-    // backgroundColor: 'white',
     borderWidth: 2,
     borderColor: 'black',
     borderRadius: 8,
@@ -159,5 +162,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: FONT,
     includeFontPadding: false
-  }
+  },
+labelText: {
+  fontSize: 18,
+  marginTop: -16,          
+  fontFamily: FONT,
+  color: 'tomato',
+  includeFontPadding: false,
+  textAlign: 'center',
+}
 })
