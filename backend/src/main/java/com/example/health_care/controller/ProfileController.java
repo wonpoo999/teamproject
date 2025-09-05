@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api") // 프로필 전용 경로
+@RequestMapping("/api/profile") // 프로필 전용 경로
 public class ProfileController {
 
     private final CustomersService customersService;
 
     // 프로필 정보 조회 API (GET api/profile)
-    @GetMapping("/profile")
+    @GetMapping
     public ResponseEntity<CustomersProfileDTO> getCustomerProfile(Authentication authentication) {
         String customerId = authentication.getName();
         CustomersProfileDTO cpd = customersService.getCustomerProfile(customerId);
@@ -30,7 +30,7 @@ public class ProfileController {
     }
 
     // 프로필 및 목표 정보 수정 API (PUT api/profile)
-    @PutMapping("/profile/${customerId}")
+    @PutMapping
     public ResponseEntity<Void> updateProfileAndGoals(
             @RequestBody UpdateAccountRequest updateRequest,
             Authentication authentication) {
