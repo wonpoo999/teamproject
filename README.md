@@ -33,7 +33,7 @@ frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니�
 #### 음식 / 영양학 데이터 API
 [Nutirition API - 영양정보 및 음식 API](https://api-ninjas.com/api/nutrition)<br>
 [USDA FoodData Central - 미농무부 식품데이터 센터 API](https://fdc.nal.usda.gov/api-guide)<br>
-[식품의약품안전처 - 행정안전부 공공데이터포털 식품영양정보 Open API](https://various.foodsafetykorea.go.kr/nutrient/industry/openApi/info.do)<br>
-
+[식품의약품안전처 - 행정안전부 공공데이터포털 식품영양정보 Open API](https://www.data.go.kr/tcs/dss/selectStdDataDetailView.do#tab_layer_open)<br>
+[Fatsecret API](https://platform.fatsecret.com/api-demo)<br>
 #### DataBase (CSV,JSON...etc)
 [전국통합식품영양성분정보(음식)표준데이터](https://www.data.go.kr/data/15100070/standard.do)<br>
