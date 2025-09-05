@@ -38,6 +38,10 @@ function AuthStack() {
 
 function AppStack({ initialRouteName = 'Home' }) {
   return (
+<<<<<<< HEAD
+=======
+
+>>>>>>> 399478e911eb9f5286b4b6463c4d9ecca449d738
     <Stack.Navigator screenOptions={commonHeader} initialRouteName={initialRouteName}>
       <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Goal" component={GoalScreen} />
@@ -45,7 +49,11 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="DietLog" component={DietLogScreen} />
       <Stack.Screen name="Data" component={DataScreen} />
+<<<<<<< HEAD
       <Stack.Screen name="Profile" component={ProfileScreen} />
+=======
+
+>>>>>>> 399478e911eb9f5286b4b6463c4d9ecca449d738
     </Stack.Navigator>
   )
 }
