@@ -48,7 +48,6 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Data" component={DataScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Quest" component={QuestScreen} />
-
     </Stack.Navigator>
   )
 }

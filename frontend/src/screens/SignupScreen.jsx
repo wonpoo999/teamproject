@@ -109,6 +109,7 @@ export default function SignupScreen({ navigation }) {
         );
         const bmi = calcBMI(payload.weight, payload.height);
         const category = classifyBMI(bmi);
+        await AsyncStorage.setItem('@avatar/category_prefill', String(category));
         Alert.alert('성공', `회원가입 완료! BMI: ${bmi}`);
         navigation.replace('Login', { bmi, category });
       } else {
