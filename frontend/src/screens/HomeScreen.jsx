@@ -1,24 +1,24 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { View, ImageBackground, Text, Pressable, Image, StyleSheet, Animated } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import AvatarByBMI from '../components/AvatarByBMI'
-import { initCalorieData } from '../utils/calorieStorage'
+import { initCalorieData, setTargetCalories } from '../utils/calorieStorage'
 import { useFonts } from 'expo-font'
+import { useAuth } from '../context/AuthContext'
+import { apiGet } from '../config/api'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { calcBMI, classifyBMI } from '../utils/bmi'
 
 const ICON_SIZE = 96
-const LABEL_SIZE = 70
-const OVERLAP = 50
 const FONT = 'DungGeunMo'
 
 function CalorieGauge({ current, target }) {
   const r = target > 0 ? current / target : 0
   const greenTo = Math.min(Math.max(r, 0), 1)
   const redTo = r > 1 ? Math.min(r - 1, 1) : 0
-
   const animatedGreen = useRef(new Animated.Value(0)).current
   const animatedRed = useRef(new Animated.Value(0)).current
-
   useEffect(() => {
     if (redTo > 0) {
       animatedGreen.stopAnimation()
@@ -30,42 +30,68 @@ function CalorieGauge({ current, target }) {
       Animated.timing(animatedGreen, { toValue: greenTo, duration: 600, useNativeDriver: false }).start()
     }
   }, [greenTo, redTo])
-
   const widthGreen = animatedGreen.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
   const widthRed = animatedRed.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
-
   return (
     <View style={styles.gaugeContainer}>
       <Animated.View style={[styles.gaugeFill, { width: widthGreen, backgroundColor: 'rgba(34,197,94,0.8)' }]} />
       <Animated.View style={[styles.gaugeFill, { right: 0, width: widthRed, backgroundColor: 'rgba(239,68,68,0.8)' }]} />
-      <View style={styles.gaugeTextWrap}>
-        <Text style={styles.gaugeText}>{current}/{target} kcal</Text>
-      </View>
+      <View style={styles.gaugeTextWrap}><Text style={styles.gaugeText}>{current}/{target} kcal</Text></View>
     </View>
   )
 }
 
-export default function HomeScreen({ route }) {
+export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const nav = useNavigation()
-  const category = route?.params?.category ?? 'normal'
+  const { user } = useAuth()
+  const [category, setCategory] = useState('normal')
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
 
-  const loadData = async () => {
-    const { target, current } = await initCalorieData()
+  const loadLocal = useCallback(async () => {
+    const { target, current } = await initCalorieData(user?.id)
     setTarget(target)
     setCurrent(current)
-  }
+  }, [user?.id])
 
-  useEffect(() => {
-    loadData()
+  const applyPrefillCategory = useCallback(async () => {
+    try {
+      const v = await AsyncStorage.getItem('@avatar/category_prefill')
+      if (v) {
+        setCategory(v)
+        await AsyncStorage.removeItem('@avatar/category_prefill')
+      }
+    } catch {}
   }, [])
 
-  useFocusEffect(() => {
-    loadData()
-  })
+  const syncFromProfile = useCallback(async () => {
+    try {
+      const prof = await apiGet('/api/profile')
+      const t = prof?.targetCalories
+      if (typeof t === 'number' && !Number.isNaN(t) && t > 0) {
+        await setTargetCalories(t, user?.id)
+        setTarget(t)
+      }
+      const w = prof?.weight
+      const h = prof?.height
+      if (typeof w === 'number' && typeof h === 'number' && w > 0 && h > 0) {
+        const bmi = calcBMI(w, h)
+        const cat = classifyBMI(bmi)
+        setCategory(cat)
+      }
+    } catch {}
+  }, [user?.id])
+
+  const loadAll = useCallback(async () => {
+    await applyPrefillCategory()
+    await loadLocal()
+    await syncFromProfile()
+  }, [applyPrefillCategory, loadLocal, syncFromProfile])
+
+  useEffect(() => { loadAll() }, [loadAll])
+  useFocusEffect(useCallback(() => { loadAll() }, [loadAll]))
 
   if (!fontsLoaded) return null
 
@@ -79,12 +105,8 @@ export default function HomeScreen({ route }) {
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
-        <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
-          <Text style={styles.boxText}>🥗 식단 기록</Text>
-        </Pressable>
-        <Pressable style={styles.box} onPress={() => nav.navigate('Data')}>
-          <Text style={styles.boxText}>👀 한눈에</Text>
-        </Pressable>
+        <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}><Text style={styles.boxText}>🥗 식단 기록</Text></Pressable>
+        <Pressable style={styles.box} onPress={() => nav.navigate('Data')}><Text style={styles.boxText}>👀 한눈에</Text></Pressable>
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260, alignItems: 'center' }} pointerEvents="none">
@@ -95,21 +117,9 @@ export default function HomeScreen({ route }) {
         </View>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
-            <IconLabeled
-              iconSrc={require('../../assets/icons/profile.png')}
-              label="PROFILE"
-              to="Profile"
-            />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/quest.png')}
-              label="QUEST"
-              to="Quest"
-            />
-            <IconLabeled
-              iconSrc={require('../../assets/icons/setting.png')}
-              label="SETTINGS"
-              to="Settings"
-            />
+            <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label="PROFILE" to="Profile" />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="QUEST" to="Quest" />
+            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label="SETTINGS" to="Settings" />
           </View>
         </View>
       </View>
@@ -118,57 +128,12 @@ export default function HomeScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  topContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 11,
-    gap: 12
-  },
-  box: {
-    flex: 1,
-    height: 220,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 30,
-    padding: 20,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start'
-  },
-  boxText: {
-    fontSize: 22,
-    height: 220,
-    color: '#333',
-    fontFamily: FONT,
-    includeFontPadding: false
-  },
-  gaugeContainer: {
-    width: '65%',
-    height: 20,
-    borderWidth: 2,
-    borderColor: 'black',
-    borderRadius: 8,
-    overflow: 'hidden'
-  },
-  gaugeFill: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0
-  },
-  gaugeTextWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  gaugeText: {
-    color: 'gray',
-    fontSize: 12,
-    fontFamily: FONT,
-    includeFontPadding: false
-  },
-labelText: {
-  fontSize: 18,
-  marginTop: -16,          
-  fontFamily: FONT,
-  color: 'tomato',
-  includeFontPadding: false,
-  textAlign: 'center',
-}
+  topContainer: { flexDirection: 'row', paddingHorizontal: 11, gap: 12 },
+  box: { flex: 1, height: 220, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 30, padding: 20, justifyContent: 'flex-start', alignItems: 'flex-start' },
+  boxText: { fontSize: 22, height: 220, color: '#333', fontFamily: FONT, includeFontPadding: false },
+  gaugeContainer: { width: '65%', height: 20, borderWidth: 2, borderColor: 'black', borderRadius: 8, overflow: 'hidden' },
+  gaugeFill: { position: 'absolute', top: 0, bottom: 0 },
+  gaugeTextWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  gaugeText: { color: 'gray', fontSize: 12, fontFamily: FONT, includeFontPadding: false },
+  labelText: { fontSize: 18, marginTop: -16, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center' },
 })

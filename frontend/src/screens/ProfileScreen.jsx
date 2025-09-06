@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
 import { useAuth } from '../context/AuthContext'
 import { ORIGIN } from '../config/api'
 
 export default function ProfileScreen() {
   const auth = useAuth()
+  const userId = auth?.user?.id || null
 
   const [current, setCurrent] = useState({ id: '', weight: '', height: '', age: '', gender: '' })
   const [editingAccount, setEditingAccount] = useState(false)
@@ -33,15 +35,28 @@ export default function ProfileScreen() {
   const [getEndpoint, setGetEndpoint] = useState(null)
 
   const getAuth = useCallback(async () => {
-    const ctxToken = auth?.token || auth?.authToken
     const ctxType = auth?.tokenType || auth?.token_type || 'Bearer'
-    if (ctxToken) return { token: ctxToken, type: ctxType }
-    const keys = ['token', 'authToken', 'accessToken', '@auth/token']
+    try {
+      const s = await SecureStore.getItemAsync('accessToken')
+      if (s) {
+        const m = String(s).match(/^(Bearer|Basic|Token)\s+(.+)$/i)
+        return { token: m ? m[2] : s, type: m ? m[1] : 'Bearer' }
+      }
+    } catch {}
+    const keys = ['token', 'authToken', '@auth/token']
     for (const k of keys) {
       const v = await AsyncStorage.getItem(k)
-      if (v) return { token: v, type: 'Bearer' }
+      if (v) {
+        const m = String(v).match(/^(Bearer|Basic|Token)\s+(.+)$/i)
+        return { token: m ? m[2] : v, type: m ? m[1] : 'Bearer' }
+      }
     }
-    return { token: null, type: 'Bearer' }
+    return { token: null, type: ctxType }
+  }, [auth])
+
+  const logoutToWelcome = useCallback(async () => {
+    try { await AsyncStorage.multiRemove(['token','authToken','accessToken','@auth/token','@profile/prefill']) } catch {}
+    try { await auth?.logout?.() } catch {}
   }, [auth])
 
   const fetchFirstOK = useCallback(
@@ -66,7 +81,7 @@ export default function ProfileScreen() {
           }
           if (res.status === 401 || res.status === 403) {
             const t = await res.text()
-            throw new Error(t || '권한이 없습니다. 다시 로그인해 주세요.')
+            throw new Error(t || '401')
           }
           lastErr = new Error(await res.text())
         } catch (e) {
@@ -107,29 +122,34 @@ export default function ProfileScreen() {
       const raw = await AsyncStorage.getItem('@profile/prefill')
       if (raw) {
         const prefill = JSON.parse(raw)
-        applyToState(prefill)
-        setLoading(false)
-        showedPrefill = true
+        if (!prefill?.id || !userId || String(prefill.id) === String(userId)) {
+          applyToState(prefill)
+          setLoading(false)
+          showedPrefill = true
+        } else {
+          await AsyncStorage.removeItem('@profile/prefill')
+        }
       }
     } catch {}
 
     try {
-      const { data, used } = await fetchFirstOK('GET', [
-        '/api/profile',
-        '/api/profile/',
-      ])
+      const { data, used } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/'])
       setGetEndpoint(used || '/api/profile')
       if (data) applyToState(data)
       setLoading(false)
       try { await AsyncStorage.removeItem('@profile/prefill') } catch {}
     } catch (e) {
+      const msg = (e?.message || '').toLowerCase()
+      if (msg.includes('forbidden') || msg.includes('401') || msg.includes('403')) {
+        await logoutToWelcome()
+        return
+      }
       if (!showedPrefill) {
-        const msg = (e?.message || '').toLowerCase()
-        setErrProfile(msg.includes('forbidden') || msg.includes('401') || msg.includes('403') ? '프로필을 불러오지 못했습니다. 다시 로그인해 주세요.' : '프로필을 불러오지 못했습니다.')
+        setErrProfile('프로필을 불러오지 못했습니다.')
         setLoading(false)
       }
     }
-  }, [applyToState, fetchFirstOK])
+  }, [applyToState, fetchFirstOK, logoutToWelcome, userId])
 
   useEffect(() => { load() }, [load])
 
@@ -148,11 +168,7 @@ export default function ProfileScreen() {
         if (form.newPassword !== form.confirmPassword) throw new Error('새 비밀번호 확인이 일치하지 않습니다.')
       }
 
-      const payload = {
-        id: nextId,
-        ...(changingPw ? { newPassword: form.newPassword } : {}),
-      }
-
+      const payload = { id: nextId, ...(changingPw ? { newPassword: form.newPassword } : {}) }
       const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean)
       await fetchFirstOK('PUT', candidates, payload)
 
@@ -164,7 +180,11 @@ export default function ProfileScreen() {
       await load()
     } catch (e) {
       const msg = (e?.message || '').toLowerCase()
-      setErrAccount(msg.includes('forbidden') ? '권한이 없습니다. 다시 로그인해 주세요.' : e?.message || '계정 정보 수정 실패')
+      if (msg.includes('forbidden') || msg.includes('401') || msg.includes('403')) {
+        await logoutToWelcome()
+        return
+      }
+      setErrAccount(e?.message || '계정 정보 수정 실패')
     } finally {
       setSavingAccount(false)
     }
@@ -199,7 +219,11 @@ export default function ProfileScreen() {
       await load()
     } catch (e) {
       const msg = (e?.message || '').toLowerCase()
-      setErrProfile(msg.includes('forbidden') ? '권한이 없습니다. 다시 로그인해 주세요.' : e?.message || '프로필 수정 실패')
+      if (msg.includes('forbidden') || msg.includes('401') || msg.includes('403')) {
+        await logoutToWelcome()
+        return
+      }
+      setErrProfile(e?.message || '프로필 수정 실패')
     } finally {
       setSavingProfile(false)
     }

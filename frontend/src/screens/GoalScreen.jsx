@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { apiPost, ORIGIN } from '../config/api.js'
 import { useAuth } from '../context/AuthContext'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -93,14 +85,9 @@ export default function GoalScreen({ navigation }) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ flex: 1, padding: 24, gap: 14, justifyContent: 'center' }}>
-        <Text style={{ fontSize: 26, textAlign: 'center', fontFamily: FONT, marginBottom: 12 }}>
-          목표 설정
-        </Text>
+        <Text style={{ fontSize: 26, textAlign: 'center', fontFamily: FONT, marginBottom: 12 }}>목표 설정</Text>
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
@@ -165,17 +152,9 @@ export default function GoalScreen({ navigation }) {
         <TouchableOpacity
           onPress={submit}
           disabled={saving}
-          style={{
-            backgroundColor: '#ef4444',
-            padding: 16,
-            borderRadius: 12,
-            alignItems: 'center',
-            marginTop: 8,
-          }}
+          style={{ backgroundColor: '#ef4444', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 }}
         >
-          <Text style={{ color: 'white', fontFamily: FONT }}>
-            {saving ? '저장 중...' : '저장하고 시작하기'}
-          </Text>
+          <Text style={{ color: 'white', fontFamily: FONT }}>{saving ? '저장 중...' : '저장하고 시작하기'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={skip} style={{ alignItems: 'center', padding: 10 }}>
