@@ -1,23 +1,15 @@
 package com.example.health_care.security;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Date;
-
 import javax.crypto.SecretKey;
-
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 import com.example.health_care.service.CustomersService;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,14 +19,15 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
+    @Lazy
     private final CustomersService cds;
 
     private static final String SECRET_KEY = "756be4cf9581add13ddb3ab3e2f1e75f27a0661af1c1225a89ef9a1d44d3f03b";
     private int jwtExpirationInMs = 24 * 60 * 60 * 1000;
 
     private SecretKey getSecretKey() {
-    return io.jsonwebtoken.security.Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-}
+        return io.jsonwebtoken.security.Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    }
 
     public String createToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
@@ -87,32 +80,33 @@ public class JwtTokenProvider {
     }
 
     public String getUsername(String token) {
-    try {
-        return Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    } catch (Exception e) {
-        return null;
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            return null;
+        }
     }
-}
 
-public LocalDateTime getExpiry(String token) {
-    try {
-        Date exp = Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration();
-        return exp == null ? null : exp.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-    } catch (Exception e) {
-        return null;
+    public LocalDateTime getExpiry(String token) {
+        try {
+            Date exp = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getExpiration();
+            return exp == null ? null
+                    : exp.toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime();
+        } catch (Exception e) {
+            return null;
+        }
+        //
     }
-    //
-}
 }
