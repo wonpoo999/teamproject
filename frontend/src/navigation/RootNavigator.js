@@ -16,6 +16,9 @@ import QuestScreen from '../screens/QuestScreen'
 import RankingScreen from '../screens/RankingScreen'
 import HealthyCatchGameScreen from '../screens/HealthyCatchGameScreen'
 
+// >>> [ADDED] 복구 질문 설정 화면 라우트 추가
+import RecoverySetup from '../screens/RecoverySetup'
+
 const Stack = createNativeStackNavigator()
 
 const commonHeader = {
@@ -35,6 +38,7 @@ function AuthStack() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      {/* >>> [FIX] Navigator 직속에는 Screen/Group/Fragment만! 공백/문자열/뷰 금지 */}
     </Stack.Navigator>
   )
 }
@@ -51,6 +55,10 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Quest" component={QuestScreen} />
       <Stack.Screen name="Ranking" component={RankingScreen} />
+
+      {/* >>> [ADDED] 복구 질문 설정 라우팅 */}
+      <Stack.Screen name="RecoverySetup" component={RecoverySetup} />
+      {/* >>> [FIX] 여기에도 공백/문자열/뷰 절대 넣지 마세요 */}
       <Stack.Screen name="HealthyCatch" component={HealthyCatchGameScreen} options={{ headerShown:false }} />
     </Stack.Navigator>
   )

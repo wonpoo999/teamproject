@@ -2,6 +2,7 @@ package com.example.health_care.controller;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.Map; // >>> [ADDED] 401 응답 JSON 생성을 위해
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +61,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) { // >>> [CHANGED] 타입만 와일드카드
         try {
             // 사용자 인증
             Authentication authentication = authenticationManager.authenticate(
@@ -83,8 +84,13 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            throw new RuntimeException("Invalid credentials");
-
+            // >>> [ADDED] 로그인 실패 시 401 + 명확한 메시지(JSON) 반환
+            return ResponseEntity.status(401).body(
+                Map.of(
+                    "error", "invalid_credentials",
+                    "message", "아이디 또는 비밀번호가 올바르지 않습니다."
+                )
+            );
         }
     }
 

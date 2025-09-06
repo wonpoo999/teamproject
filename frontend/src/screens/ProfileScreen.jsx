@@ -7,6 +7,9 @@ import { useAuth } from '../context/AuthContext'
 import { ORIGIN } from '../config/api'
 import { useFonts } from 'expo-font'
 
+// >>> [ADDED] 네비게이션 훅 (복구 설정으로 이동)
+import { useNavigation } from '@react-navigation/native'
+
 const FONT = 'DungGeunMo'
 
 if (Text.defaultProps == null) Text.defaultProps = {}
@@ -26,6 +29,8 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
   const auth = useAuth()
   const userId = auth?.user?.id || null
+  // >>> [ADDED]
+  const nav = useNavigation()
 
   const [current, setCurrent] = useState({ id: '', weight: '', height: '', age: '', gender: '' })
   const [editingAccount, setEditingAccount] = useState(false)
@@ -278,6 +283,14 @@ export default function ProfileScreen() {
                 {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
                 <Pressable onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true) }} style={styles.primaryBtn}>
                   <Text style={styles.primaryBtnText}>수정</Text>
+                </Pressable>
+
+                {/* >>> [ADDED] 복구 질문 설정 진입 버튼 */}
+                <Pressable
+                  onPress={() => nav.navigate('RecoverySetup')}
+                  style={styles.ghostBtn}
+                >
+                  <Text style={styles.ghostBtnText}>복구 질문 설정</Text>
                 </Pressable>
               </>
             ) : (

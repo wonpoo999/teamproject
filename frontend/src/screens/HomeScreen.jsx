@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext'
 import { apiGet } from '../config/api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { calcBMI, classifyBMI } from '../utils/bmi'
+// >>> [ADDED] 다국어 컨텍스트
+import { useI18n } from '../i18n/I18nContext'
 
 const ICON_SIZE = 72
 const FONT = 'DungGeunMo'
@@ -44,6 +46,9 @@ function CalorieGauge({ current, target }) {
   )
 }
 
+// >>> [ADDED] 날짜 키 유틸 (0시 리셋 배지에 사용)
+function dayKey(d = new Date()) { const t = new Date(d); t.setHours(0,0,0,0); return t.toISOString().slice(0,10) }
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const nav = useNavigation()
@@ -52,7 +57,6 @@ export default function HomeScreen() {
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
-  const [eggCount, setEggCount] = useState(0)
 
   const loadLocal = useCallback(async () => {
     const { target, current } = await initCalorieData(user?.id)
@@ -73,10 +77,10 @@ export default function HomeScreen() {
   const syncFromProfile = useCallback(async () => {
     try {
       const prof = await apiGet('/api/profile')
-      const t = prof?.targetCalories
-      if (typeof t === 'number' && !Number.isNaN(t) && t > 0) {
-        await setTargetCalories(t, user?.id)
-        setTarget(t)
+      const tcal = prof?.targetCalories
+      if (typeof tcal === 'number' && !Number.isNaN(tcal) && tcal > 0) {
+        await setTargetCalories(tcal, user?.id)
+        setTarget(tcal)
       }
       const w = prof?.weight
       const h = prof?.height
@@ -88,20 +92,43 @@ export default function HomeScreen() {
     } catch {}
   }, [user?.id])
 
+  // >>> [ADDED] 퀘스트 배지 상태 로드
+  const loadQuestBadge = useCallback(async () => {
+    try {
+      const today = dayKey()
+      const v = await AsyncStorage.getItem('@quest/new_date')
+      setQuestNew(v !== today) // 오늘의 퀘스트를 아직 열어보지 않았으면 *
+    } catch {}
+  }, [])
+
   const loadAll = useCallback(async () => {
     await applyPrefillCategory()
     await loadLocal()
     await syncFromProfile()
-  }, [applyPrefillCategory, loadLocal, syncFromProfile])
+    // >>> [ADDED]
+    await loadQuestBadge()
+  }, [applyPrefillCategory, loadLocal, syncFromProfile, loadQuestBadge])
 
   useEffect(() => { loadAll() }, [loadAll])
   useFocusEffect(useCallback(() => { loadAll() }, [loadAll]))
 
   if (!fontsLoaded) return null
 
-  const IconLabeled = ({ iconSrc, label, to, onPress }) => (
+  // >>> [CHANGED] 라벨 i18n + 퀘스트 배지 지원
+  const IconLabeled = ({ iconSrc, label, to, onPress, showBadge }) => (
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center', width: ICON_SIZE + 8 }}>
-      <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
+      <View style={{ position: 'relative' }}>
+        <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
+        {/* >>> [ADDED] 모서리 빨간 * 뱃지 */}
+        {showBadge ? (
+          <View style={{
+            position: 'absolute', right: -4, top: -4, width: 20, height: 20,
+            borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <Text style={{ color: '#fff', fontFamily: FONT, fontSize: 14 }}>*</Text>
+          </View>
+        ) : null}
+      </View>
       <Text style={styles.labelText} numberOfLines={1} allowFontScaling={false}>{label}</Text>
     </Pressable>
   )
@@ -109,11 +136,12 @@ export default function HomeScreen() {
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
+        {/* >>> [CHANGED] 다국어 치환 */}
         <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
-          <Text style={styles.boxText} allowFontScaling={false}>🥗 식단 기록</Text>
+          <Text style={styles.boxText} allowFontScaling={false}>{t('HOME_MEAL')}</Text>
         </Pressable>
         <Pressable style={styles.box} onPress={() => nav.navigate('Data')}>
-          <Text style={styles.boxText} allowFontScaling={false}>👀 한눈에</Text>
+          <Text style={styles.boxText} allowFontScaling={false}>{t('HOME_DATA')}</Text>
         </Pressable>
       </View>
       <View style={{ flex: 1 }}>
@@ -138,10 +166,11 @@ export default function HomeScreen() {
         />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
-            <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label="PROFILE" to="Profile" />
-            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="QUEST" to="Quest" />
-            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="RANKING" to="Ranking" />
-            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label="SETTINGS" to="Settings" />
+            {/* >>> [CHANGED] 라벨 i18n + 퀘스트 NEW 배지 only on Quest */}
+            <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label={t('PROFILE')} to="Profile" />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('QUEST')} to="Quest" showBadge={questNew} />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('RANKING')} to="Ranking" />
+            <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label={t('SETTINGS')} to="Settings" />
           </View>
         </View>
       </View>

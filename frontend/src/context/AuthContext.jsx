@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { decode as atob } from 'base-64'
 import { apiPost, setAuthToken, clearAuthToken } from '../config/api'
+import { useI18n } from '../i18n/I18nContext' // >>> [ADDED]
 
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
@@ -10,6 +11,7 @@ export const useAuth = () => useContext(Ctx)
 const goalKey = (userId) => `goalsetup_${String(userId || '').replace(/[^a-zA-Z0-9._-]/g, '_')}`
 
 export default function AuthProvider({ children }) {
+  const { t } = useI18n() // >>> [ADDED]
   const [ready, setReady] = useState(false)
   const [isAuthenticated, setAuthed] = useState(false)
   const [user, setUser] = useState(null)
@@ -63,17 +65,26 @@ export default function AuthProvider({ children }) {
   }, [])
 
   const login = async (id, password) => {
-    const res = await apiPost('/api/auth/login', { id, password })
-    const token = `${res.tokenType} ${res.token}`
-    await SecureStore.setItemAsync('accessToken', token)
-    await wipeLegacyTokens()
-    setAuthToken(token)
-    const userId = res.id ?? parseJwt(token).sub ?? id
-    setUser({ id: userId })
-    setAuthed(true)
-    try { await AsyncStorage.setItem('last_user_id', String(userId)) } catch {}
-    setNeedsGoalSetup(await loadGoalFlag(userId))
-    return true
+    try {
+      const res = await apiPost('/api/auth/login', { id, password })
+      const token = `${res.tokenType} ${res.token}`
+      await SecureStore.setItemAsync('accessToken', token)
+      await wipeLegacyTokens()
+      setAuthToken(token)
+      const userId = res.id ?? parseJwt(token).sub ?? id
+      setUser({ id: userId })
+      setAuthed(true)
+      try { await AsyncStorage.setItem('last_user_id', String(userId)) } catch {}
+      setNeedsGoalSetup(await loadGoalFlag(userId))
+      return true
+    } catch (e) {
+      // >>> [ADDED] 401/인증 실패 메시지 매핑
+      const msg = String(e?.message || '')
+      if (msg.includes('401') || /Invalid credentials|Unauthorized/i.test(msg)) {
+        throw new Error(t('INVALID_CREDENTIALS'))
+      }
+      throw e
+    }
   }
 
   const logout = async () => {

@@ -163,4 +163,12 @@ public class CustomersService implements UserDetailsService {
                         goalRepository.save(goalEntity);
                 }
         }
+         // >>> [ADDED] 복구/프로필 등에서 공용으로 쓰는 비밀번호 변경 유틸
+        @Transactional
+        public void updatePassword(String customerId, String newPassword) {
+                CustomersEntity user = customersRepository.findById(customerId)
+                                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다 : " + customerId));
+                user.setPassword(passwordEncoder.encode(newPassword));
+                customersRepository.save(user);
+        }
 }
