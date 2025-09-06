@@ -14,7 +14,7 @@ API 필수조건
 - 무료
 ---------------------------------------------
 <b>Node js 설치구문</b>
-- frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니다)
+frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니다)
 - npm install
 - npm i @react-navigation/native @react-navigation/native-stack
 - npx expo install react-native-screens react-native-safe-area-context
