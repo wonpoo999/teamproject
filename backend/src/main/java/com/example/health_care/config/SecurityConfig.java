@@ -21,56 +21,57 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 public class SecurityConfig {
 
-    private final CorsConfig corsConfig;
+        private final CorsConfig corsConfig;
 
-    // swagger 문서 접근 허용 목록
-    private static final String[] SWAGGER_WHITELIST = {
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
-    };
+        // swagger 문서 접근 허용 목록
+        private static final String[] SWAGGER_WHITELIST = {
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
+        };
 
-    // 공개 허용 (개발용)
-    private static final String[] PUBLIC_WHITELIST = {
-            "/api/ping", // 헬스 체크
-            "/api/auth/**", // 로그인/회원가입 등
-            "/error" // 스프링 기본 에러 엔드포인트
-    };
+        // 공개 허용 (개발용)
+        private static final String[] PUBLIC_WHITELIST = {
+                        "/api/ping", // 헬스 체크
+                        "/api/auth/**", // 로그인/회원가입 등
+                        "/error" // 스프링 기본 에러 엔드포인트
+        };
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
-        http
-                // corsConfig 빈에서 가져온 설정을 직접 사용
-                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilter(new CorsFilter(corsConfig.corsConfigurationSource()))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)// 추가된 부분
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(PUBLIC_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup").permitAll()
-                        .requestMatchers("/api/auth/logout","/body","/api/profile").authenticated() // 로그아웃, 바디프로필, 프로필 추가
-                        .anyRequest().authenticated()
-                )
-                // 폼/베이직 로그인 비활성
-                .httpBasic(b -> b.disable())
-                .formLogin(f -> f.disable());
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                        JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                http
+                                // corsConfig 빈에서 가져온 설정을 직접 사용
+                                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                .requestMatchers(PUBLIC_WHITELIST).permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/ranking").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup")
+                                                .permitAll()
+                                                .requestMatchers("/api/auth/logout", "/body", "/api/profile")
+                                                .authenticated() // 로그아웃, 바디프로필, 프로필 추가
+                                                .anyRequest().authenticated())
+                                // 폼/베이직 로그인 비활성
+                                .httpBasic(b -> b.disable())
+                                .formLogin(f -> f.disable());
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        throws Exception {
+                return authenticationConfiguration.getAuthenticationManager();
+        }
 
 }
