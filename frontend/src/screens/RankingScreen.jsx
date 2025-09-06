@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, ActivityIndicator, FlatList, RefreshControl, StyleSheet } from 'react-native'
+import { View, Text, ActivityIndicator, FlatList, RefreshControl, StyleSheet, ImageBackground } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFonts } from 'expo-font'
 import { apiGet } from '../config/api'
 
@@ -17,15 +18,14 @@ function maskEmail(v) {
 }
 
 export default function RankingScreen() {
+  const insets = useSafeAreaInsets()
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
 
-  const candidates = [
-    '/ranking',
-  ]
+  const candidates = ['/ranking']
 
   const pullIds = (arr) =>
     arr
@@ -105,38 +105,44 @@ export default function RankingScreen() {
 
   if (!fontsLoaded) return null
 
+  const contentTop = insets.top + 100
+
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-        <Text style={[styles.title, { marginTop: 8 }]}>RANKING</Text>
-      </View>
+      <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+        <View style={[styles.center, { paddingTop: contentTop }]}>
+          <ActivityIndicator />
+          <Text style={[styles.title, { marginTop: 8 }]}>RANKING</Text>
+        </View>
+      </ImageBackground>
     )
   }
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.title}>RANKING</Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <FlatList
-        data={items}
-        keyExtractor={(item, idx) => `${item}-${idx}`}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.rank}>{index + 1}</Text>
-            <Text style={styles.email}>{maskEmail(item)}</Text>
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.empty}>표시할 랭킹이 없습니다.</Text>}
-        contentContainerStyle={items.length === 0 ? { flex: 1, justifyContent: 'center', alignItems: 'center' } : null}
-      />
-    </View>
+    <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+      <View style={[styles.wrap, { paddingTop: contentTop }]}>
+        <Text style={styles.title}>RANKING</Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <FlatList
+          data={items}
+          keyExtractor={(item, idx) => `${item}-${idx}`}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          renderItem={({ item, index }) => (
+            <View style={styles.row}>
+              <Text style={styles.rank}>{index + 1}</Text>
+              <Text style={styles.email}>{maskEmail(item)}</Text>
+            </View>
+          )}
+          ListEmptyComponent={<Text style={styles.empty}>표시할 랭킹이 없습니다.</Text>}
+          contentContainerStyle={items.length === 0 ? { flex: 1, justifyContent: 'center', alignItems: 'center' } : { paddingBottom: 24 }}
+        />
+      </View>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, paddingTop: 24, paddingHorizontal: 16 },
+  wrap: { flex: 1, paddingHorizontal: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: FONT, fontSize: 28, textAlign: 'center', marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' },
