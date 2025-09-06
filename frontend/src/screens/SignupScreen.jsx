@@ -88,6 +88,17 @@ export default function SignupScreen({ navigation }) {
       const ok = auth?.signup ? await auth.signup(payload) : await signupFallback(payload);
       if (ok) {
         await AsyncStorage.setItem(
+          '@profile/prefill',
+          JSON.stringify({
+            id: payload.id,
+            email: payload.id,
+            weight: payload.weight,
+            height: payload.height,
+            age: payload.age,
+            gender: payload.gender,
+          })
+        );
+        await AsyncStorage.setItem(
           'goal_draft',
           JSON.stringify({
             weight: payload.weight,
