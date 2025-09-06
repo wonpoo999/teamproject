@@ -22,6 +22,7 @@ frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니�
 - npx expo install expo-secure-store
 - npm i base-64
 - npx expo install expo-location @react-native-async-storage/async-storage
+- npm install @react-native-community/datetimepicker
 - npx expo start
 
 

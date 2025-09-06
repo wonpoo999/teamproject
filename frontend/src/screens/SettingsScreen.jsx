@@ -9,7 +9,7 @@ export default function SettingsScreen() {
   const onLogout = async () => {
     await logout()
   }
-
+  // 이 부분에 언어 변경 버튼 구현 (누르면 언어 변경 되게) 및 효과음 on/off (버튼만 구현) 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 20, paddingBottom: 20, rowGap: 16 }}>
