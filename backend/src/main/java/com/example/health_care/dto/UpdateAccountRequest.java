@@ -14,6 +14,10 @@ public class UpdateAccountRequest {
     private String newPassword;
 
     // 프로필 변경 필드 (UpdateAccountProfileRequest에서 가져옴)
+    @Email
+    @NotBlank
+    private String id;
+
     @Positive
     @Digits(integer = 3, fraction = 1)
     private Double weight;
@@ -27,10 +31,6 @@ public class UpdateAccountRequest {
     @Positive
     @Digits(integer = 3, fraction = 1)
     private Double height;
-
-    @Email
-    @NotBlank
-    private String id;
 
     // 추가로 목표 몸무게, 목표 칼로리 등을 넣을 수 있습니다.
     @NotNull
