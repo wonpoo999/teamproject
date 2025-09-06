@@ -11,10 +11,14 @@ import {
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { useFonts } from 'expo-font'
+import { useI18n } from '../i18n/I18nContext' // >>> [ADDED]
+import { useNavigation } from '@react-navigation/native' // >>> [ADDED]
 
 const FONT = 'DungGeunMo'
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation: navProp }) {
+  const navigation = useNavigation() // >>> [ADDED]
+  const { t } = useI18n() // >>> [ADDED]
   const { login, needsGoalSetup } = useAuth()
   const [id, setId] = useState('')
   const [password, setPassword] = useState('')
@@ -28,13 +32,13 @@ export default function LoginScreen({ navigation }) {
   const onSubmit = async () => {
     if (loading) return
     if (!id || !password) {
-      Alert.alert('입력 필요', '아이디와 비밀번호를 입력해주세요.')
+      Alert.alert(t('INPUT_REQUIRED'), t('ENTER_ID_PW'))
       return
     }
     try {
       setLoading(true)
       const ok = await login(id.trim(), password)
-      if (!ok) throw new Error('로그인 실패')
+      if (!ok) throw new Error(t('TRY_AGAIN'))
 
       if (needsGoalSetup) {
         navigation.reset({ index: 0, routes: [{ name: 'Goal' }] })
@@ -42,7 +46,7 @@ export default function LoginScreen({ navigation }) {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
       }
     } catch (e) {
-      Alert.alert('로그인 실패', e?.message ?? '다시 시도해주세요.')
+      Alert.alert(t('LOGIN'), e?.message ?? t('TRY_AGAIN'))
     } finally {
       setLoading(false)
     }
@@ -79,13 +83,13 @@ export default function LoginScreen({ navigation }) {
             fontFamily: FONT,
           }}
         >
-          LOGIN
+          {t('LOGIN')}
         </Text>
 
         <TextInput
           value={id}
           onChangeText={setId}
-          placeholder="ID"
+          placeholder={t('EMAIL')}
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="username"
@@ -96,7 +100,7 @@ export default function LoginScreen({ navigation }) {
         <TextInput
           value={password}
           onChangeText={setPassword}
-          placeholder="Password"
+          placeholder={t('PASSWORD_MIN')}
           secureTextEntry
           textContentType="password"
           style={inputStyle}
@@ -121,8 +125,16 @@ export default function LoginScreen({ navigation }) {
               fontFamily: FONT,
             }}
           >
-            {loading ? '로그인 중…' : 'Login'}
+            {loading ? '...' : t('LOGIN')}
           </Text>
+        </TouchableOpacity>
+
+        {/* >>> [ADDED] 비밀번호 찾기 진입 */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Recover')}
+          style={{ alignItems: 'center', padding: 10 }}
+        >
+          <Text style={{ fontFamily: FONT, color: '#2563eb' }}>{t('RECOVERY')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

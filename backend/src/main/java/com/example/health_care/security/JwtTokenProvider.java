@@ -109,4 +109,29 @@ public class JwtTokenProvider {
         }
         //
     }
+
+    // >>> [ADDED] (비밀번호 재설정용) 15분짜리 단기 토큰 발급
+    public String createRecoveryToken(String userId) {
+        Date expiry = new Date(System.currentTimeMillis() + 15 * 60 * 1000);
+        return Jwts.builder()
+                .signWith(getSecretKey())
+                .subject(userId)
+                .issuer("com.example")
+                .issuedAt(new Date())
+                .expiration(expiry)
+                .claim("typ", "PW_RESET")
+                .compact();
+    }
+
+    // >>> [ADDED] 복구 토큰 검증 + 사용자ID 추출 (유형 체크)
+    public String validateAndGetUserFromRecoveryToken(String token) {
+        try {
+            Claims c = Jwts.parser().verifyWith(getSecretKey()).build()
+                    .parseSignedClaims(token).getPayload();
+            if (!"PW_RESET".equals(c.get("typ"))) return null;
+            return c.getSubject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

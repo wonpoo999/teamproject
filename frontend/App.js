@@ -1,3 +1,4 @@
+import { registerRootComponent } from 'expo';
 import React, { useMemo } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -7,6 +8,9 @@ import { useFonts } from 'expo-font';
 
 import RootNavigator from './src/navigation/RootNavigator';
 import AuthProvider, { useAuth } from './src/context/AuthContext';
+
+// >>> [ADDED] i18n 컨텍스트
+import { I18nProvider } from './src/i18n/I18nContext'; // <<< NEW
 
 function applyGlobalFont(fontFamily) {
   if (Text.__globalFontPatched) return;
@@ -42,7 +46,6 @@ export default function App() {
     DungGeunMo: require('./assets/fonts/DungGeunMo.otf'),
   });
 
-
   useMemo(() => {
     if (fontsLoaded) applyGlobalFont('DungGeunMo');
   }, [fontsLoaded]);
@@ -52,9 +55,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" backgroundColor="#111827" />
-      <AuthProvider>
-        <AppShell />
-      </AuthProvider>
+      {/* >>> [ADDED] I18nProvider로 전체 감싸기 */}
+      <I18nProvider> {/* <<< NEW */}
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
+      </I18nProvider> {/* <<< NEW */}
     </SafeAreaProvider>
   );
 }
@@ -64,3 +70,5 @@ const styles = StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000',
   },
 });
+
+registerRootComponent(App);
