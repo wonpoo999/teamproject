@@ -3,6 +3,8 @@ package com.example.health_care.controller;
 import com.example.health_care.service.CustomersService;
 import com.example.health_care.dto.BodyRequest;
 import com.example.health_care.dto.CustomersProfileDTO;
+import com.example.health_care.dto.UpdateAccountRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,15 +36,17 @@ public class GoalController {
             return ResponseEntity.notFound().build();
         }
     }
-
 @PostMapping
-    public ResponseEntity<String> handlePostBody(@RequestBody BodyRequest bodyRequest, Authentication authentication) {
-        log.info("Received POST request for body with data: {}", bodyRequest);
-        String customerId = authentication.getName();
+    public ResponseEntity<String> handleInitialSetup(
+            @RequestBody UpdateAccountRequest updateRequest,
+            Authentication authentication) {
         
-        // 🚀 수정: 새로운 트랜잭션 메서드 호출
-        customersService.updateProfileAndSaveGoal(customerId, bodyRequest);
+        log.info("Received POST request for initial setup with data: {}", updateRequest);
+        String customerId = authentication.getName();
 
-        return ResponseEntity.ok("목표설정 ");
+        // 서비스 메서드 호출: 기존 프로필과 새로운 목표를 동시에 처리
+        customersService.updateProfileAndSaveGoal(customerId, updateRequest);
+        
+        return ResponseEntity.ok("목표 설정 및 프로필 업데이트 완료");
     }
 }

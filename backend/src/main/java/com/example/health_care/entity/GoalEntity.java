@@ -35,9 +35,9 @@ public class GoalEntity {
     @JoinColumn(name = "customer_id", nullable = false)
     private CustomersEntity customer;
 
-    @Column(name = "target_weight", nullable = false)
+    @Column(name = "target_weight") // nullable = false 속성 제거
     private Double targetWeight;
 
-    @Column(name = "target_calories", nullable = false)
+    @Column(name = "target_calories") // nullable = false 속성 제거
     private Integer targetCalories;
 }

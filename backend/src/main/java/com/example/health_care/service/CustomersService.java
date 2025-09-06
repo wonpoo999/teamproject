@@ -1,6 +1,8 @@
 package com.example.health_care.service;
 
 import java.util.Date;
+import java.util.Optional;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.health_care.dto.BodyRequest;
 import com.example.health_care.dto.CustomersProfileDTO;
 import com.example.health_care.dto.SignupRequest;
+import com.example.health_care.dto.UpdateAccountRequest;
 import com.example.health_care.entity.BodyEntity;
 import com.example.health_care.entity.CustomersEntity;
 import com.example.health_care.entity.GoalEntity;
@@ -76,16 +79,25 @@ public class CustomersService implements UserDetailsService {
                                 .build();
         }
 
+        @Transactional(readOnly = true)
         public CustomersProfileDTO getCustomerProfile(String customerId) {
-                return customersRepository.findById(customerId)
-                                .map(customer -> CustomersProfileDTO.builder()
-                                                .id(customer.getId())
-                                                .weight(customer.getWeight())
-                                                .age(customer.getAge())
-                                                .gender(customer.getGender())
-                                                .height(customer.getHeight())
-                                                .build())
-                                .orElse(null);
+                // 1. 고객 기본 정보 조회
+                CustomersEntity customer = customersRepository.findById(customerId)
+                                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다 : " + customerId));
+
+                // 2. 고객의 idx를 사용하여 목표 정보 조회
+                Optional<GoalEntity> goal = goalRepository.findByCustomer_Idx(customer.getIdx());
+
+                // 3. 두 정보를 합쳐 DTO로 빌드하여 반환
+                return CustomersProfileDTO.builder()
+                                .id(customer.getId())
+                                .weight(customer.getWeight())
+                                .age(customer.getAge())
+                                .gender(customer.getGender())
+                                .height(customer.getHeight())
+                                .targetWeight(goal.map(GoalEntity::getTargetWeight).orElse(null))
+                                .targetCalories(goal.map(GoalEntity::getTargetCalories).orElse(null))
+                                .build();
         }
 
         @Transactional
@@ -95,9 +107,6 @@ public class CustomersService implements UserDetailsService {
                                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
                 // 2. BodyRequest DTO를 BodyEntity로 변환
-                // Double 타입을 Integer로 안전하게 형 변환
-                Double height = (bodyRequest.getHeight() != null) ? bodyRequest.getHeight().doubleValue() : null;
-
                 BodyEntity bodyEntity = BodyEntity.builder()
                                 .customer(customer)
                                 .targetWeight(bodyRequest.getTargetWeight())
@@ -105,7 +114,7 @@ public class CustomersService implements UserDetailsService {
                                 .weight(bodyRequest.getWeight())
                                 .age(bodyRequest.getAge())
                                 .gender(bodyRequest.getGender())
-                                .height(height) // 형 변환된 값 사용
+                                .height(bodyRequest.getHeight()) // 형 변환된 값 사용
                                 .inbody(bodyRequest.getInbody())
                                 .recordDate(new Date()) // 현재 날짜를 기록
                                 .build();
@@ -115,25 +124,45 @@ public class CustomersService implements UserDetailsService {
         }
 
         @Transactional
-        public void updateProfileAndSaveGoal(String customerId, BodyRequest bodyRequest) {
+        public void updateProfileAndSaveGoal(String customerId, UpdateAccountRequest req) {
                 // 1. 고객 엔티티를 찾아서 업데이트
                 CustomersEntity customer = customersRepository.findById(customerId)
                                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
                 // DTO에서 받은 데이터로 Customers 테이블의 정보 업데이트
-                customer.setWeight(bodyRequest.getWeight());
-                customer.setHeight(bodyRequest.getHeight());
-                customer.setAge(bodyRequest.getAge());
-                customer.setGender(bodyRequest.getGender());
+                Optional.ofNullable(req.getWeight()).ifPresent(customer::setWeight);
+                Optional.ofNullable(req.getHeight()).ifPresent(customer::setHeight);
+                Optional.ofNullable(req.getAge()).ifPresent(customer::setAge);
+                Optional.ofNullable(req.getGender()).ifPresent(customer::setGender);
 
-                // 2. Goal 엔티티 생성 및 저장
-                GoalEntity goalEntity = GoalEntity.builder()
-                                .customer(customer)
-                                .targetWeight(bodyRequest.getTargetWeight())
-                                .targetCalories(bodyRequest.getTargetCalories())
-                                .build();
+                // 2. 비밀번호 변경
+                if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
+                        customer.setPassword(passwordEncoder.encode(req.getNewPassword()));
+                }
 
-                goalRepository.save(goalEntity);
+                // 3. 엔티티 저장
+                customersRepository.save(customer);
+
+                // 4. 목표 정보가 DTO에 포함된 경우 Goal 엔티티를 생성하거나 업데이트
+                if (req.getTargetWeight() != null || req.getTargetCalories() != null) {
+                        // 고객의 idx를 사용하여 Goal 엔티티를 찾음
+                        Optional<GoalEntity> existingGoal = goalRepository.findByCustomer_Idx(customer.getIdx());
+                        GoalEntity goalEntity;
+
+                        if (existingGoal.isPresent()) {
+                                goalEntity = existingGoal.get();
+                        } else {
+                                goalEntity = new GoalEntity();
+                                goalEntity.setCustomer(customer);
+                        }
+
+                        // DTO의 값으로 Goal 엔티티 업데이트
+                        Optional.ofNullable(req.getTargetWeight()).ifPresent(goalEntity::setTargetWeight);
+                        Optional.ofNullable(req.getTargetCalories()).ifPresent(goalEntity::setTargetCalories);
+
+                        goalRepository.save(goalEntity);
+                }
         }
 }
 // 와이라노..
+// 프로필 기능 이주완료

@@ -14,4 +14,6 @@ public class CustomersProfileDTO {
     private Integer age;
     private Gender gender;
     private Double height;
+    private Double targetWeight;
+    private Integer targetCalories;
 }
