@@ -12,21 +12,22 @@ Ports : 3000
 
 API 필수조건
 - 무료
-
-frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니다)
-npm install
-npm i @react-navigation/native @react-navigation/native-stack
-npx expo install react-native-screens react-native-safe-area-context
-npx expo install expo-camera expo-image-manipulator
-npx expo install @react-native-async-storage/async-storage
-npx expo install expo-secure-store
-npm i base-64
-npx expo install expo-location @react-native-async-storage/async-storage
-npm install @react-native-community/datetimepicker
-npx expo install expo-localization
-npm i i18next react-i18next react-native-localize
-npm i @react-native-async-storage/async-storage
-npx expo start
+---------------------------------------------
+<b>Node js 설치구문</b>
+- frontend install (assets 안에 사진은 중요한 거라 냅두시면 됩니다)
+- npm install
+- npm i @react-navigation/native @react-navigation/native-stack
+- npx expo install react-native-screens react-native-safe-area-context
+- npx expo install expo-camera expo-image-manipulator
+- npx expo install @react-native-async-storage/async-storage
+- npx expo install expo-secure-store
+- npm i base-64
+- npx expo install expo-location @react-native-async-storage/async-storage
+- npm install @react-native-community/datetimepicker
+- npx expo install expo-localization
+- npm i i18next react-i18next react-native-localize
+- npm i @react-native-async-storage/async-storage
+- npx expo start
 
 
 #### 사진 인식 및 분석 API
