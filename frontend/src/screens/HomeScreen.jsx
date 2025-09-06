@@ -52,6 +52,7 @@ export default function HomeScreen() {
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
+  const [eggCount, setEggCount] = useState(0)
 
   const loadLocal = useCallback(async () => {
     const { target, current } = await initCalorieData(user?.id)
@@ -122,6 +123,19 @@ export default function HomeScreen() {
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, alignItems: 'center' }} pointerEvents="none">
           <AvatarByBMI category={category} size={260} />
         </View>
+        <Pressable
+          onPress={() => {
+            setEggCount(c => {
+              const n = c + 1
+              if (n >= 5) {
+                nav.navigate('HealthyCatch')
+                return 0
+              }
+              return n
+            })
+          }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150, height: 260 }}
+        />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label="PROFILE" to="Profile" />
