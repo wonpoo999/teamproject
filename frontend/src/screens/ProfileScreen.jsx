@@ -1,3 +1,4 @@
+// >>> [UPDATED] FILE: src/screens/ProfileScreen.jsx
 import React, { useEffect, useState, useCallback } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View, Text, TextInput, Pressable, StyleSheet, ImageBackground } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -6,9 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../context/AuthContext'
 import { ORIGIN } from '../config/api'
 import { useFonts } from 'expo-font'
-
-// >>> [ADDED] 네비게이션 훅 (복구 설정으로 이동)
 import { useNavigation } from '@react-navigation/native'
+import { useI18n } from '../i18n/I18nContext'  // ✅ i18n
 
 const FONT = 'DungGeunMo'
 
@@ -20,6 +20,7 @@ TextInput.defaultProps.allowFontScaling = false
 TextInput.defaultProps.maxFontSizeMultiplier = 1
 
 export default function ProfileScreen() {
+  const { t } = useI18n() // ✅
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
   if (fontsLoaded) {
     if (!Text.defaultProps.style) Text.defaultProps.style = { fontFamily: FONT }
@@ -29,7 +30,6 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
   const auth = useAuth()
   const userId = auth?.user?.id || null
-  // >>> [ADDED]
   const nav = useNavigation()
 
   const [current, setCurrent] = useState({ id: '', weight: '', height: '', age: '', gender: '' })
@@ -99,12 +99,12 @@ export default function ProfileScreen() {
             ...(body ? { body: JSON.stringify(body) } : {}),
           })
           if (res.ok) {
-            const t = await res.text()
-            try { return { data: JSON.parse(t), used: p } } catch { return { data: null, used: p } }
+            const ttxt = await res.text()
+            try { return { data: JSON.parse(ttxt), used: p } } catch { return { data: null, used: p } }
           }
           if (res.status === 401 || res.status === 403) {
-            const t = await res.text()
-            throw new Error(t || '401')
+            const ttxt = await res.text()
+            throw new Error(ttxt || '401')
           }
           lastErr = new Error(await res.text())
         } catch (e) {
@@ -167,11 +167,11 @@ export default function ProfileScreen() {
         return
       }
       if (!showedPrefill) {
-        setErrProfile('프로필을 불러오지 못했습니다.')
+        setErrProfile(t('UPDATE_FAIL'))
         setLoading(false)
       }
     }
-  }, [applyToState, fetchFirstOK, logoutToWelcome, userId])
+  }, [applyToState, fetchFirstOK, logoutToWelcome, userId, t])
 
   useEffect(() => { load() }, [load])
 
@@ -183,16 +183,16 @@ export default function ProfileScreen() {
     setOkAccount('')
     try {
       const nextId = (form.newId || current.id || '').trim()
-      if (!nextId || !/^\S+@\S+\.\S+$/.test(nextId)) throw new Error('이메일 형식이 올바르지 않습니다.')
+      if (!nextId || !/^\S+@\S+\.\S+$/.test(nextId)) throw new Error(t('EMAIL_INVALID'))
       const changingPw = !!form.newPassword || !!form.confirmPassword
       if (changingPw) {
-        if ((form.newPassword || '').length < 8) throw new Error('새 비밀번호는 8자 이상이어야 합니다.')
-        if (form.newPassword !== form.confirmPassword) throw new Error('새 비밀번호 확인이 일치하지 않습니다.')
+        if ((form.newPassword || '').length < 8) throw new Error(t('PW_TOO_SHORT'))
+        if (form.newPassword !== form.confirmPassword) throw new Error(t('PW_MISMATCH'))
       }
       const payload = { id: nextId, ...(changingPw ? { newPassword: form.newPassword } : {}) }
       const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean)
       await fetchFirstOK('PUT', candidates, payload)
-      setOkAccount(`${form.newId ? '이메일 ' : ''}${changingPw ? (form.newId ? '및 비밀번호 ' : '비밀번호 ') : ''}수정 완료`)
+      setOkAccount(t('UPDATE_OK'))
       setEditingAccount(false)
       setCurrent(c => ({ ...c, id: nextId }))
       setForm(f => ({ ...f, newPassword: '', confirmPassword: '' }))
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
         await logoutToWelcome()
         return
       }
-      setErrAccount(e?.message || '계정 정보 수정 실패')
+      setErrAccount(e?.message || t('UPDATE_FAIL'))
     } finally {
       setSavingAccount(false)
     }
@@ -217,7 +217,7 @@ export default function ProfileScreen() {
     try {
       const numOk = v => v === '' || !Number.isNaN(Number(v))
       if (!numOk(form.weight) || !numOk(form.height) || !numOk(form.age) || !numOk(form.targetWeight) || !numOk(form.targetCalories)) {
-        throw new Error('숫자 항목은 숫자로 입력하세요.')
+        throw new Error(t('NUMERIC_ONLY'))
       }
       const payload = {
         id: (current.id || '').trim(),
@@ -230,7 +230,7 @@ export default function ProfileScreen() {
       }
       const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean)
       await fetchFirstOK('PUT', candidates, payload)
-      setOkProfile('프로필 수정이 완료되었습니다.')
+      setOkProfile(t('UPDATE_OK'))
       setEditingProfile(false)
       await AsyncStorage.removeItem('@profile/prefill')
       await load()
@@ -240,7 +240,7 @@ export default function ProfileScreen() {
         await logoutToWelcome()
         return
       }
-      setErrProfile(e?.message || '프로필 수정 실패')
+      setErrProfile(e?.message || t('UPDATE_FAIL'))
     } finally {
       setSavingProfile(false)
     }
@@ -257,10 +257,10 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
-        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>PROFILE</Text>
+        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>{t('PROFILE_TITLE')}</Text>
         <View style={[styles.center, { paddingTop: insets.top + 96 }]}>
           <ActivityIndicator />
-          <Text style={{ marginTop: 8, color: '#fff', fontFamily: FONT }}>불러오는 중…</Text>
+          <Text style={{ marginTop: 8, color: '#fff', fontFamily: FONT }}>{t('LOADING')}</Text>
         </View>
       </ImageBackground>
     )
@@ -269,43 +269,40 @@ export default function ProfileScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={{ flex: 1 }}>
       <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
-        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>PROFILE</Text>
+        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>{t('PROFILE_TITLE')}</Text>
         <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 108, paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>계정 정보</Text>
+            <Text style={styles.cardTitle}>{t('ACCOUNT_INFO')}</Text>
             {!editingAccount ? (
               <>
                 <View style={styles.rowBetween}>
-                  <Text style={styles.label}>현재 이메일</Text>
+                  <Text style={styles.label}>{t('CURRENT_EMAIL')}</Text>
                   <Text style={styles.value}>{current.id ? String(current.id) : '-'}</Text>
                 </View>
                 {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
                 {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
                 <Pressable onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true) }} style={styles.primaryBtn}>
-                  <Text style={styles.primaryBtnText}>수정</Text>
+                  <Text style={styles.primaryBtnText}>{t('EDIT')}</Text>
                 </Pressable>
 
-                {/* >>> [ADDED] 복구 질문 설정 진입 버튼 */}
-                <Pressable
-                  onPress={() => nav.navigate('RecoverySetup')}
-                  style={styles.ghostBtn}
-                >
-                  <Text style={styles.ghostBtnText}>복구 질문 설정</Text>
+                {/* 복구 질문 설정 */}
+                <Pressable onPress={() => nav.navigate('RecoverySetup')} style={styles.ghostBtn}>
+                  <Text style={styles.ghostBtnText}>{t('RECOVERY_SETUP')}</Text>
                 </Pressable>
               </>
             ) : (
               <>
-                <Text style={styles.label}>이메일</Text>
+                <Text style={styles.label}>{t('EMAIL')}</Text>
                 <TextInput value={form.newId} onChangeText={v => update('newId', v)} autoCapitalize="none" keyboardType="email-address" style={styles.input} />
-                <Text style={styles.label}>새 비밀번호</Text>
+                <Text style={styles.label}>{t('PASSWORD')}</Text>
                 <TextInput value={form.newPassword} onChangeText={v => update('newPassword', v)} secureTextEntry style={styles.input} />
-                <Text style={styles.label}>새 비밀번호 확인</Text>
+                <Text style={styles.label}>{t('PASSWORD_CONFIRM')}</Text>
                 <TextInput value={form.confirmPassword} onChangeText={v => update('confirmPassword', v)} secureTextEntry style={styles.input} />
                 {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
                 {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
                 <View style={styles.row}>
                   <Pressable onPress={saveAccount} disabled={savingAccount} style={[styles.primaryBtn, savingAccount && { opacity: 0.6 }]}>
-                    {savingAccount ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
+                    {savingAccount ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>}
                   </Pressable>
                   <Pressable
                     onPress={() => {
@@ -314,7 +311,7 @@ export default function ProfileScreen() {
                     }}
                     style={styles.ghostBtn}
                   >
-                    <Text style={styles.ghostBtnText}>취소</Text>
+                    <Text style={styles.ghostBtnText}>{t('CANCEL')}</Text>
                   </Pressable>
                 </View>
               </>
@@ -322,55 +319,55 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>프로필 정보</Text>
+            <Text style={styles.cardTitle}>{t('PROFILE_INFO')}</Text>
             {!editingProfile ? (
               <>
-                <View style={styles.rowBetween}><Text style={styles.label}>체중(kg)</Text><Text style={styles.value}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={styles.label}>키(cm)</Text><Text style={styles.value}>{current.height !== '' ? String(current.height) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={styles.label}>나이</Text><Text style={styles.value}>{current.age !== '' ? String(current.age) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={styles.label}>성별</Text><Text style={styles.value}>{current.gender === 'M' ? '남성' : current.gender === 'F' ? '여성' : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>{t('WEIGHT')}</Text><Text style={styles.value}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>{t('HEIGHT')}</Text><Text style={styles.value}>{current.height !== '' ? String(current.height) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>{t('AGE')}</Text><Text style={styles.value}>{current.age !== '' ? String(current.age) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>{t('GENDER')}</Text><Text style={styles.value}>{current.gender === 'M' ? t('MALE') : current.gender === 'F' ? t('FEMALE') : '-'}</Text></View>
                 {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
                 {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
                 <Pressable onPress={() => { setErrProfile(''); setOkProfile(''); setEditingProfile(true) }} style={styles.primaryBtn}>
-                  <Text style={styles.primaryBtnText}>수정</Text>
+                  <Text style={styles.primaryBtnText}>{t('EDIT')}</Text>
                 </Pressable>
               </>
             ) : (
               <>
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>체중(kg)</Text>
+                    <Text style={styles.label}>{t('WEIGHT')}</Text>
                     <TextInput value={form.weight} onChangeText={v => update('weight', v)} keyboardType="decimal-pad" style={styles.input} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>키(cm)</Text>
+                    <Text style={styles.label}>{t('HEIGHT')}</Text>
                     <TextInput value={form.height} onChangeText={v => update('height', v)} keyboardType="number-pad" style={styles.input} />
                   </View>
                 </View>
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>나이</Text>
+                    <Text style={styles.label}>{t('AGE')}</Text>
                     <TextInput value={form.age} onChangeText={v => update('age', v)} keyboardType="number-pad" style={styles.input} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>성별</Text>
+                    <Text style={styles.label}>{t('GENDER')}</Text>
                     <View style={styles.segmentWrap}>
                       <Pressable onPress={() => update('gender', form.gender === 'M' ? '' : 'M')} style={[styles.segmentBtn, form.gender === 'M' && styles.segmentBtnActive]}>
-                        <Text style={[styles.segmentText, form.gender === 'M' && styles.segmentTextActive]}>남성</Text>
+                        <Text style={[styles.segmentText, form.gender === 'M' && styles.segmentTextActive]}>{t('MALE')}</Text>
                       </Pressable>
                       <Pressable onPress={() => update('gender', form.gender === 'F' ? '' : 'F')} style={[styles.segmentBtn, form.gender === 'F' && styles.segmentBtnActive]}>
-                        <Text style={[styles.segmentText, form.gender === 'F' && styles.segmentTextActive]}>여성</Text>
+                        <Text style={[styles.segmentText, form.gender === 'F' && styles.segmentTextActive]}>{t('FEMALE')}</Text>
                       </Pressable>
                     </View>
                   </View>
                 </View>
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>목표 체중(kg)</Text>
+                    <Text style={styles.label}>{t('TARGET_WEIGHT')}</Text>
                     <TextInput value={form.targetWeight} onChangeText={v => update('targetWeight', v)} keyboardType="decimal-pad" style={styles.input} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>목표 칼로리(kcal)</Text>
+                    <Text style={styles.label}>{t('TARGET_CALORIES')}</Text>
                     <TextInput value={form.targetCalories} onChangeText={v => update('targetCalories', v)} keyboardType="number-pad" style={styles.input} />
                   </View>
                 </View>
@@ -378,7 +375,7 @@ export default function ProfileScreen() {
                 {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
                 <View style={styles.row}>
                   <Pressable onPress={saveProfile} disabled={savingProfile} style={[styles.primaryBtn, savingProfile && { opacity: 0.6 }]}>
-                    {savingProfile ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
+                    {savingProfile ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>}
                   </Pressable>
                   <Pressable
                     onPress={() => {
@@ -393,7 +390,7 @@ export default function ProfileScreen() {
                     }}
                     style={styles.ghostBtn}
                   >
-                    <Text style={styles.ghostBtnText}>취소</Text>
+                    <Text style={styles.ghostBtnText}>{t('CANCEL')}</Text>
                   </Pressable>
                 </View>
               </>

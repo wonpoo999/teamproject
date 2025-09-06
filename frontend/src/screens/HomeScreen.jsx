@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext'
 import { apiGet } from '../config/api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { calcBMI, classifyBMI } from '../utils/bmi'
-// >>> [ADDED] 다국어 컨텍스트
 import { useI18n } from '../i18n/I18nContext'
 
 const ICON_SIZE = 72
@@ -46,16 +45,18 @@ function CalorieGauge({ current, target }) {
   )
 }
 
-// >>> [ADDED] 날짜 키 유틸 (0시 리셋 배지에 사용)
 function dayKey(d = new Date()) { const t = new Date(d); t.setHours(0,0,0,0); return t.toISOString().slice(0,10) }
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const nav = useNavigation()
   const { user } = useAuth()
+  const { t } = useI18n()
   const [category, setCategory] = useState('normal')
   const [target, setTarget] = useState(1200)
   const [current, setCurrent] = useState(0)
+  const [questNew, setQuestNew] = useState(false)
+  const [eggCount, setEggCount] = useState(0)
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
 
   const loadLocal = useCallback(async () => {
@@ -92,12 +93,11 @@ export default function HomeScreen() {
     } catch {}
   }, [user?.id])
 
-  // >>> [ADDED] 퀘스트 배지 상태 로드
   const loadQuestBadge = useCallback(async () => {
     try {
       const today = dayKey()
       const v = await AsyncStorage.getItem('@quest/new_date')
-      setQuestNew(v !== today) // 오늘의 퀘스트를 아직 열어보지 않았으면 *
+      setQuestNew(v !== today)
     } catch {}
   }, [])
 
@@ -105,7 +105,6 @@ export default function HomeScreen() {
     await applyPrefillCategory()
     await loadLocal()
     await syncFromProfile()
-    // >>> [ADDED]
     await loadQuestBadge()
   }, [applyPrefillCategory, loadLocal, syncFromProfile, loadQuestBadge])
 
@@ -114,17 +113,12 @@ export default function HomeScreen() {
 
   if (!fontsLoaded) return null
 
-  // >>> [CHANGED] 라벨 i18n + 퀘스트 배지 지원
   const IconLabeled = ({ iconSrc, label, to, onPress, showBadge }) => (
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center', width: ICON_SIZE + 8 }}>
       <View style={{ position: 'relative' }}>
         <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
-        {/* >>> [ADDED] 모서리 빨간 * 뱃지 */}
         {showBadge ? (
-          <View style={{
-            position: 'absolute', right: -4, top: -4, width: 20, height: 20,
-            borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center'
-          }}>
+          <View style={{ position: 'absolute', right: -4, top: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: '#fff', fontFamily: FONT, fontSize: 14 }}>*</Text>
           </View>
         ) : null}
@@ -136,7 +130,6 @@ export default function HomeScreen() {
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
-        {/* >>> [CHANGED] 다국어 치환 */}
         <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
           <Text style={styles.boxText} allowFontScaling={false}>{t('HOME_MEAL')}</Text>
         </Pressable>
@@ -166,7 +159,6 @@ export default function HomeScreen() {
         />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
-            {/* >>> [CHANGED] 라벨 i18n + 퀘스트 NEW 배지 only on Quest */}
             <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label={t('PROFILE')} to="Profile" />
             <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('QUEST')} to="Quest" showBadge={questNew} />
             <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('RANKING')} to="Ranking" />
@@ -180,25 +172,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   topContainer: { flexDirection: 'row', paddingHorizontal: 11, gap: 12 },
-  box: {
-    flex: 1,
-    height: BOX_HEIGHT,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 30,
-    padding: BOX_PAD,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start'
-  },
-  boxText: {
-    fontSize: BOX_FONT,
-    height: BOX_HEIGHT,
-    color: '#333',
-    fontFamily: FONT,
-    includeFontPadding: false
-  },
+  box: { flex: 1, height: BOX_HEIGHT, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 30, padding: BOX_PAD, justifyContent: 'flex-start', alignItems: 'flex-start' },
+  boxText: { fontSize: BOX_FONT, height: BOX_HEIGHT, color: '#333', fontFamily: FONT, includeFontPadding: false },
   gaugeContainer: { width: '65%', height: 20, borderWidth: 2, borderColor: 'black', borderRadius: 8, overflow: 'hidden' },
   gaugeFill: { position: 'absolute', top: 0, bottom: 0 },
   gaugeTextWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   gaugeText: { color: 'gray', fontSize: 12, fontFamily: FONT, includeFontPadding: false },
-  labelText: { fontSize: 18, marginTop: -8, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center'}
+  labelText: { fontSize: 18, marginTop: -8, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center' }
 })

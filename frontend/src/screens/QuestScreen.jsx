@@ -1,38 +1,79 @@
-import { useEffect, useRef, useState } from 'react'
+// src/screens/QuestScreen.jsx
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { View, Text, ImageBackground, StyleSheet, Animated, Platform, AppState, Linking, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Location from 'expo-location'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFonts } from 'expo-font'
-import { useI18n } from '../i18n/I18nContext' // >>> [ADDED]
-import { apiGet } from '../config/api' // >>> [ADDED] 체격 읽어와 난이도 반영
+import { useI18n } from '../i18n/I18nContext'
+import { apiGet } from '../config/api'
 
 const FONT = 'DungGeunMo'
 
-const TAUNTS = {
-  none: ['0.00km… 산책 앱을 켰는데 산책은 안 함','첫 좌표에서 평생 살 계획?','오늘도 바닥이랑 베프네','다리는 절전 모드, 폰만 고성능','앉아있는 재능 국가대표'],
-  low: ['워밍업 끝? 이제 진짜 이동은 언제?','편의점 왕복이 오늘의 하이라이트?','GPS가 울어요 “움직여줘…”','지구 둘레 4만km 중 0.1도 못 채웠다','발 대신 손가락만 운동하는 중'],
-  mid: ['반도 안 왔는데 숨 먼저 참네','속도 이대로면 달팽이도 추월하겠다','물 마셨지? 이제 걸어라 인간','지도 확대하면 길긴 길어 보이긴 함','오늘도 “산책의 추억(구라)” 제작 중'],
-  near: ['코앞에서 멈추면 구경꾼 인증','결승선 보이는데 브레이크 밟는 재주 무엇','끝까지 가면 칭찬… 받을 수도 말 수도','여기서 멈추면 오늘 얘깃거리 끝','알람 5분 전 느낌으로 평생 살 거야?'],
-  done: ['오케이 인정. 오늘만','완료. 변명 금지 모드 진입','터보 엔진 잠깐 켰네','지도도 놀람 “드디어 이동함”','사람 초월까진 아니고 사람 정도'],
-  unavailable: ['위치 권한부터 허락하고 훈수 두자','GPS가 못 잡아도 핑계는 잘 잡네','체감 10km? 체감은 자유, 기록은 냉정','장비 탓 금지, 본인 탓 가능','설정 안 열면 거리도 안 열림']
+// ===== 다국어 도발 멘트 =====
+const TAUNTS_MAP = {
+  none: {
+    ko: ['0.00km… 산책 앱을 켰는데 산책은 안 함','첫 좌표에서 평생 살 계획?','오늘도 바닥이랑 베프네','다리는 절전 모드, 폰만 고성능','앉아있는 재능 국가대표'],
+    en: ['0.00km… Opened the app but no walk','Planning to live at the first GPS point forever?','Best friends with the floor again','Legs in power save, phone on turbo','National-team level at sitting'],
+    ja: ['0.00km… アプリ開いたのに歩いてない','最初の座標で一生暮らすの？','今日も床と親友','足は省電力、スマホはハイスペ','座りっぱなしの才能は代表クラス'],
+    zh: ['0.00km… 打开了应用却没走','打算一辈子待在第一个坐标？','今天又和地板做朋友','腿在省电模式，手机在高性能','坐着的天赋国家级'],
+  },
+  low: {
+    ko: ['워밍업 끝? 이제 진짜 이동은 언제?','편의점 왕복이 오늘의 하이라이트?','GPS가 울어요 “움직여줘…”','지구 둘레 4万km 중 0.1도 못 채웠다','발 대신 손가락만 운동하는 중'],
+    en: ['Warm-up done? When does the real move start?','Convenience store round trip is the highlight?','GPS is crying: “Please move…”','40,000km around Earth, you did 0.1','Only fingers are exercising'],
+    ja: ['準備運動は終わり？本番はいつ？','コンビニ往復が今日のハイライト？','GPSが泣いてる「動いて…」','地球一周4万kmのうち0.1だけ','指だけ筋トレ中'],
+    zh: ['热身结束？正式出发什么时候？','今天的亮点是便利店往返？','GPS在哭：“动一动…”','地球四万公里，你完成了0.1','只有手指在运动'],
+  },
+  mid: {
+    ko: ['반도 안 왔는데 숨 먼저 참네','이 속도면 달팽이도 추월하겠다','물 마셨지? 이제 걸어라 인간','지도를 확대하면 길어 보이긴 함','오늘도 “산책의 추억(구라)” 제작 중'],
+    en: ['Not even halfway and already holding your breath','At this pace, snails will pass you','Hydrated? Now walk, human','Zooming the map doesn’t make it longer','Making “Walking Memories (fiction)” again'],
+    ja: ['半分も来てないのにもう息切れ？','この速度ならカタツムリに抜かれる','水分取った？さあ歩け人間','地図を拡大しても距離は増えない','今日も「散歩の思い出（フィクション）」制作中'],
+    zh: ['还不到一半就开始喘了？','这个速度会被蜗牛超车','补水完毕？现在开始走吧','地图放大不等于路变长','今天也在制作“散步回忆（虚构）”'],
+  },
+  near: {
+    ko: ['코앞에서 멈추면 구경꾼 인증','결승선 보이는데 왜 브레이크?','끝까지 가면 칭찬… 받을 수도 말 수도','여기서 멈추면 오늘 얘깃거리 끝','알람 5분 전 모드로 평생 갈 거야?'],
+    en: ['Stop at the finish line’s nose—spectator confirmed','See the tape—why hit the brakes?','Go to the end and maybe… get praise','Stop here and the story ends','Living life in “5 minutes before alarm” mode?'],
+    ja: ['ゴール直前で止まったら観客認定','テープ見えてるのにブレーキ？','最後まで行けば…褒めるかも','ここで止まったら今日の話題は終了','一生「アラーム5分前」モードで行く？'],
+    zh: ['就在终点前停下=观众认证','都看到终点线了为何刹车？','坚持到最后…也许会被表扬','现在停下，今天就没话题了','一辈子“闹钟前5分钟”模式？'],
+  },
+  done: {
+    ko: ['오케이 인정. 오늘만','완료. 변명 금지 모드 진입','터보 엔진 잠깐 켰네','지도도 놀람 “드디어 이동함”','사람 초월까진 아니고 사람 정도'],
+    en: ['Okay, respect. Today only','Done. Excuse-free mode engaged','Turbo engine briefly on','Map shocked: “Finally moving”','Not superhuman, but human at least'],
+    ja: ['オーケー認めよう。今日はね','完了。言い訳禁止モード突入','ターボ一瞬ON','地図も驚き「ついに動いた」','超人ではないが人間レベルには到達'],
+    zh: ['行，认可。仅限今天','完成。进入无借口模式','涡轮短暂开启','地图也震惊“终于动了”','超人算不上，人类还行'],
+  },
+  unavailable: {
+    ko: ['위치 권한부터 허락하고 훈수 두자','GPS가 못 잡아도 핑계는 잘 잡네','체감 10km? 기록은 냉정해','장비 탓 금지, 본인 탓 가능','설정 안 열면 거리도 안 열림'],
+    en: ['Grant location first, then coach me','GPS can’t lock but excuses can','Feels like 10km? Records are cold','No blaming gear—blame yourself','No settings, no distance'],
+    ja: ['まず位置情報を許可してから指示して','GPSは掴めないのに言い訳は掴む','体感10km？記録は冷酷','機材のせい禁止、自分のせいは可','設定を開かなければ距離も開かない'],
+    zh: ['先给定位权限，再来指点','GPS锁不住，借口倒挺多','体感10公里？记录很冷静','别怪设备，可以怪自己','不打开设置，就走不出距离'],
+  },
 }
+
+// 언어별 배열을 반환
+const TAUNTS = (lang) => ({
+  none: TAUNTS_MAP.none[lang] || TAUNTS_MAP.none.ko,
+  low: TAUNTS_MAP.low[lang] || TAUNTS_MAP.low.ko,
+  mid: TAUNTS_MAP.mid[lang] || TAUNTS_MAP.mid.ko,
+  near: TAUNTS_MAP.near[lang] || TAUNTS_MAP.near.ko,
+  done: TAUNTS_MAP.done[lang] || TAUNTS_MAP.done.ko,
+  unavailable: TAUNTS_MAP.unavailable[lang] || TAUNTS_MAP.unavailable.ko,
+})
 
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function dayKey(d=new Date()){const t=new Date(d);t.setHours(0,0,0,0);return t.toISOString().slice(0,10)}
 function haversine(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon2+lon2-lon2);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
-// >>> [CHANGED] 위 haversine 기존 오타 방지
+// 오타 방지 버전
 function haversineFix(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 
 export default function QuestScreen(){
   const insets=useSafeAreaInsets()
   const [fontsLoaded]=useFonts({[FONT]:require('../../assets/fonts/DungGeunMo.otf')})
-  const { t } = useI18n() // >>> [ADDED]
+  const { t, lang } = useI18n()
   const [perm,setPerm]=useState('undetermined')
   const [meters,setMeters]=useState(0)
   const [sessionMeters,setSessionMeters]=useState(0)
 
-  // >>> [ADDED] 코인/퀘스트 상태
   const [coins, setCoins] = useState(0)
   const [quests, setQuests] = useState([]) // [{id,type,desc,target,done,reward,auto}]
   const [bonusGiven, setBonusGiven] = useState(false)
@@ -43,8 +84,8 @@ export default function QuestScreen(){
   const appActiveRef=useRef(true)
 
   const today = dayKey()
+  const taunts = useMemo(()=>TAUNTS(lang), [lang])  // <<< 언어별 도발 세트
 
-  // >>> [ADDED] 오늘 처음 열었음을 기록(홈 배지 제거)
   useEffect(() => {
     (async () => {
       try { await AsyncStorage.setItem('@quest/new_date', today) } catch {}
@@ -59,7 +100,7 @@ export default function QuestScreen(){
     if (storedDate !== today) {
       await genNewQuests()
       await AsyncStorage.setItem('@quest/date', today)
-      await AsyncStorage.setItem('@quest/new_date', today) // 미확인 표시 기준
+      await AsyncStorage.setItem('@quest/new_date', today)
       setBonusGiven(false)
     } else {
       const raw = await AsyncStorage.getItem('@quest/list')
@@ -70,7 +111,6 @@ export default function QuestScreen(){
   }
 
   async function genNewQuests(){
-    // 체격/성별 반영 (간단 규칙)
     let weight=65, height=170, gender='F', targetCalories=1200
     try {
       const prof = await apiGet('/api/profile')
@@ -80,14 +120,11 @@ export default function QuestScreen(){
       if (prof?.targetCalories) targetCalories = Number(prof.targetCalories)
     } catch {}
     const bmi = height>0 ? (weight/((height/100)*(height/100))) : 22
-    const factor = Math.max(0.8, Math.min(1.4, bmi/22 * (gender==='M'?1.05:1))) // 남성 약간 상향
+    const factor = Math.max(0.8, Math.min(1.4, bmi/22 * (gender==='M'?1.05:1)))
 
-    // 걷기 목표(km)
-    const walkKm = Math.round((4.0 * factor) * 10) / 10 // 3.2~5.6km 사이
-    // 푸시업/스쿼트 목표(회)
+    const walkKm = Math.round((4.0 * factor) * 10) / 10
     const pushUps = Math.round(20 * factor)
     const squats = Math.round(30 * factor)
-    // 식단: 오늘 총칼로리 목표 이하로 마감
     const dietMax = Math.round(targetCalories)
 
     const list = [
@@ -104,19 +141,16 @@ export default function QuestScreen(){
     const list = quests.map(q => q.id===id ? { ...q, done: true } : q)
     setQuests(list)
     await AsyncStorage.setItem('@quest/list', JSON.stringify(list))
-    // 보상 지급 n*10 (n=1 고정, 요구 예시 반영)
     const q = list.find(x=>x.id===id)
     if (q && q.reward) await saveCoins(coins + q.reward)
-    // 모두 완료 추가 보너스 +20
     const allDone = list.every(x=>x.done)
     if (allDone && !bonusGiven) {
-      await saveCoins(coins + (q?.reward||0) + 20) // 마지막 퀘 완료 순간 +20
+      await saveCoins(coins + (q?.reward||0) + 20)
       setBonusGiven(true)
       await AsyncStorage.setItem('@quest/bonus', '1')
     }
   }
 
-  // 0시 리셋은 날짜키 비교로 처리(loadOrGenQuests에서)
   useEffect(()=>{ (async()=>{ await loadCoins(); await loadOrGenQuests(); })() }, [])
 
   useEffect(()=>{const sub=AppState.addEventListener('change',s=>{appActiveRef.current=(s==='active')});return()=>sub?.remove?.()},[])
@@ -152,7 +186,6 @@ export default function QuestScreen(){
     )
   })();return()=>{mounted=false;watchRef.current?.remove?.()}},[])
 
-  // 걷기 자동완료 체크
   useEffect(()=>{
     const q = quests.find(x=>x.id==='walk')
     if (!q) return
@@ -161,22 +194,21 @@ export default function QuestScreen(){
     if (done && !q.done) markDone('walk')
   }, [meters, quests])
 
-  // 진행바/도발문구(걷기 기존 유지)
   const [quip,setQuip]=useState('')
   useEffect(()=>{
     const q = quests.find(x=>x.id==='walk')
     const goalMeters = q ? q.target*1000 : 0
     const ratio=goalMeters>0?Math.min(meters/goalMeters,1):0
     Animated.timing(anim,{toValue:ratio,duration:400,useNativeDriver:false}).start()
-    const d=goalMeters>0 && meters>=goalMeters
+    const achieved=goalMeters>0 && meters>=goalMeters
     const r=goalMeters>0?meters/goalMeters:0
-    if(perm!=='granted')setQuip(pick(TAUNTS.unavailable))
-    else if(d)setQuip(pick(TAUNTS.done))
-    else if(meters===0)setQuip(pick(TAUNTS.none))
-    else if(r<0.3)setQuip(pick(TAUNTS.low))
-    else if(r<0.8)setQuip(pick(TAUNTS.mid))
-    else setQuip(pick(TAUNTS.near))
-  },[meters, quests, perm])
+    if(perm!=='granted') setQuip(pick(taunts.unavailable))
+    else if(achieved)    setQuip(pick(taunts.done))
+    else if(meters===0)  setQuip(pick(taunts.none))
+    else if(r<0.3)       setQuip(pick(taunts.low))
+    else if(r<0.8)       setQuip(pick(taunts.mid))
+    else                 setQuip(pick(taunts.near))
+  },[meters, quests, perm, taunts, anim])
 
   if(!fontsLoaded){
     return(
@@ -191,7 +223,6 @@ export default function QuestScreen(){
   const km = ((meters)/1000).toFixed(2)
   const goalKm = walkQ ? walkQ.target.toFixed(1) : '0.0'
 
-  // 수동 완료 버튼
   const QuestRow = ({ item }) => (
     <View style={styles.rowQ}>
       <Text style={styles.rowText}>{item.desc}</Text>
@@ -202,7 +233,9 @@ export default function QuestScreen(){
           onPress={() => markDone(item.id)}
           style={[styles.btn, item.done ? { backgroundColor: '#10b981' } : (item.auto ? { backgroundColor: '#9ca3af' } : null)]}
         >
-          <Text style={styles.btnText}>{item.done ? 'DONE' : (item.auto ? 'AUTO' : t('CONFIRM'))}</Text>
+          <Text style={styles.btnText}>
+            {item.done ? t('DONE') : (item.auto ? t('AUTO') : t('CONFIRM'))}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -214,19 +247,22 @@ export default function QuestScreen(){
       <View style={{paddingTop:insets.top+88,paddingHorizontal:18,gap:16}}>
         <View style={styles.card}>
           <Text style={styles.title}>{t('DAILY_QUESTS')}</Text>
-          {/* 걷기 게이지 */}
           <Text style={styles.questMain}>{t('WALK')} {goalKm} km</Text>
           <View style={styles.barWrap}>
             <Animated.View style={[styles.barFill,{width}]}/>
             <Text style={styles.barText}>{km} / {goalKm} km</Text>
           </View>
           <Text style={styles.quip}>{quip}</Text>
-          <Text style={styles.hint}>{perm==='granted'?'위치 사용 가능':'권한 필요: 위치'}</Text>
-          {Platform.OS==='android'&&<Text style={styles.hint}>정확도 높음, 배터리 최적화 제외 권장</Text>}
-          {perm!=='granted'&&<Text onPress={()=>Linking.openSettings()} style={[styles.hint,{textDecorationLine:'underline'}]}>설정 열기</Text>}
+
+          <Text style={styles.hint}>{perm==='granted' ? t('LOCATION_OK') : t('LOCATION_NEEDED')}</Text>
+          {Platform.OS==='android' && <Text style={styles.hint}>{t('ANDROID_LOCATION_HINT') || t('ANDROID_LOCATION_HINT') /* 키 이름 통일 시 이 줄만 남김 */}</Text>}
+          {perm!=='granted' && (
+            <Text onPress={()=>Linking.openSettings()} style={[styles.hint,{textDecorationLine:'underline'}]}>
+              {t('OPEN_SETTINGS')}
+            </Text>
+          )}
         </View>
 
-        {/* 나머지 3개 */}
         <View style={styles.subCard}>
           {quests.filter(x=>x.id!=='walk').map(q => <QuestRow key={q.id} item={q} />)}
           <View style={{ height: 8 }} />

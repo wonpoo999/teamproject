@@ -59,11 +59,7 @@ export default function LoginScreen({ navigation: navProp }) {
     }
     try {
       setLoading(true)
-<<<<<<< HEAD
-      const ok = await login(id.trim(), password)
-      if (!ok) throw new Error(t('TRY_AGAIN'))
 
-=======
       const res = await login(id.trim(), password)
       const ok =
         res === true ||
@@ -75,19 +71,17 @@ export default function LoginScreen({ navigation: navProp }) {
           (typeof res === 'string' ? res : undefined)
         throw new Error(normalizeLoginError(errMsg))
       }
->>>>>>> 7103c90ef34bb7b892afa0287e3f20744a270357
+
       if (needsGoalSetup) {
         navigation.reset({ index: 0, routes: [{ name: 'Goal' }] })
       } else {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
       }
     } catch (e) {
-<<<<<<< HEAD
-      Alert.alert(t('LOGIN'), e?.message ?? t('TRY_AGAIN'))
-=======
+
       const msg = normalizeLoginError(e?.message ?? e)
       Alert.alert('로그인 실패', msg)
->>>>>>> 7103c90ef34bb7b892afa0287e3f20744a270357
+
     } finally {
       setLoading(false)
     }
