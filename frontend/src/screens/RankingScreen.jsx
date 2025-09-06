@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font'
 import { apiGet } from '../config/api'
 
 const FONT = 'DungGeunMo'
+const LIFT = 16
 
 function maskEmail(v) {
   const s = String(v || '')
@@ -105,14 +106,16 @@ export default function RankingScreen() {
 
   if (!fontsLoaded) return null
 
-  const contentTop = insets.top + 100
+  const contentTop = insets.top + 100 - LIFT
 
   if (loading) {
     return (
       <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>RANKING</Text>
         <View style={[styles.center, { paddingTop: contentTop }]}>
-          <ActivityIndicator />
-          <Text style={[styles.title, { marginTop: 8 }]}>RANKING</Text>
+          <View style={[styles.card, styles.lifted]}>
+            <ActivityIndicator />
+          </View>
         </View>
       </ImageBackground>
     )
@@ -120,22 +123,24 @@ export default function RankingScreen() {
 
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+      <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>RANKING</Text>
       <View style={[styles.wrap, { paddingTop: contentTop }]}>
-        <Text style={styles.title}>RANKING</Text>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <FlatList
-          data={items}
-          keyExtractor={(item, idx) => `${item}-${idx}`}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          renderItem={({ item, index }) => (
-            <View style={styles.row}>
-              <Text style={styles.rank}>{index + 1}</Text>
-              <Text style={styles.email}>{maskEmail(item)}</Text>
-            </View>
-          )}
-          ListEmptyComponent={<Text style={styles.empty}>표시할 랭킹이 없습니다.</Text>}
-          contentContainerStyle={items.length === 0 ? { flex: 1, justifyContent: 'center', alignItems: 'center' } : { paddingBottom: 24 }}
-        />
+        <View style={[styles.card, styles.lifted]}>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <FlatList
+            data={items}
+            keyExtractor={(item, idx) => `${item}-${idx}`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            renderItem={({ item, index }) => (
+              <View style={styles.row}>
+                <Text style={styles.rank}>{index + 1}</Text>
+                <Text style={styles.email}>{maskEmail(item)}</Text>
+              </View>
+            )}
+            ListEmptyComponent={<Text style={styles.empty}>표시할 랭킹이 없습니다.</Text>}
+            contentContainerStyle={items.length === 0 ? { flex: 1, justifyContent: 'center', alignItems: 'center' } : { paddingBottom: 24 }}
+          />
+        </View>
       </View>
     </ImageBackground>
   )
@@ -144,10 +149,32 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   wrap: { flex: 1, paddingHorizontal: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: FONT, fontSize: 28, textAlign: 'center', marginBottom: 8 },
+  screenTitle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: '#000',
+    fontFamily: FONT,
+    fontSize: 28,
+    fontWeight: 'normal',
+    zIndex: 10,
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  lifted: { marginTop: -LIFT },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' },
   rank: { width: 40, textAlign: 'center', fontFamily: FONT, fontSize: 18, color: '#ef4444' },
-  email: { flex: 1, fontFamily: FONT, fontSize: 16 },
-  empty: { fontFamily: FONT, color: '#9ca3af' },
+  email: { flex: 1, fontFamily: FONT, fontSize: 16, color: '#111' },
+  empty: { fontFamily: FONT, color: '#9ca3af', textAlign: 'center' },
   error: { fontFamily: FONT, color: '#ef4444', textAlign: 'center', marginBottom: 8 }
 })
