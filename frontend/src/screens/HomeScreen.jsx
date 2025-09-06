@@ -10,7 +10,7 @@ import { apiGet } from '../config/api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { calcBMI, classifyBMI } from '../utils/bmi'
 
-const ICON_SIZE = 96
+const ICON_SIZE = 72
 const FONT = 'DungGeunMo'
 
 function CalorieGauge({ current, target }) {
@@ -96,9 +96,9 @@ export default function HomeScreen() {
   if (!fontsLoaded) return null
 
   const IconLabeled = ({ iconSrc, label, to, onPress }) => (
-    <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center' }}>
+    <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center', width: ICON_SIZE + 8 }}>
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
-      <Text style={styles.labelText}>{label}</Text>
+      <Text style={styles.labelText} numberOfLines={1}>{label}</Text>
     </Pressable>
   )
 
@@ -119,6 +119,7 @@ export default function HomeScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label="PROFILE" to="Profile" />
             <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="QUEST" to="Quest" />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="RANKING" to="Ranking" />
             <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label="SETTINGS" to="Settings" />
           </View>
         </View>
@@ -135,5 +136,5 @@ const styles = StyleSheet.create({
   gaugeFill: { position: 'absolute', top: 0, bottom: 0 },
   gaugeTextWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   gaugeText: { color: 'gray', fontSize: 12, fontFamily: FONT, includeFontPadding: false },
-  labelText: { fontSize: 18, marginTop: -16, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center' },
+  labelText: { fontSize: 14, marginTop: -8, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center' },
 })
