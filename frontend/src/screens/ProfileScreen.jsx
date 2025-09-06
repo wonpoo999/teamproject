@@ -10,13 +10,9 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE =
-  (Constants?.expoConfig?.extra && Constants.expoConfig.extra.apiBase) ||
-  'http://192.168.0.244:3000';
+import { API_BASE_DEBUG } from '../config/api';
 
 export default function ProfileScreen() {
   const auth = useAuth();
@@ -51,15 +47,12 @@ export default function ProfileScreen() {
   const [okAccount, setOkAccount] = useState('');
   const [okProfile, setOkProfile] = useState('');
 
-  // GET이 실제로 성공했던 경로를 기억해두었다가 PUT시 먼저 사용
   const [getEndpoint, setGetEndpoint] = useState(null);
 
-  // ───────── auth helper ─────────
   const getAuth = useCallback(async () => {
     const ctxToken = auth?.token || auth?.authToken;
     const ctxType = auth?.tokenType || auth?.token_type || 'Bearer';
     if (ctxToken) return { token: ctxToken, type: ctxType };
-
     const keys = ['token', 'authToken', 'accessToken', '@auth/token'];
     for (const k of keys) {
       const v = await AsyncStorage.getItem(k);
@@ -68,14 +61,13 @@ export default function ProfileScreen() {
     return { token: null, type: 'Bearer' };
   }, [auth]);
 
-  // path 리스트를 돌며 **성공한 경로와 데이터**를 반환
   const fetchFirstOK = useCallback(
     async (method, paths, body) => {
       const { token, type } = await getAuth();
       let lastErr;
       for (const p of paths) {
         try {
-          const res = await fetch(`${API_BASE}${p}`, {
+          const res = await fetch(`${API_BASE_DEBUG}${p}`, {
             method,
             headers: {
               ...(body ? { 'Content-Type': 'application/json' } : {}),
@@ -91,13 +83,11 @@ export default function ProfileScreen() {
             } catch (_) {}
             return { data, used: p };
           }
-          // 401/403이면 즉시 에러 반환 (다음 경로로 안 넘기고 사용자에게 알려줌)
           if (res.status === 401 || res.status === 403) {
             const msgText = await res.text();
             const msg = msgText || '권한이 없습니다. 다시 로그인 해주세요.';
             throw new Error(msg);
           }
-          // 그 외에는 다음 경로로 계속 시도
           lastErr = new Error(await res.text());
         } catch (e) {
           lastErr = e;
@@ -108,7 +98,6 @@ export default function ProfileScreen() {
     [getAuth]
   );
 
-  // 불러오기
   const load = useCallback(async () => {
     setLoading(true);
     setErrAccount('');
@@ -123,7 +112,6 @@ export default function ProfileScreen() {
         '/api/customers/me',
       ]);
       setGetEndpoint(used || null);
-
       setCurrent({
         id: data.id ?? data.email ?? '',
         weight: data.weight ?? '',
@@ -131,8 +119,6 @@ export default function ProfileScreen() {
         age: data.age ?? '',
         gender: data.gender ?? '',
       });
-
-      // 편집 폼은 항상 빈값으로 초기화 (요구사항)
       setForm({
         weight: '',
         height: '',
@@ -144,7 +130,6 @@ export default function ProfileScreen() {
         confirmPassword: '',
       });
     } catch (e) {
-      // 401/403 메시지 가독화
       const msg =
         (e?.message || '').toLowerCase().includes('forbidden') ||
         (e?.message || '').includes('401') ||
@@ -163,7 +148,6 @@ export default function ProfileScreen() {
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
-  // ───────── 저장(계정) ─────────
   const saveAccount = async () => {
     setSavingAccount(true);
     setErrAccount('');
@@ -194,7 +178,6 @@ export default function ProfileScreen() {
         return;
       }
 
-      // GET으로 성공했던 경로 → 나머지 후보 순으로 시도
       const candidates = [
         getEndpoint,
         '/api/profile',
@@ -222,7 +205,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ───────── 저장(프로필) ─────────
   const saveProfile = async () => {
     setSavingProfile(true);
     setErrProfile('');
@@ -266,7 +248,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ───────── UI ─────────
   if (loading) {
     return (
       <View style={styles.center}>
@@ -282,7 +263,6 @@ export default function ProfileScreen() {
       style={{ flex: 1 }}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        {/* 계정 정보 */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>계정 정보</Text>
 
@@ -385,7 +365,6 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* 프로필 정보 */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>프로필 정보</Text>
 
@@ -536,7 +515,6 @@ export default function ProfileScreen() {
   );
 }
 
-/* ───────── styles ───────── */
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: 16, gap: 16 },
