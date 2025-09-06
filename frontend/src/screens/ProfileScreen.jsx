@@ -1,11 +1,29 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View, Text, TextInput, Pressable, StyleSheet, ImageBackground } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../context/AuthContext'
 import { ORIGIN } from '../config/api'
+import { useFonts } from 'expo-font'
+
+const FONT = 'DungGeunMo'
+
+if (Text.defaultProps == null) Text.defaultProps = {}
+if (TextInput.defaultProps == null) TextInput.defaultProps = {}
+Text.defaultProps.allowFontScaling = false
+Text.defaultProps.maxFontSizeMultiplier = 1
+TextInput.defaultProps.allowFontScaling = false
+TextInput.defaultProps.maxFontSizeMultiplier = 1
 
 export default function ProfileScreen() {
+  const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') })
+  if (fontsLoaded) {
+    if (!Text.defaultProps.style) Text.defaultProps.style = { fontFamily: FONT }
+    if (!TextInput.defaultProps.style) TextInput.defaultProps.style = { fontFamily: FONT }
+  }
+
+  const insets = useSafeAreaInsets()
   const auth = useAuth()
   const userId = auth?.user?.id || null
 
@@ -131,7 +149,6 @@ export default function ProfileScreen() {
         }
       }
     } catch {}
-
     try {
       const { data, used } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/'])
       setGetEndpoint(used || '/api/profile')
@@ -167,11 +184,9 @@ export default function ProfileScreen() {
         if ((form.newPassword || '').length < 8) throw new Error('새 비밀번호는 8자 이상이어야 합니다.')
         if (form.newPassword !== form.confirmPassword) throw new Error('새 비밀번호 확인이 일치하지 않습니다.')
       }
-
       const payload = { id: nextId, ...(changingPw ? { newPassword: form.newPassword } : {}) }
       const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean)
       await fetchFirstOK('PUT', candidates, payload)
-
       setOkAccount(`${form.newId ? '이메일 ' : ''}${changingPw ? (form.newId ? '및 비밀번호 ' : '비밀번호 ') : ''}수정 완료`)
       setEditingAccount(false)
       setCurrent(c => ({ ...c, id: nextId }))
@@ -199,7 +214,6 @@ export default function ProfileScreen() {
       if (!numOk(form.weight) || !numOk(form.height) || !numOk(form.age) || !numOk(form.targetWeight) || !numOk(form.targetCalories)) {
         throw new Error('숫자 항목은 숫자로 입력하세요.')
       }
-
       const payload = {
         id: (current.id || '').trim(),
         ...(form.weight !== '' ? { weight: Number(form.weight) } : {}),
@@ -209,10 +223,8 @@ export default function ProfileScreen() {
         ...(form.targetWeight !== '' ? { targetWeight: Number(form.targetWeight) } : {}),
         ...(form.targetCalories !== '' ? { targetCalories: Number(form.targetCalories) } : {}),
       }
-
       const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean)
       await fetchFirstOK('PUT', candidates, payload)
-
       setOkProfile('프로필 수정이 완료되었습니다.')
       setEditingProfile(false)
       await AsyncStorage.removeItem('@profile/prefill')
@@ -229,175 +241,203 @@ export default function ProfileScreen() {
     }
   }
 
+  if (!fontsLoaded) {
+    return (
+      <View style={[styles.center, { backgroundColor: '#000' }]}>
+        <ActivityIndicator />
+      </View>
+    )
+  }
+
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>불러오는 중…</Text>
-      </View>
+      <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>PROFILE</Text>
+        <View style={[styles.center, { paddingTop: insets.top + 96 }]}>
+          <ActivityIndicator />
+          <Text style={{ marginTop: 8, color: '#fff', fontFamily: FONT }}>불러오는 중…</Text>
+        </View>
+      </ImageBackground>
     )
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>계정 정보</Text>
-
-          {!editingAccount ? (
-            <>
-              <View style={styles.rowBetween}>
-                <Text style={styles.label}>현재 이메일</Text>
-                <Text style={styles.value}>{current.id ? String(current.id) : '-'}</Text>
-              </View>
-              {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
-              {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
-              <Pressable onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true) }} style={styles.primaryBtn}>
-                <Text style={styles.primaryBtnText}>수정</Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>이메일</Text>
-              <TextInput value={form.newId} onChangeText={v => update('newId', v)} autoCapitalize="none" keyboardType="email-address" style={styles.input} />
-
-              <Text style={styles.label}>새 비밀번호</Text>
-              <TextInput value={form.newPassword} onChangeText={v => update('newPassword', v)} secureTextEntry style={styles.input} />
-
-              <Text style={styles.label}>새 비밀번호 확인</Text>
-              <TextInput value={form.confirmPassword} onChangeText={v => update('confirmPassword', v)} secureTextEntry style={styles.input} />
-
-              {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
-              {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
-
-              <View style={styles.row}>
-                <Pressable onPress={saveAccount} disabled={savingAccount} style={[styles.primaryBtn, savingAccount && { opacity: 0.6 }]}>
-                  {savingAccount ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
+      <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
+        <Text style={[styles.screenTitle, { top: insets.top + 8 }]}>PROFILE</Text>
+        <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 108, paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>계정 정보</Text>
+            {!editingAccount ? (
+              <>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.label}>현재 이메일</Text>
+                  <Text style={styles.value}>{current.id ? String(current.id) : '-'}</Text>
+                </View>
+                {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
+                {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
+                <Pressable onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true) }} style={styles.primaryBtn}>
+                  <Text style={styles.primaryBtnText}>수정</Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setEditingAccount(false)
-                    setForm(f => ({ ...f, newId: current.id || '', newPassword: '', confirmPassword: '' }))
-                  }}
-                  style={styles.ghostBtn}
-                >
-                  <Text style={styles.ghostBtnText}>취소</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.label}>이메일</Text>
+                <TextInput value={form.newId} onChangeText={v => update('newId', v)} autoCapitalize="none" keyboardType="email-address" style={styles.input} />
+                <Text style={styles.label}>새 비밀번호</Text>
+                <TextInput value={form.newPassword} onChangeText={v => update('newPassword', v)} secureTextEntry style={styles.input} />
+                <Text style={styles.label}>새 비밀번호 확인</Text>
+                <TextInput value={form.confirmPassword} onChangeText={v => update('confirmPassword', v)} secureTextEntry style={styles.input} />
+                {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
+                {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
+                <View style={styles.row}>
+                  <Pressable onPress={saveAccount} disabled={savingAccount} style={[styles.primaryBtn, savingAccount && { opacity: 0.6 }]}>
+                    {savingAccount ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setEditingAccount(false)
+                      setForm(f => ({ ...f, newId: current.id || '', newPassword: '', confirmPassword: '' }))
+                    }}
+                    style={styles.ghostBtn}
+                  >
+                    <Text style={styles.ghostBtnText}>취소</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>프로필 정보</Text>
+            {!editingProfile ? (
+              <>
+                <View style={styles.rowBetween}><Text style={styles.label}>체중(kg)</Text><Text style={styles.value}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>키(cm)</Text><Text style={styles.value}>{current.height !== '' ? String(current.height) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>나이</Text><Text style={styles.value}>{current.age !== '' ? String(current.age) : '-'}</Text></View>
+                <View style={styles.rowBetween}><Text style={styles.label}>성별</Text><Text style={styles.value}>{current.gender === 'M' ? '남성' : current.gender === 'F' ? '여성' : '-'}</Text></View>
+                {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
+                {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
+                <Pressable onPress={() => { setErrProfile(''); setOkProfile(''); setEditingProfile(true) }} style={styles.primaryBtn}>
+                  <Text style={styles.primaryBtnText}>수정</Text>
                 </Pressable>
-              </View>
-            </>
-          )}
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>프로필 정보</Text>
-
-          {!editingProfile ? (
-            <>
-              <View style={styles.rowBetween}><Text style={styles.label}>체중(kg)</Text><Text style={styles.value}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
-              <View style={styles.rowBetween}><Text style={styles.label}>키(cm)</Text><Text style={styles.value}>{current.height !== '' ? String(current.height) : '-'}</Text></View>
-              <View style={styles.rowBetween}><Text style={styles.label}>나이</Text><Text style={styles.value}>{current.age !== '' ? String(current.age) : '-'}</Text></View>
-              <View style={styles.rowBetween}><Text style={styles.label}>성별</Text><Text style={styles.value}>{current.gender === 'M' ? '남성' : current.gender === 'F' ? '여성' : '-'}</Text></View>
-
-              {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
-              {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
-
-              <Pressable onPress={() => { setErrProfile(''); setOkProfile(''); setEditingProfile(true) }} style={styles.primaryBtn}>
-                <Text style={styles.primaryBtnText}>수정</Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <View style={styles.row2}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>체중(kg)</Text>
-                  <TextInput value={form.weight} onChangeText={v => update('weight', v)} keyboardType="decimal-pad" style={styles.input} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>키(cm)</Text>
-                  <TextInput value={form.height} onChangeText={v => update('height', v)} keyboardType="number-pad" style={styles.input} />
-                </View>
-              </View>
-
-              <View style={styles.row2}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>나이</Text>
-                  <TextInput value={form.age} onChangeText={v => update('age', v)} keyboardType="number-pad" style={styles.input} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>성별</Text>
-                  <View style={styles.segmentWrap}>
-                    <Pressable onPress={() => update('gender', form.gender === 'M' ? '' : 'M')} style={[styles.segmentBtn, form.gender === 'M' && styles.segmentBtnActive]}>
-                      <Text style={[styles.segmentText, form.gender === 'M' && styles.segmentTextActive]}>남성</Text>
-                    </Pressable>
-                    <Pressable onPress={() => update('gender', form.gender === 'F' ? '' : 'F')} style={[styles.segmentBtn, form.gender === 'F' && styles.segmentBtnActive]}>
-                      <Text style={[styles.segmentText, form.gender === 'F' && styles.segmentTextActive]}>여성</Text>
-                    </Pressable>
+              </>
+            ) : (
+              <>
+                <View style={styles.row2}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>체중(kg)</Text>
+                    <TextInput value={form.weight} onChangeText={v => update('weight', v)} keyboardType="decimal-pad" style={styles.input} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>키(cm)</Text>
+                    <TextInput value={form.height} onChangeText={v => update('height', v)} keyboardType="number-pad" style={styles.input} />
                   </View>
                 </View>
-              </View>
-
-              <View style={styles.row2}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>목표 체중(kg)</Text>
-                  <TextInput value={form.targetWeight} onChangeText={v => update('targetWeight', v)} keyboardType="decimal-pad" style={styles.input} />
+                <View style={styles.row2}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>나이</Text>
+                    <TextInput value={form.age} onChangeText={v => update('age', v)} keyboardType="number-pad" style={styles.input} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>성별</Text>
+                    <View style={styles.segmentWrap}>
+                      <Pressable onPress={() => update('gender', form.gender === 'M' ? '' : 'M')} style={[styles.segmentBtn, form.gender === 'M' && styles.segmentBtnActive]}>
+                        <Text style={[styles.segmentText, form.gender === 'M' && styles.segmentTextActive]}>남성</Text>
+                      </Pressable>
+                      <Pressable onPress={() => update('gender', form.gender === 'F' ? '' : 'F')} style={[styles.segmentBtn, form.gender === 'F' && styles.segmentBtnActive]}>
+                        <Text style={[styles.segmentText, form.gender === 'F' && styles.segmentTextActive]}>여성</Text>
+                      </Pressable>
+                    </View>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>목표 칼로리(kcal)</Text>
-                  <TextInput value={form.targetCalories} onChangeText={v => update('targetCalories', v)} keyboardType="number-pad" style={styles.input} />
+                <View style={styles.row2}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>목표 체중(kg)</Text>
+                    <TextInput value={form.targetWeight} onChangeText={v => update('targetWeight', v)} keyboardType="decimal-pad" style={styles.input} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>목표 칼로리(kcal)</Text>
+                    <TextInput value={form.targetCalories} onChangeText={v => update('targetCalories', v)} keyboardType="number-pad" style={styles.input} />
+                  </View>
                 </View>
-              </View>
-
-              {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
-              {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
-
-              <View style={styles.row}>
-                <Pressable onPress={saveProfile} disabled={savingProfile} style={[styles.primaryBtn, savingProfile && { opacity: 0.6 }]}>
-                  {savingProfile ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setEditingProfile(false)
-                    setForm(f => ({
-                      ...f,
-                      weight: current.weight === '' ? '' : String(current.weight),
-                      height: current.height === '' ? '' : String(current.height),
-                      age: current.age === '' ? '' : String(current.age),
-                      gender: current.gender ?? '',
-                    }))
-                  }}
-                  style={styles.ghostBtn}
-                >
-                  <Text style={styles.ghostBtnText}>취소</Text>
-                </Pressable>
-              </View>
-            </>
-          )}
-        </View>
-      </ScrollView>
+                {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
+                {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
+                <View style={styles.row}>
+                  <Pressable onPress={saveProfile} disabled={savingProfile} style={[styles.primaryBtn, savingProfile && { opacity: 0.6 }]}>
+                    {savingProfile ? <ActivityIndicator /> : <Text style={styles.primaryBtnText}>확인</Text>}
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setEditingProfile(false)
+                      setForm(f => ({
+                        ...f,
+                        weight: current.weight === '' ? '' : String(current.weight),
+                        height: current.height === '' ? '' : String(current.height),
+                        age: current.age === '' ? '' : String(current.age),
+                        gender: current.gender ?? '',
+                      }))
+                    }}
+                    style={styles.ghostBtn}
+                  >
+                    <Text style={styles.ghostBtnText}>취소</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </ImageBackground>
     </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
+  screenTitle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: '#000',
+    fontSize: 26,
+    textShadowColor: 'rgba(255,255,255,0.28)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    zIndex: 10,
+    fontFamily: FONT,
+    fontWeight: 'normal',
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, gap: 16 },
-  card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, backgroundColor: '#fff', padding: 16, gap: 12 },
-  cardTitle: { fontWeight: '700', fontSize: 18, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  container: { paddingHorizontal: 16, gap: 16 },
+  card: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  cardTitle: { fontSize: 18, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', fontFamily: FONT, fontWeight: 'normal' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  label: { fontWeight: '600' },
-  value: { fontWeight: '700', color: '#111827' },
-  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  label: { color: '#111827', fontFamily: FONT, fontWeight: 'normal' },
+  value: { color: '#111827', fontFamily: FONT, fontWeight: 'normal' },
+  input: { borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.9)', fontFamily: FONT },
   row: { flexDirection: 'row', gap: 10, marginTop: 6 },
   row2: { flexDirection: 'row', gap: 12 },
   segmentWrap: { flexDirection: 'row', gap: 8 },
-  segmentBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#d1d5db', alignItems: 'center' },
+  segmentBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.15)', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.9)' },
   segmentBtnActive: { backgroundColor: '#111827', borderColor: '#111827' },
-  segmentText: { fontWeight: '600' },
-  segmentTextActive: { color: '#fff' },
+  segmentText: { color: '#111827', fontFamily: FONT, fontWeight: 'normal' },
+  segmentTextActive: { color: '#fff', fontFamily: FONT, fontWeight: 'normal' },
   primaryBtn: { flex: 1, backgroundColor: '#111827', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
-  ghostBtn: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: '#fff' },
-  ghostBtnText: { fontWeight: '700' },
-  error: { color: '#dc2626', marginTop: 6 },
-  ok: { color: '#16a34a', marginTop: 6 },
+  primaryBtnText: { color: '#fff', fontFamily: FONT, fontWeight: 'normal' },
+  ghostBtn: { flex: 1, borderWidth: 1, borderColor: 'rgba(0,0,0,0.15)', paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.9)' },
+  ghostBtnText: { color: '#111827', fontFamily: FONT, fontWeight: 'normal' },
+  error: { color: '#dc2626', marginTop: 6, fontFamily: FONT },
+  ok: { color: '#16a34a', marginTop: 6, fontFamily: FONT },
 })

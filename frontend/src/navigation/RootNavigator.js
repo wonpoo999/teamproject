@@ -13,6 +13,7 @@ import DataScreen from '../screens/DataScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import { useFonts } from 'expo-font'
 import QuestScreen from '../screens/QuestScreen'
+import RankingScreen from '../screens/RankingScreen'
 
 const Stack = createNativeStackNavigator()
 
@@ -48,6 +49,7 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Data" component={DataScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Quest" component={QuestScreen} />
+      <Stack.Screen name="Ranking" component={RankingScreen} />
     </Stack.Navigator>
   )
 }

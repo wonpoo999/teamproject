@@ -1,3 +1,4 @@
+// 거의 안 쓴다고 봐도 됨
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const norm = (id) => String(id || 'anon').replace(/[^a-zA-Z0-9._-]/g, '_')

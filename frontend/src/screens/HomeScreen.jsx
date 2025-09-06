@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { View, ImageBackground, Text, Pressable, Image, StyleSheet, Animated } from 'react-native'
+import { View, ImageBackground, Text, Pressable, Image, StyleSheet, Animated, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import AvatarByBMI from '../components/AvatarByBMI'
@@ -10,8 +10,11 @@ import { apiGet } from '../config/api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { calcBMI, classifyBMI } from '../utils/bmi'
 
-const ICON_SIZE = 96
+const ICON_SIZE = 72
 const FONT = 'DungGeunMo'
+const BOX_HEIGHT = Platform.select({ ios: 220, android: 170 })
+const BOX_FONT = Platform.select({ ios: 22, android: 18 })
+const BOX_PAD = Platform.select({ ios: 20, android: 14 })
 
 function CalorieGauge({ current, target }) {
   const r = target > 0 ? current / target : 0
@@ -36,7 +39,7 @@ function CalorieGauge({ current, target }) {
     <View style={styles.gaugeContainer}>
       <Animated.View style={[styles.gaugeFill, { width: widthGreen, backgroundColor: 'rgba(34,197,94,0.8)' }]} />
       <Animated.View style={[styles.gaugeFill, { right: 0, width: widthRed, backgroundColor: 'rgba(239,68,68,0.8)' }]} />
-      <View style={styles.gaugeTextWrap}><Text style={styles.gaugeText}>{current}/{target} kcal</Text></View>
+      <View style={styles.gaugeTextWrap}><Text style={styles.gaugeText} allowFontScaling={false}>{current}/{target} kcal</Text></View>
     </View>
   )
 }
@@ -96,17 +99,21 @@ export default function HomeScreen() {
   if (!fontsLoaded) return null
 
   const IconLabeled = ({ iconSrc, label, to, onPress }) => (
-    <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center' }}>
+    <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center', width: ICON_SIZE + 8 }}>
       <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
-      <Text style={styles.labelText}>{label}</Text>
+      <Text style={styles.labelText} numberOfLines={1} allowFontScaling={false}>{label}</Text>
     </Pressable>
   )
 
   return (
     <ImageBackground source={require('../../assets/background/home.png')} style={{ flex: 1 }} resizeMode="cover">
       <View style={[styles.topContainer, { marginTop: insets.top + 20 }]}>
-        <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}><Text style={styles.boxText}>🥗 식단 기록</Text></Pressable>
-        <Pressable style={styles.box} onPress={() => nav.navigate('Data')}><Text style={styles.boxText}>👀 한눈에</Text></Pressable>
+        <Pressable style={styles.box} onPress={() => nav.navigate('DietLog')}>
+          <Text style={styles.boxText} allowFontScaling={false}>🥗 식단 기록</Text>
+        </Pressable>
+        <Pressable style={styles.box} onPress={() => nav.navigate('Data')}>
+          <Text style={styles.boxText} allowFontScaling={false}>👀 한눈에</Text>
+        </Pressable>
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 150 + 260, alignItems: 'center' }} pointerEvents="none">
@@ -119,6 +126,7 @@ export default function HomeScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label="PROFILE" to="Profile" />
             <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="QUEST" to="Quest" />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label="RANKING" to="Ranking" />
             <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label="SETTINGS" to="Settings" />
           </View>
         </View>
@@ -129,11 +137,25 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   topContainer: { flexDirection: 'row', paddingHorizontal: 11, gap: 12 },
-  box: { flex: 1, height: 220, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 30, padding: 20, justifyContent: 'flex-start', alignItems: 'flex-start' },
-  boxText: { fontSize: 22, height: 220, color: '#333', fontFamily: FONT, includeFontPadding: false },
+  box: {
+    flex: 1,
+    height: BOX_HEIGHT,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 30,
+    padding: BOX_PAD,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start'
+  },
+  boxText: {
+    fontSize: BOX_FONT,
+    height: BOX_HEIGHT,
+    color: '#333',
+    fontFamily: FONT,
+    includeFontPadding: false
+  },
   gaugeContainer: { width: '65%', height: 20, borderWidth: 2, borderColor: 'black', borderRadius: 8, overflow: 'hidden' },
   gaugeFill: { position: 'absolute', top: 0, bottom: 0 },
   gaugeTextWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   gaugeText: { color: 'gray', fontSize: 12, fontFamily: FONT, includeFontPadding: false },
-  labelText: { fontSize: 18, marginTop: -16, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center' },
+  labelText: { fontSize: 18, marginTop: -8, fontFamily: FONT, color: 'tomato', includeFontPadding: false, textAlign: 'center'}
 })
