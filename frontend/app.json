@@ -2,17 +2,22 @@
   "expo": {
     "plugins": [
       "expo-secure-store",
-      "expo-localization"
+      "expo-localization",
+      "expo-camera"
     ],
     "android": {
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO"
       ]
     },
     "ios": {
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "산책 거리 측정을 위해 위치를 사용합니다."
+        "NSLocationWhenInUseUsageDescription": "산책 거리 측정을 위해 위치를 사용합니다.",
+        "NSCameraUsageDescription": "스쿼트 카운트 및 음식 사진 촬영을 위해 카메라를 사용합니다.",
+        "NSMicrophoneUsageDescription": "일부 기기에서 카메라 사용 시 마이크 권한이 함께 요구될 수 있습니다."
       }
     }
   }

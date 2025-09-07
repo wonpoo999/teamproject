@@ -25,7 +25,7 @@ npx expo install expo-location @react-native-async-storage/async-storage
 npm install @react-native-community/datetimepicker
 npx expo install expo-localization
 npm i i18next react-i18next react-native-localize
-npm i @react-native-async-storage/async-storage
+npx expo install expo-sensors expo-haptics
 npx expo start
 
 
