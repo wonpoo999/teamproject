@@ -17,9 +17,11 @@ import com.example.health_care.dto.UpdateAccountRequest;
 import com.example.health_care.entity.BodyEntity;
 import com.example.health_care.entity.CustomersEntity;
 import com.example.health_care.entity.GoalEntity;
+import com.example.health_care.entity.RecordEntity;
 import com.example.health_care.repository.BodyRepository;
 import com.example.health_care.repository.CustomersRepository;
 import com.example.health_care.repository.GoalRepository;
+import com.example.health_care.repository.RecordRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,8 @@ public class CustomersService implements UserDetailsService {
         private final PasswordEncoder passwordEncoder;
         private final BodyRepository bodyRepository;
         private final GoalRepository goalRepository;
-
+        private final RecordRepository recordRepository;
+        
         @Transactional
         public CustomersEntity signup(SignupRequest req) {
                 log.debug("[SIGNUP:SERVICE] existsById? id={}", req.getId()); // log 확인
@@ -86,7 +89,7 @@ public class CustomersService implements UserDetailsService {
                                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다 : " + customerId));
 
                 // 2. 고객의 idx를 사용하여 목표 정보 조회
-                Optional<GoalEntity> goal = goalRepository.findByCustomer_Idx(customer.getIdx());
+                Optional<GoalEntity> goal = goalRepository.findTopByCustomer_IdxOrderByIdxDesc(customer.getIdx());
 
                 // 3. 두 정보를 합쳐 DTO로 빌드하여 반환
                 return CustomersProfileDTO.builder()
@@ -124,45 +127,61 @@ public class CustomersService implements UserDetailsService {
         }
 
         @Transactional
-        public void updateProfileAndSaveGoal(String customerId, UpdateAccountRequest req) {
-                // 1. 고객 엔티티를 찾아서 업데이트
-                CustomersEntity customer = customersRepository.findById(customerId)
-                                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+    public void updateProfileAndSaveGoal(String customerId, UpdateAccountRequest req) {
+        // 1. 고객 엔티티를 찾아서 업데이트
+        CustomersEntity customer = customersRepository.findById(customerId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
-                // DTO에서 받은 데이터로 Customers 테이블의 정보 업데이트
-                Optional.ofNullable(req.getWeight()).ifPresent(customer::setWeight);
-                Optional.ofNullable(req.getHeight()).ifPresent(customer::setHeight);
-                Optional.ofNullable(req.getAge()).ifPresent(customer::setAge);
-                Optional.ofNullable(req.getGender()).ifPresent(customer::setGender);
+        // DTO에서 받은 데이터로 Customers 테이블의 정보 업데이트
+        Optional.ofNullable(req.getWeight()).ifPresent(customer::setWeight);
+        Optional.ofNullable(req.getHeight()).ifPresent(customer::setHeight);
+        Optional.ofNullable(req.getAge()).ifPresent(customer::setAge);
+        Optional.ofNullable(req.getGender()).ifPresent(customer::setGender);
 
-                // 2. 비밀번호 변경
-                if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
-                        customer.setPassword(passwordEncoder.encode(req.getNewPassword()));
-                }
-
-                // 3. 엔티티 저장
-                customersRepository.save(customer);
-
-                // 4. 목표 정보가 DTO에 포함된 경우 Goal 엔티티를 생성하거나 업데이트
-                if (req.getTargetWeight() != null || req.getTargetCalories() != null) {
-                        // 고객의 idx를 사용하여 Goal 엔티티를 찾음
-                        Optional<GoalEntity> existingGoal = goalRepository.findByCustomer_Idx(customer.getIdx());
-                        GoalEntity goalEntity;
-
-                        if (existingGoal.isPresent()) {
-                                goalEntity = existingGoal.get();
-                        } else {
-                                goalEntity = new GoalEntity();
-                                goalEntity.setCustomer(customer);
-                        }
-
-                        // DTO의 값으로 Goal 엔티티 업데이트
-                        Optional.ofNullable(req.getTargetWeight()).ifPresent(goalEntity::setTargetWeight);
-                        Optional.ofNullable(req.getTargetCalories()).ifPresent(goalEntity::setTargetCalories);
-
-                        goalRepository.save(goalEntity);
-                }
+        // 2. 비밀번호 변경
+        if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
+            customer.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }
+
+        customersRepository.save(customer);
+
+        // 3. 목표 정보가 DTO에 포함된 경우
+        if (req.getTargetWeight() != null || req.getTargetCalories() != null) {
+            // ⭐ 1. GOAL 테이블에 새로운 목표 기록을 생성하고 저장
+            GoalEntity goalEntity = GoalEntity.builder()
+                    .customer(customer)
+                    .targetWeight(req.getTargetWeight())
+                    .targetCalories(req.getTargetCalories())
+                    .build();
+            goalRepository.save(goalEntity);
+
+            // ⭐ 2. BODY 테이블에 현재 신체 정보와 목표를 함께 기록
+            BodyEntity bodyEntity = BodyEntity.builder()
+                    .customer(customer)
+                    .weight(req.getWeight())
+                    .height(req.getHeight())
+                    .age(req.getAge())
+                    .gender(req.getGender())
+                    .targetWeight(req.getTargetWeight())
+                    .targetCalories(req.getTargetCalories())
+                    .recordDate(new Date())
+                    .build();
+            bodyRepository.save(bodyEntity);
+
+            // ⭐ 3. RECORD 테이블에 초기 목표 기록
+            RecordEntity recordEntity = RecordEntity.builder()
+                    .customer(customer)
+                    .recordDate(new Date())
+                    .targetWeight(req.getTargetWeight())
+                    .targetCalories(req.getTargetCalories())
+                    // 아침/점심/저녁 칼로리 정보는 아직 없으므로 NULL로 둡니다.
+                    .caloriesM(null)
+                    .caloriesL(null)
+                    .caloriesD(null)
+                    .build();
+            recordRepository.save(recordEntity);
+        }
+    }
          // >>> [ADDED] 복구/프로필 등에서 공용으로 쓰는 비밀번호 변경 유틸
         @Transactional
         public void updatePassword(String customerId, String newPassword) {
