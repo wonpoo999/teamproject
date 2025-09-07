@@ -86,7 +86,7 @@ public class CustomersService implements UserDetailsService {
                                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다 : " + customerId));
 
                 // 2. 고객의 idx를 사용하여 목표 정보 조회
-                Optional<GoalEntity> goal = goalRepository.findByCustomer_Idx(customer.getIdx());
+                Optional<GoalEntity> goal = goalRepository.findTopByCustomer_IdxOrderByIdxDesc(customer.getIdx());
 
                 // 3. 두 정보를 합쳐 DTO로 빌드하여 반환
                 return CustomersProfileDTO.builder()
