@@ -1,5 +1,7 @@
 package com.example.health_care.entity;
 
+import java.util.Date;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -40,4 +42,8 @@ public class GoalEntity {
 
     @Column(name = "target_calories") // nullable = false 속성 제거
     private Integer targetCalories;
+
+ @Builder.Default
+    @Column(name = "record_date", nullable = false)
+    private Date recordDate = new Date();
 }
