@@ -1,4 +1,4 @@
-import { View, ScrollView, TouchableOpacity, Text, Switch, ImageBackground } from 'react-native'
+import { View, ScrollView, TouchableOpacity, Text, Switch, ImageBackground, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../i18n/I18nContext'
@@ -43,6 +43,8 @@ export default function SettingsScreen() {
             textAlign: 'center',
             marginBottom: 16,
             fontFamily: fontsLoaded ? FONT : undefined,
+            lineHeight: 34, // 잘림 방지
+            includeFontPadding: true,
           }}
         >
           SETTING
@@ -66,7 +68,14 @@ export default function SettingsScreen() {
         >
           <ScrollView contentContainerStyle={{ rowGap: 20 }}>
             <View style={{ gap: 10 }}>
-              <Text style={{ fontFamily: fontsLoaded ? FONT : undefined, fontSize: 18 }}>
+              <Text
+                style={{
+                  fontFamily: fontsLoaded ? FONT : undefined,
+                  fontSize: 18,
+                  lineHeight: 22,
+                  includeFontPadding: true,
+                }}
+              >
                 {t('LANGUAGE')}
               </Text>
               <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
@@ -92,6 +101,9 @@ export default function SettingsScreen() {
                       style={{
                         fontFamily: fontsLoaded ? FONT : undefined,
                         color: lang === item.k ? 'white' : '#111827',
+                        fontSize: 16,
+                        lineHeight: 20,
+                        includeFontPadding: true,
                       }}
                     >
                       {item.label}
@@ -106,12 +118,23 @@ export default function SettingsScreen() {
                 style={{
                   fontFamily: fontsLoaded ? FONT : undefined,
                   marginRight: 8,
+                  fontSize: 16,
+                  lineHeight: 20,
+                  includeFontPadding: true,
                 }}
               >
                 {t('SOUND')}
               </Text>
               <Switch value={sfx} onValueChange={toggleSfx} />
-              <Text style={{ fontFamily: fontsLoaded ? FONT : undefined, marginLeft: 8 }}>
+              <Text
+                style={{
+                  fontFamily: fontsLoaded ? FONT : undefined,
+                  marginLeft: 8,
+                  fontSize: 16,
+                  lineHeight: 20,
+                  includeFontPadding: true,
+                }}
+              >
                 {sfx ? t('ON') : t('OFF')}
               </Text>
             </View>
@@ -130,6 +153,9 @@ export default function SettingsScreen() {
                   fontFamily: fontsLoaded ? FONT : undefined,
                   color: '#fff',
                   textAlign: 'center',
+                  fontSize: 18,
+                  lineHeight: 22,
+                  includeFontPadding: true,
                 }}
               >
                 {t('LOGOUT')}

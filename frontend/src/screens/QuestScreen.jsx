@@ -1,4 +1,3 @@
-// src/screens/QuestScreen.jsx
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { View, Text, ImageBackground, StyleSheet, Animated, Platform, AppState, Linking, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,6 +9,10 @@ import { useI18n } from '../i18n/I18nContext'
 import { apiGet } from '../config/api'
 
 const FONT = 'DungGeunMo'
+
+// 안드로이드 폰트 컷 방지 (전역)
+if (Text.defaultProps == null) Text.defaultProps = {}
+Text.defaultProps.includeFontPadding = true
 
 // 👇 원래 쓰던 다국어 맵 그대로 유지
 const TAUNTS_MAP = {
@@ -85,8 +88,8 @@ export default function QuestScreen(){
     const situps = Math.round(25 * factor)
 
     const list = [
-      { id: 'walk',  type: 'walk_km', target: walkKm, desc: `${t('WALK')} ${walkKm} km`, auto: true,  done: false },
-      { id: 'squat', type: 'squat',   target: squats,  desc: `${t('SQUAT')} ${squats}`,   auto: false, done: false },
+      { id: 'walk',  type: 'walk_km', target: walkKm, desc: `${t('WALK') || 'WALK'} ${walkKm} km`, auto: true,  done: false },
+      { id: 'squat', type: 'squat',   target: squats,  desc: `${t('SQUAT') || 'SQUAT'} ${squats}`,   auto: false, done: false },
       { id: 'situp', type: 'situp',   target: situps,  desc: `${t('SITUP') || 'SIT-UP'} ${situps}`, auto: false, done: false },
     ]
     await AsyncStorage.setItem('@quest/list', JSON.stringify(list))
@@ -179,8 +182,9 @@ export default function QuestScreen(){
   const km = ((meters)/1000).toFixed(2)
   const goalKm = walkQ ? walkQ.target.toFixed(1) : '0.0'
 
-  const startSquat = () => navigation.navigate('SquatCounterSimple', { target: squatQ.target })
-  const startSitup = () => navigation.navigate('SitupCounterHand', { target: situpQ.target })
+  // ✅ 널가드: 아직 quests 로딩 전 터치 방지
+  const startSquat = () => squatQ && navigation.navigate('SquatCounterSimple', { target: squatQ.target })
+  const startSitup = () => situpQ && navigation.navigate('SitupCounterHand', { target: situpQ.target })
 
   const QuestRow = ({ item }) => {
     const onPress = item.id === 'squat' ? startSquat : startSitup
@@ -188,7 +192,7 @@ export default function QuestScreen(){
       <View style={styles.rowQ}>
         <Text style={styles.rowText}>{item.desc}</Text>
         <TouchableOpacity onPress={onPress} style={[styles.btn, item.done ? { backgroundColor: '#10b981' } : null]}>
-          <Text style={styles.btnText}>{item.done ? t('DONE') : t('START')}</Text>
+          <Text style={styles.btnText}>{item.done ? (t('DONE') || 'DONE') : (t('START') || 'START')}</Text>
         </TouchableOpacity>
       </View>
     )
@@ -196,11 +200,11 @@ export default function QuestScreen(){
 
   return(
     <ImageBackground source={require('../../assets/background/home.png')} style={{flex:1}} resizeMode="cover">
-      <Text style={[styles.screenTitle,{top:insets.top+8}]}>{t('QUEST')}</Text>
+      <Text style={[styles.screenTitle,{top:insets.top+8}]}>{t('QUEST') || 'QUEST'}</Text>
       <View style={{paddingTop:insets.top+88,paddingHorizontal:18,gap:16}}>
         <View style={styles.card}>
-          <Text style={styles.title}>{t('DAILY_QUESTS')}</Text>
-          <Text style={styles.questMain}>{t('WALK')} {goalKm} km</Text>
+          <Text style={styles.title}>{t('DAILY_QUESTS') || 'DAILY QUESTS'}</Text>
+          <Text style={styles.questMain}>{(t('WALK') || 'WALK')} {goalKm} km</Text>
           <View style={styles.barWrap}>
             <Animated.View style={[styles.barFill,{width}]}/>
             <Text style={styles.barText}>{km} / {goalKm} km</Text>
@@ -212,7 +216,7 @@ export default function QuestScreen(){
           {quests.filter(x => x.id === 'squat' || x.id === 'situp').map(q => <QuestRow key={q.id} item={q} />)}
         </View>
 
-        {/* 🔹 RESET 버튼 */}
+        {/* 🔹 RESET 버튼 (i18n 적용) */}
         <TouchableOpacity
           onPress={async () => {
             await AsyncStorage.removeItem('@quest/list')
@@ -221,7 +225,7 @@ export default function QuestScreen(){
           }}
           style={[styles.btn, { marginTop: 20, alignSelf: 'center', backgroundColor: '#ef4444' }]}
         >
-          <Text style={styles.btnText}>RESET QUESTS</Text>
+          <Text style={styles.btnText}>{t('RESET_QUESTS') || 'RESET QUESTS'}</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -229,18 +233,23 @@ export default function QuestScreen(){
 }
 
 const styles=StyleSheet.create({
-  screenTitle:{position:'absolute',left:0,right:0,textAlign:'center',color:'#000',fontSize:26,textShadowColor:'rgba(255,255,255,0.28)',textShadowOffset:{width:0,height:1},textShadowRadius:2,zIndex:10,fontFamily:FONT,fontWeight:'normal'},
+  screenTitle:{
+    position:'absolute',left:0,right:0,textAlign:'center',color:'#000',
+    fontSize:26, lineHeight:32, // 컷 방지
+    textShadowColor:'rgba(255,255,255,0.28)',textShadowOffset:{width:0,height:1},textShadowRadius:2,
+    zIndex:10,fontFamily:FONT,fontWeight:'normal',includeFontPadding:true,
+  },
   center:{flex:1,alignItems:'center',justifyContent:'center'},
   card:{backgroundColor:'rgba(255,255,255,0.8)',borderRadius:24,padding:18,gap:12},
-  title:{fontFamily:FONT,fontSize:20,color:'#111'},
-  questMain:{fontFamily:FONT,fontSize:28,color:'#111'},
+  title:{fontFamily:FONT,fontSize:20,lineHeight:24,color:'#111',includeFontPadding:true},
+  questMain:{fontFamily:FONT,fontSize:28,lineHeight:34,color:'#111',includeFontPadding:true},
   barWrap:{height:26,borderWidth:2,borderColor:'#111',borderRadius:10,overflow:'hidden',justifyContent:'center',backgroundColor:'rgba(0,0,0,0.05)'},
   barFill:{position:'absolute',left:0,top:0,bottom:0,backgroundColor:'rgba(34,197,94,0.85)'},
-  barText:{textAlign:'center',fontFamily:FONT,fontSize:14,color:'#111'},
-  quip:{fontFamily:FONT,fontSize:14,color:'#000',marginTop:2},
+  barText:{textAlign:'center',fontFamily:FONT,fontSize:14,lineHeight:17,color:'#111',includeFontPadding:true},
+  quip:{fontFamily:FONT,fontSize:14,lineHeight:17,color:'#000',marginTop:2,includeFontPadding:true},
   subCard:{backgroundColor:'rgba(255,255,255,0.72)',borderRadius:20,padding:16,gap:8},
   rowQ:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingVertical:8,borderBottomWidth:1,borderColor:'rgba(0,0,0,0.06)'},
-  rowText:{fontFamily:FONT,fontSize:16,color:'#111'},
+  rowText:{fontFamily:FONT,fontSize:16,lineHeight:20,color:'#111',includeFontPadding:true},
   btn:{paddingHorizontal:12,paddingVertical:6,backgroundColor:'#111827',borderRadius:8},
-  btnText:{fontFamily:FONT,color:'#fff',fontSize:12},
+  btnText:{fontFamily:FONT,color:'#fff',fontSize:12,lineHeight:15,includeFontPadding:true},
 })
