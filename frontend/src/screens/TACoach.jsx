@@ -11,7 +11,6 @@ const MODE_LABEL_EN = { squat: 'SQUAT', pushup: 'PUSH-UP' }
 const TA_IMG = require('../../assets/char/ta.png')
 const STORE_KEY = '@tts/voiceId'
 
-// 독려 멘트
 const MOTIVATE = [
   '좋아요! 이렇게 꾸준히 하면 금방 늘어요.',
   '한 개씩 차근차근, 잘 하고 있어요!',
@@ -30,7 +29,6 @@ const MOTIVATE = [
   '멋진 페이스예요, 끝까지 화이팅!',
 ]
 
-// 도발 멘트
 const SPICY = [
   '이 정도에 힘들면 엘리베이터도 운동이지요?',
   '킹받지? 그럼 한 개만 더.',
@@ -74,165 +72,133 @@ async function resolveVoice() {
 
 export default function TACoach({ route }) {
   const mode = route?.params?.mode || 'squat'
-
   const [running, setRunning] = useState(false)
   const [count, setCount] = useState(0)
   const [voiceId, setVoiceId] = useState(null)
-
-  // 속도 고정(천천히)
   const intervalMs = 3000
+  const TONES = ['soft', 'hard', 'mix']
+  const TONE_LABEL = { soft: '소프트', hard: '하드', mix: '믹스' }
+  const [toneIdx, setToneIdx] = useState(0)
+  const tone = TONES[toneIdx]
+  const toneRef = useRef(tone)
 
-const TONES = ['soft', 'hard', 'mix']
-const TONE_LABEL = { soft: '소프트', hard: '하드', mix: '믹스' }
-const [toneIdx, setToneIdx] = useState(0)
-const tone = TONES[toneIdx]
+  useEffect(() => { toneRef.current = TONES[toneIdx] }, [toneIdx])
 
-function pickLine() {
-  if (tone === 'soft') return pick(MOTIVATE) // 독려
-  if (tone === 'hard') return pick(SPICY)    // 도발
-  // 믹스
-  return Math.random() < 0.5 ? pick(MOTIVATE) : pick(SPICY)
-}
-  const lastSpoken = useRef(0)
-  const autoTimer = useRef(null)   // setInterval id
-  const tauntTimer = useRef(null)  // setTimeout id
+  function pickLineByTone() {
+    const t = toneRef.current
+    if (t === 'soft') return pick(MOTIVATE)
+    if (t === 'hard') return pick(SPICY)
+    return Math.random() < 0.5 ? pick(MOTIVATE) : pick(SPICY)
+  }
 
-  // --- TTS 큐 ---
-  const q = useRef([])
-  const speaking = useRef(false)
+  const loopOn = useRef(false)
+  const timeoutRef = useRef(null)
+  const countRef = useRef(0)
   const lastTauntAt = useRef(0)
+  const startedOnceRef = useRef(false)
   const TAUNT_COOLDOWN_MS = 12000
 
-  function ttsEnqueue(text, rate = 1.0) {
-    if (!text) return
-    q.current.push({ text, rate })
-    processQueue()
+  function speak(text, rate = 1.0) {
+    return new Promise(resolve => {
+      const opts = {
+        language: 'ko-KR',
+        rate,
+        onDone: resolve,
+        onStopped: resolve,
+        onError: resolve,
+      }
+      if (voiceId) opts.voice = voiceId
+      else opts.pitch = 0.85
+      Speech.speak(text, opts)
+    })
   }
-  function processQueue() {
-    if (speaking.current) return
-    const job = q.current.shift()
-    if (!job) return
-    speaking.current = true
-    const opts = {
-      language: 'ko-KR',
-      rate: job.rate,
-      onDone: handleDone,
-      onStopped: handleDone,
-      onError: handleDone,
+
+  function clearTimer() {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
     }
-    if (voiceId) opts.voice = voiceId
-    else opts.pitch = 0.85
-    Speech.speak(job.text, opts)
   }
-  function handleDone() {
-    speaking.current = false
-    processQueue()
+
+  async function loop() {
+    if (!loopOn.current) return
+    const next = countRef.current + 1
+    setCount(next)
+    countRef.current = next
+    const t0 = Date.now()
+    await speak(`${next}개`, 1.03)
+    const t1 = Date.now()
+    const numberDur = t1 - t0
+    const now = Date.now()
+    if (next % 12 === 0 && now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
+      lastTauntAt.current = now
+      await speak(pickLineByTone(), 1.0)
+    }
+    const rest = Math.max(0, intervalMs - numberDur)
+    timeoutRef.current = setTimeout(loop, rest)
   }
-  function ttsStopAll() {
-    q.current = []
-    speaking.current = false
-    Speech.stop()
+
+  async function startAuto() {
+    if (loopOn.current) return
+    loopOn.current = true
+    clearTimer()
+    try { Speech.stop() } catch {}
+    if (!startedOnceRef.current) {
+      startedOnceRef.current = true
+      await speak(buildGreeting(mode), 1.0)
+      await speak('자동 카운트를 시작합니다.', 1.0)
+    }
+    loop()
+    setRunning(true)
+  }
+
+  function stopAuto() {
+    loopOn.current = false
+    clearTimer()
+    try { Speech.stop() } catch {}
+    setRunning(false)
+  }
+
+  function cycleTone() {
+    const next = (toneIdx + 1) % TONES.length
+    setToneIdx(next)
+    if (running) speak(`${TONE_LABEL[TONES[next]]} 톤으로 전환`, 1.0)
   }
 
   useEffect(() => {
     resolveVoice().then(setVoiceId)
-    if (Platform.OS === 'android') Speech.speak('', { language: 'ko-KR', onDone: () => Speech.stop() })
-    return () => { stopAuto(); clearTaunt(); ttsStopAll() }
+    if (Platform.OS === 'android') {
+      Speech.speak('', { language: 'ko-KR', onDone: () => Speech.stop() })
+    }
+    return () => { stopAuto() }
   }, [])
-
-  useEffect(() => {
-    if (!running) return
-    if (count > 0 && count !== lastSpoken.current) {
-      lastSpoken.current = count
-      ttsEnqueue(`${count}개`)
-      const now = Date.now()
-      if (count % 12 === 0 && now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
-        lastTauntAt.current = now
-        ttsEnqueue(pickLine())
-      }
-    }
-  }, [count, running, tone])
-
-  function scheduleTaunt() {
-    clearTaunt()
-    const delay = 20000 + Math.floor(Math.random() * 15000)
-    tauntTimer.current = setTimeout(() => {
-      if (autoTimer.current) {
-        const now = Date.now()
-        if (now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
-          lastTauntAt.current = now
-          ttsEnqueue(pickLine())
-        }
-        scheduleTaunt()
-      }
-    }, delay)
-  }
-  function clearTaunt() {
-    if (tauntTimer.current) {
-      clearTimeout(tauntTimer.current)
-      tauntTimer.current = null
-    }
-  }
-
-  function startAuto() {
-    if (autoTimer.current) return
-    setRunning(true)
-    lastSpoken.current = 0
-    ttsStopAll()
-    ttsEnqueue(buildGreeting(mode))
-    autoTimer.current = setInterval(() => setCount(c => c + 1), intervalMs)
-    ttsEnqueue('자동 카운트를 시작합니다.')
-    scheduleTaunt()
-  }
-  function stopAuto() {
-    if (autoTimer.current) {
-      clearInterval(autoTimer.current)
-      autoTimer.current = null
-    }
-    setRunning(false)
-    clearTaunt()
-  }
-function cycleTone() {
-  const next = (toneIdx + 1) % TONES.length
-  setToneIdx(next)
-  if (running) ttsEnqueue(`${TONE_LABEL[TONES[next]]} 톤으로 전환`)
-}
 
   return (
     <View style={S.wrap}>
-      {/* 상단 중앙 모드 텍스트 */}
       <View style={S.topCenter}>
         <View style={S.modePill}>
           <Text style={S.modeTxt}>{(MODE_LABEL_EN[mode] || mode).toUpperCase()}</Text>
         </View>
-
-       <TouchableOpacity onPress={cycleTone} style={S.tonePill}>
-        <Text style={S.toneLabel}>톤</Text>
-        <Text style={S.toneValue}>{TONE_LABEL[tone]}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={cycleTone} style={S.tonePill}>
+          <Text style={S.toneLabel}>톤</Text>
+          <Text style={S.toneValue}>{TONE_LABEL[tone]}</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* 캐릭터 */}
       <View style={S.charWrap}>
         <Image source={TA_IMG} style={S.charImg} resizeMode="contain" />
       </View>
-
-      {/* 카운트: 배경 제거, 글로우만 */}
       <View style={S.countWrap}>
         <Text style={S.countGlow}>{count}</Text>
         <Text style={S.count}>{count}</Text>
         <Text style={S.countUnit}>REPS</Text>
       </View>
-
-      {/* 컨트롤 버튼 */}
       <View style={S.bottomRow}>
         <TouchableOpacity
           style={[S.ctrlBtn, S.resetBtn]}
-          onPress={() => { stopAuto(); setCount(0); lastSpoken.current = 0; ttsStopAll() }}
+          onPress={() => { stopAuto(); setCount(0); countRef.current = 0; startedOnceRef.current = false }}
         >
           <Text style={S.ctrlTxt}>RESET</Text>
         </TouchableOpacity>
-
         {running ? (
           <TouchableOpacity style={[S.ctrlBtn, S.pauseBtn]} onPress={stopAuto}>
             <Text style={S.ctrlTxt}>PAUSE</Text>
@@ -249,28 +215,17 @@ function cycleTone() {
 
 const S = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: '#05060a' },
-
-  topCenter: {
-    position: 'absolute',
-    top: 28, // 필요시 32~40 조절
-    left: 0, right: 0,
-    alignItems: 'center',
-    zIndex: 2,
-  },
+  topCenter: { position: 'absolute', top: 28, left: 0, right: 0, alignItems: 'center', zIndex: 2 },
   modePill: {
-    paddingHorizontal: 18, paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
   },
   modeTxt: {
     color: '#e8e8ea', fontSize: 22, letterSpacing: 4, fontFamily: 'DungGeunMo',
     textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
   },
-
   tonePill: {
-    marginTop: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
     backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.35)',
   },
@@ -279,32 +234,19 @@ const S = StyleSheet.create({
     color: '#93c5fd', fontSize: 14, fontFamily: 'DungGeunMo', letterSpacing: 1,
     textShadowColor: 'rgba(147,197,253,0.6)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8,
   },
-
   charWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   charImg: { width: W * 0.78, height: Math.min(W * 0.9, H * 0.5) },
-
   countWrap: { position: 'absolute', left: 0, right: 0, bottom: 128, alignItems: 'center' },
   countGlow: {
-    position: 'absolute',
-    fontSize: 94, fontWeight: '900', fontFamily: 'DungGeunMo',
-    color: 'transparent',
-    textShadowColor: 'rgba(59,130,246,0.45)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 22,
+    position: 'absolute', fontSize: 94, fontWeight: '900', fontFamily: 'DungGeunMo',
+    color: 'transparent', textShadowColor: 'rgba(59,130,246,0.45)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 22,
   },
   count: {
     color: '#fff', fontSize: 86, fontWeight: '900', fontFamily: 'DungGeunMo', letterSpacing: 2,
     textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 6,
   },
-  countUnit: {
-    marginTop: 8,
-    color: '#cbd5e1', fontSize: 12, opacity: 0.9, fontFamily: 'DungGeunMo', letterSpacing: 2,
-  },
-
-  bottomRow: {
-    position: 'absolute', left: 0, right: 0, bottom: 36,
-    flexDirection: 'row', gap: 12, justifyContent: 'center',
-  },
+  countUnit: { marginTop: 8, color: '#cbd5e1', fontSize: 12, opacity: 0.9, fontFamily: 'DungGeunMo', letterSpacing: 2 },
+  bottomRow: { position: 'absolute', left: 0, right: 0, bottom: 36, flexDirection: 'row', gap: 12, justifyContent: 'center' },
   ctrlBtn: {
     minWidth: 120, paddingVertical: 14, paddingHorizontal: 22, borderRadius: 16, alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 6 },
