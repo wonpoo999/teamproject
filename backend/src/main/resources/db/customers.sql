@@ -1,11 +1,6 @@
 -- SELECT
 SELECT * FROM customers;
 SELECT * FROM USER_CONSTRAINTS WHERE TABLE_NAME = "tabnam";
--- DROP
-DROP TABLE customers;
-DROP TABLE body;
-DROP TABLE foodInfo;
-DROP TABLE goal;
 
 --커밋
 commit;
@@ -19,9 +14,15 @@ SELECT * FROM V$VERSION;
 -- 외래 키에 의해 종속된 테이블 먼저 삭제
 DROP TABLE goal CASCADE CONSTRAINTS;
 DROP TABLE body CASCADE CONSTRAINTS;
+DROP TABLE recovery CASCADE CONSTRAINTS;
+DROP TABLE record CASCADE CONSTRAINTS;
 
 -- 마지막으로 customers 테이블 삭제
 DROP TABLE customers CASCADE CONSTRAINTS;
+-- 시퀀스 초기화
+drop SEQUENCE customers_seq;
+-- customers 시퀀스 생성
+CREATE SEQUENCE customers_seq START WITH 1 INCREMENT BY 1;
 
 --테이블 수정된걸로 수정
 CREATE TABLE customers (
@@ -34,5 +35,3 @@ CREATE TABLE customers (
     height NUMBER(3)
 );
 
--- customers 시퀀스 생성
-CREATE SEQUENCE customers_seq START WITH 1 INCREMENT BY 1;
