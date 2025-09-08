@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Image, Alert, StyleShe
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import * as ImageManipulator from "expo-image-manipulator"
-import { analyzeFoodImageWithGemini } from "../api/gemini"
+import { analyzeFoodImage } from "../api/gemini"
 import { API_BASE_DEBUG } from "../config/api"
 import { addCalories } from "../utils/calorieStorage"
 import { useNavigation } from "@react-navigation/native"
@@ -64,7 +64,7 @@ export default function CameraScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: true })
       const manipulated = await ImageManipulator.manipulateAsync(photo.uri, [{ resize: { width: 1280 } }], { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG })
       setShotUri(manipulated.uri)
-      const result = await analyzeFoodImageWithGemini(manipulated.uri)
+      const result = await analyzeFoodImage(manipulated.uri)
       setFood(result)
     } catch (e) {
       setError(e?.message ?? "분석 중 문제가 발생했어요.")
@@ -119,13 +119,9 @@ export default function CameraScreen() {
             {!busy && food && (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>분석 결과</Text>
-                <Text style={styles.foodRow}>🍽 음식: <Text style={styles.foodStrong}>{food.dish}</Text></Text>
                 <View style={styles.chipsRow}>
-                  <View style={styles.chip}><Text style={styles.chipText}>🔥 {food.calories} kcal</Text></View>
-                  <View style={styles.chip}><Text style={styles.chipText}>단백질 {food.protein}g</Text></View>
-                  <View style={styles.chip}><Text style={styles.chipText}>지방 {food.fat}g</Text></View>
-                  <View style={styles.chip}><Text style={styles.chipText}>탄수화물 {food.carbs}g</Text></View>
-                </View>
+                 <View style={styles.chip}><Text style={styles.chipText}>🔥 {food.calories} kcal</Text></View>
+                 </View>
                 <View style={styles.cardActions}>
                   <TouchableOpacity onPress={resetShot} style={styles.secondaryBtn}>
                     <Text style={styles.secondaryBtnText}>다시 찍기</Text>
