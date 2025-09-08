@@ -93,19 +93,9 @@ export default function QuestScreen(){
     setQuests(list)
   }
 
-  async function markDone(id){
-    const list = quests.map(q => q.id===id ? { ...q, done: true } : q)
-    setQuests(list)
-    await AsyncStorage.setItem('@quest/list', JSON.stringify(list))
-  }
-
   useEffect(()=>{ (async()=>{ await loadOrGenQuests(); })() }, [])
 
-  useFocusEffect(
-    useMemo(() => () => {
-      return () => {}
-    }, [])
-  )
+  useFocusEffect(useMemo(() => () => { return () => {} }, []))
 
   useEffect(()=>{const sub=AppState.addEventListener('change',s=>{appActiveRef.current=(s==='active')});return()=>sub?.remove?.()},[])
   useEffect(()=>{let mounted=true;(async()=>{
@@ -169,21 +159,13 @@ export default function QuestScreen(){
   const startSquat = () => squatQ && navigation.navigate('TACoach', { mode: 'squat', target: squatQ.target })
   const startPushup = () => pushupQ && navigation.navigate('TACoach', { mode: 'pushup', target: pushupQ.target })
 
-  const QuestRow = ({ item }) => {
-    const onPress = item.id === 'squat' ? startSquat : item.id === 'pushup' ? startPushup : undefined
-    return (
-      <View style={styles.rowQ}>
-        <Text style={styles.rowText}>{item.desc}</Text>
-        <TouchableOpacity onPress={onPress} style={[styles.btn, item.done ? { backgroundColor: '#10b981' } : null]}>
-          <Text style={styles.btnText}>{item.done ? (t('DONE') || 'DONE') : (t('START') || 'START')}</Text>
-        </TouchableOpacity>
-      </View>
-    )
-  }
+  const canSquat = !!squatQ
+  const canPush = !!pushupQ
 
   return(
     <ImageBackground source={require('../../assets/background/home.png')} style={{flex:1}} resizeMode="cover">
       <Text style={[styles.screenTitle,{top:insets.top+8}]}>{t('QUEST') || 'QUEST'}</Text>
+
       <View style={{paddingTop:insets.top+88,paddingHorizontal:18,gap:16}}>
         <View style={styles.card}>
           <Text style={styles.title}>{t('DAILY_QUESTS') || 'DAILY QUESTS'}</Text>
@@ -195,8 +177,14 @@ export default function QuestScreen(){
           <Text style={styles.quip}>{quip}</Text>
         </View>
 
-        <View style={styles.subCard}>
-          {quests.filter(x => x.id === 'squat' || x.id === 'pushup').map(q => <QuestRow key={q.id} item={q} />)}
+        {/* 빠른 시작 버튼만 표시 */}
+        <View style={styles.quickRow}>
+          <TouchableOpacity onPress={startSquat} disabled={!canSquat} style={[styles.quickBtn, !canSquat && styles.disabled]}>
+            <Text style={styles.quickTxt}>스쿼트 시작</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={startPushup} disabled={!canPush} style={[styles.quickBtn, !canPush && styles.disabled]}>
+            <Text style={styles.quickTxt}>푸쉬업 시작</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -229,9 +217,12 @@ const styles=StyleSheet.create({
   barFill:{position:'absolute',left:0,top:0,bottom:0,backgroundColor:'rgba(34,197,94,0.85)'},
   barText:{textAlign:'center',fontFamily:FONT,fontSize:14,lineHeight:17,color:'#111',includeFontPadding:true},
   quip:{fontFamily:FONT,fontSize:14,lineHeight:17,color:'#000',marginTop:2,includeFontPadding:true},
-  subCard:{backgroundColor:'rgba(255,255,255,0.72)',borderRadius:20,padding:16,gap:8},
-  rowQ:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingVertical:8,borderBottomWidth:1,borderColor:'rgba(0,0,0,0.06)'},
-  rowText:{fontFamily:FONT,fontSize:16,lineHeight:20,color:'#111',includeFontPadding:true},
+
+  quickRow:{ flexDirection:'row', gap:10 },
+  quickBtn:{ flex:1, backgroundColor:'#111827', borderRadius:12, paddingVertical:12, alignItems:'center' },
+  quickTxt:{ fontFamily:FONT, color:'#fff', fontSize:16, lineHeight:20, includeFontPadding:true },
+  disabled:{ opacity:0.5 },
+
   btn:{paddingHorizontal:12,paddingVertical:6,backgroundColor:'#111827',borderRadius:8},
   btnText:{fontFamily:FONT,color:'#fff',fontSize:12,lineHeight:15,includeFontPadding:true},
 })
