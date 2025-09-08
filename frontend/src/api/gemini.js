@@ -1,6 +1,6 @@
 import { apiGet } from "../config/api"
 
-const GEMINI_API_KEY = "AIzaSyC5syZA0D3aq1QZSHczFQTSVV8bBQHeCSs"
+const GEMINI_API_KEY = "AIzaSyCCzNKTnjCLy6ifIHrKUIZrdRlu-ee3cCA"
 
 /* ───────────── 공통 유틸 (필요 최소) ───────────── */
 
@@ -47,7 +47,6 @@ const clamp = (n, min, max) => Math.max(min, Math.min(max, Number.isFinite(n) ? 
 const round = (n) => Math.round(Number(n) || 0)
 const energyFromMacros = (p, f, c) => 4 * p + 9 * f + 4 * c
 
-/* ───────────── Vision 추정(폴백): 칼로리만 리턴 ───────────── */
 
 function visionPrompt(strict = false) {
   const base = `너는 영양 추정기다. 음식 사진을 보고 JSON으로만 응답해.
@@ -57,6 +56,7 @@ function visionPrompt(strict = false) {
 - per100g 수치는 일반적인 영양 데이터 상식 범위로 추정
 - 설명·단위·코멘트·마크다운 금지. JSON만 출력.
 - 만약에 모르겠으면 네이버에 검색을 해서라도 정확한 값을 출력해
+- 그래도 모르겠으면 사진에 나와있는 칼로리를 읽고 출력을 해
 형식:
 {
   "dish": "김치볶음밥",
