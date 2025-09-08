@@ -16,8 +16,8 @@ import QuestScreen from '../screens/QuestScreen'
 import RankingScreen from '../screens/RankingScreen'
 import HealthyCatchGameScreen from '../screens/HealthyCatchGameScreen'
 import RecoverySetup from '../screens/RecoverySetup'
-import SquatCounterSimple from '../screens/SquatCounterSimple'
-import SitupCounterHand from '../screens/SitupCounterHand'
+import TACoach from '../screens/TACoach'
+import VoicePickerScreen from '../screens/VoicePickerScreen'
 
 const Stack = createNativeStackNavigator()
 
@@ -29,7 +29,7 @@ const commonHeader = {
   headerStyle: { backgroundColor: 'transparent', elevation: 0 },
   headerBackTitleVisible: false,
   headerTintColor: '#fff',
-  headerTitleStyle: { fontFamily: 'DungGeunMo', fontSize: 20 },
+  headerTitleStyle: { fontFamily: 'DungGeunMo', fontSize: 20 }
 }
 
 function AuthStack() {
@@ -56,8 +56,8 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Ranking" component={RankingScreen} />
       <Stack.Screen name="RecoverySetup" component={RecoverySetup} />
       <Stack.Screen name="HealthyCatch" component={HealthyCatchGameScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SquatCounterSimple" component={SquatCounterSimple} options={{ headerShown: false }} />
-      <Stack.Screen name="SitupCounterHand" component={SitupCounterHand} options={{ headerShown: false }} />
+      <Stack.Screen name="TACoach" component={TACoach} options={{ headerShown: false }} />
+      <Stack.Screen name="VoicePicker" component={VoicePickerScreen} options={{ title: '보이스 선택' }} />
     </Stack.Navigator>
   )
 }
