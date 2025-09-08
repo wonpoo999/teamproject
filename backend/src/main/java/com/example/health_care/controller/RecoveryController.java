@@ -1,4 +1,4 @@
-package com.example.health_care.recovery;
+package com.example.health_care.controller;
 
 import com.example.health_care.dto.RecoveryDTO.*;
 import com.example.health_care.entity.RecoveryQuestionCode;
