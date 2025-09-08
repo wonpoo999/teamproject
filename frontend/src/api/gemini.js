@@ -1,6 +1,8 @@
 import { apiGet } from "../config/api"
 
+
 const GEMINI_API_KEY = "AIzaSyCCzNKTnjCLy6ifIHrKUIZrdRlu-ee3cCA"
+
 
 /* ───────────────────── 공통 유틸 ───────────────────── */
 
