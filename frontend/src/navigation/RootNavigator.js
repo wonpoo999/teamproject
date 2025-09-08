@@ -1,3 +1,4 @@
+// src/navigation/RootNavigator.jsx
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../context/AuthContext'
@@ -29,7 +30,7 @@ const commonHeader = {
   headerStyle: { backgroundColor: 'transparent', elevation: 0 },
   headerBackTitleVisible: false,
   headerTintColor: '#fff',
-  headerTitleStyle: { fontFamily: 'DungGeunMo', fontSize: 20 }
+  headerTitleStyle: { fontFamily: 'DungGeunMo', fontSize: 20 },
 }
 
 function AuthStack() {
@@ -56,7 +57,8 @@ function AppStack({ initialRouteName = 'Home' }) {
       <Stack.Screen name="Ranking" component={RankingScreen} />
       <Stack.Screen name="RecoverySetup" component={RecoverySetup} />
       <Stack.Screen name="HealthyCatch" component={HealthyCatchGameScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="TACoach" component={TACoach} options={{ headerShown: false }} />
+      {/* ▼ 헤더 표시 = 뒤로가기 활성화 */}
+      <Stack.Screen name="TACoach" component={TACoach} options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="VoicePicker" component={VoicePickerScreen} options={{ title: '보이스 선택' }} />
     </Stack.Navigator>
   )
