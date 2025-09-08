@@ -1,6 +1,6 @@
 import { apiGet } from "../config/api"
 
-const GEMINI_API_KEY = "AIzaSyC5syZA0D3aq1QZSHczFQTSVV8bBQHeCSs"
+const GEMINI_API_KEY = "AIzaSyAvca1r-SMD32rBnQ8S7f6o28FN1YpxfqU"
 
 /* ───────────── 공통 유틸 (필요 최소) ───────────── */
 
