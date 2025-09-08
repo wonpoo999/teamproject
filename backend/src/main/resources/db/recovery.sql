@@ -14,9 +14,9 @@ CREATE TABLE recovery (
 );
 
 -- 필요 시 FK를 customers(id)에 연결 (고객 테이블 설계가 id UNIQUE 인 환경에서만 권장)
--- ALTER TABLE recovery
---   ADD CONSTRAINT fk_recovery_customer
---   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE;
+ ALTER TABLE recovery
+   ADD CONSTRAINT fk_recovery_customer
+   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE;
 
 -- 확인
 -- SELECT * FROM recovery;
