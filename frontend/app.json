@@ -3,7 +3,8 @@
     "plugins": [
       "expo-secure-store",
       "expo-localization",
-      "expo-camera"
+      "expo-camera",
+      "expo-font"
     ],
     "android": {
       "permissions": [
