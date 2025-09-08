@@ -11,13 +11,45 @@ const MODE_LABEL_EN = { squat: 'SQUAT', pushup: 'PUSH-UP' }
 const TA_IMG = require('../../assets/char/ta.png')
 const STORE_KEY = '@tts/voiceId'
 
+// 독려 멘트
+const MOTIVATE = [
+  '좋아요! 이렇게 꾸준히 하면 금방 늘어요.',
+  '한 개씩 차근차근, 잘 하고 있어요!',
+  '운동하는 모습 멋져요, 계속 가요!',
+  '지금처럼만 하면 목표 금방 도달할 거예요.',
+  '조금만 더, 분명히 성장하고 있어요!',
+  '꾸준함이 근육을 만듭니다. 잘하고 있어요!',
+  '포기하지 않는 게 제일 큰 힘이에요!',
+  '호흡 일정하게, 지금 완벽해요!',
+  '몸이 점점 강해지고 있어요, 느껴지죠?',
+  '한 번 더! 그게 오늘의 차이를 만듭니다.',
+  '힘든 만큼 보상은 크게 돌아와요.',
+  '오늘도 자신과의 약속을 지키고 있네요!',
+  '운동은 배신하지 않아요. 계속해요!',
+  '조금 힘들어도 내일의 나를 위해 가는 거예요.',
+  '멋진 페이스예요, 끝까지 화이팅!',
+]
+
+// 도발 멘트
 const SPICY = [
   '이 정도에 힘들면 엘리베이터도 운동이지요?',
   '킹받지? 그럼 한 개만 더.',
   '근손실이 전화했어요. 빨리 움직이라네요.',
   '오늘도 포기 전문가가 되실 건가요?',
   '운동은 마음이 아니라 몸으로 하는 겁니다.',
+  '이 속도로는 군고구마도 다 타겠다.',
+  '땀 좀 흘려봐요, 눈물 말고요.',
+  '지금 멈추면 내일 더 하기 싫을 텐데요?',
+  '헬스장 대신 침대랑 계약했나요?',
+  '근육은 배신 안 해요, 대신 의자랑 친해지겠죠.',
+  '앉아 있는 게 더 편하죠? 그게 문제예요.',
+  '몸이 아니라 변명만 성장 중이네요?',
+  '운동은 공짜지만 후회는 유료입니다.',
+  '운동 중 포기? 오늘도 의자 MVP!',
+  '열정은 어디 두고 오신 거예요?',
+  '거울이랑 눈 못 마주치게 될걸요?',
 ]
+
 const pick = a => a[Math.floor(Math.random() * a.length)]
 
 function buildGreeting(mode = 'squat') {
@@ -50,25 +82,57 @@ export default function TACoach({ route }) {
   // 속도 고정(천천히)
   const intervalMs = 3000
 
-  const lastSpoken = useRef(0)
-  const autoTimer = useRef(null)
-  const tauntTimer = useRef(null)
+const TONES = ['soft', 'hard', 'mix']
+const TONE_LABEL = { soft: '소프트', hard: '하드', mix: '믹스' }
+const [toneIdx, setToneIdx] = useState(0)
+const tone = TONES[toneIdx]
 
-  const q = useRef([]); const speaking = useRef(false)
-  const lastTauntAt = useRef(0); const TAUNT_COOLDOWN_MS = 12000
+function pickLine() {
+  if (tone === 'soft') return pick(MOTIVATE) // 독려
+  if (tone === 'hard') return pick(SPICY)    // 도발
+  // 믹스
+  return Math.random() < 0.5 ? pick(MOTIVATE) : pick(SPICY)
+}
+  const lastSpoken = useRef(0)
+  const autoTimer = useRef(null)   // setInterval id
+  const tauntTimer = useRef(null)  // setTimeout id
+
+  // --- TTS 큐 ---
+  const q = useRef([])
+  const speaking = useRef(false)
+  const lastTauntAt = useRef(0)
+  const TAUNT_COOLDOWN_MS = 12000
+
   function ttsEnqueue(text, rate = 1.0) {
-    if (!text) return; q.current.push({ text, rate }); processQueue()
+    if (!text) return
+    q.current.push({ text, rate })
+    processQueue()
   }
   function processQueue() {
     if (speaking.current) return
-    const job = q.current.shift(); if (!job) return
+    const job = q.current.shift()
+    if (!job) return
     speaking.current = true
-    const opts = { language: 'ko-KR', rate: job.rate, onDone: handleDone, onStopped: handleDone, onError: handleDone }
-    if (voiceId) opts.voice = voiceId; else opts.pitch = 0.85
+    const opts = {
+      language: 'ko-KR',
+      rate: job.rate,
+      onDone: handleDone,
+      onStopped: handleDone,
+      onError: handleDone,
+    }
+    if (voiceId) opts.voice = voiceId
+    else opts.pitch = 0.85
     Speech.speak(job.text, opts)
   }
-  function handleDone(){ speaking.current = false; processQueue() }
-  function ttsStopAll(){ q.current = []; speaking.current = false; Speech.stop() }
+  function handleDone() {
+    speaking.current = false
+    processQueue()
+  }
+  function ttsStopAll() {
+    q.current = []
+    speaking.current = false
+    Speech.stop()
+  }
 
   useEffect(() => {
     resolveVoice().then(setVoiceId)
@@ -84,10 +148,10 @@ export default function TACoach({ route }) {
       const now = Date.now()
       if (count % 12 === 0 && now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
         lastTauntAt.current = now
-        ttsEnqueue(pick(SPICY))
+        ttsEnqueue(pickLine())
       }
     }
-  }, [count, running])
+  }, [count, running, tone])
 
   function scheduleTaunt() {
     clearTaunt()
@@ -97,13 +161,18 @@ export default function TACoach({ route }) {
         const now = Date.now()
         if (now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
           lastTauntAt.current = now
-          ttsEnqueue(pick(SPICY))
+          ttsEnqueue(pickLine())
         }
         scheduleTaunt()
       }
     }, delay)
   }
-  function clearTaunt(){ if (tauntTimer.current){ clearTimeout(tauntTimer.current); tauntTimer.current = null } }
+  function clearTaunt() {
+    if (tauntTimer.current) {
+      clearTimeout(tauntTimer.current)
+      tauntTimer.current = null
+    }
+  }
 
   function startAuto() {
     if (autoTimer.current) return
@@ -116,18 +185,31 @@ export default function TACoach({ route }) {
     scheduleTaunt()
   }
   function stopAuto() {
-    if (autoTimer.current){ clearInterval(autoTimer.current); autoTimer.current = null }
+    if (autoTimer.current) {
+      clearInterval(autoTimer.current)
+      autoTimer.current = null
+    }
     setRunning(false)
     clearTaunt()
   }
+function cycleTone() {
+  const next = (toneIdx + 1) % TONES.length
+  setToneIdx(next)
+  if (running) ttsEnqueue(`${TONE_LABEL[TONES[next]]} 톤으로 전환`)
+}
 
   return (
     <View style={S.wrap}>
-      {/* 상단 중앙 모드 텍스트 (조금 아래로) */}
+      {/* 상단 중앙 모드 텍스트 */}
       <View style={S.topCenter}>
         <View style={S.modePill}>
           <Text style={S.modeTxt}>{(MODE_LABEL_EN[mode] || mode).toUpperCase()}</Text>
         </View>
+
+       <TouchableOpacity onPress={cycleTone} style={S.tonePill}>
+        <Text style={S.toneLabel}>톤</Text>
+        <Text style={S.toneValue}>{TONE_LABEL[tone]}</Text>
+      </TouchableOpacity>
       </View>
 
       {/* 캐릭터 */}
@@ -168,10 +250,9 @@ export default function TACoach({ route }) {
 const S = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: '#05060a' },
 
-  // 상단 중앙 배치 (노치/상태바와 겹치지 않게 살짝 내림)
   topCenter: {
     position: 'absolute',
-    top: 28,                 // ← 필요하면 32~40으로 더 내려도 OK
+    top: 28, // 필요시 32~40 조절
     left: 0, right: 0,
     alignItems: 'center',
     zIndex: 2,
@@ -187,11 +268,21 @@ const S = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
   },
 
-  // 캐릭터
+  tonePill: {
+    marginTop: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.35)',
+  },
+  toneLabel: { color: '#c7d2fe', fontSize: 12, fontFamily: 'DungGeunMo', opacity: 0.9, letterSpacing: 1 },
+  toneValue: {
+    color: '#93c5fd', fontSize: 14, fontFamily: 'DungGeunMo', letterSpacing: 1,
+    textShadowColor: 'rgba(147,197,253,0.6)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8,
+  },
+
   charWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   charImg: { width: W * 0.78, height: Math.min(W * 0.9, H * 0.5) },
 
-  // 카운트(배경 없음)
   countWrap: { position: 'absolute', left: 0, right: 0, bottom: 128, alignItems: 'center' },
   countGlow: {
     position: 'absolute',
@@ -210,7 +301,6 @@ const S = StyleSheet.create({
     color: '#cbd5e1', fontSize: 12, opacity: 0.9, fontFamily: 'DungGeunMo', letterSpacing: 2,
   },
 
-  // 버튼
   bottomRow: {
     position: 'absolute', left: 0, right: 0, bottom: 36,
     flexDirection: 'row', gap: 12, justifyContent: 'center',

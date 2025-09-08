@@ -155,7 +155,7 @@ export default function HomeScreen() {
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}>
             <IconLabeled iconSrc={require('../../assets/icons/profile.png')} label={t('PROFILE')} to="Profile" />
-            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('QUEST')} to="Quest" showBadge={questNew} />
+            <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('QUEST')} to="Burning" showBadge={questNew} />
             <IconLabeled iconSrc={require('../../assets/icons/quest.png')} label={t('RANKING')} to="Ranking" />
             <IconLabeled iconSrc={require('../../assets/icons/setting.png')} label={t('SETTINGS')} to="Settings" />
           </View>
