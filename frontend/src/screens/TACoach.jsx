@@ -48,39 +48,74 @@ export default function TACoach({ route }) {
   const tauntTimer = useRef(null)
   const [intervalMs, setIntervalMs] = useState(2000)
 
+  // --- TTS Queue (겹침 방지 직렬화) ---
+  const q = useRef([])
+  const speaking = useRef(false)
+  const lastTauntAt = useRef(0)
+  const TAUNT_COOLDOWN_MS = 12000
+
+  function ttsEnqueue(text, rate = 1.0) {
+    if (!text) return
+    q.current.push({ text, rate })
+    processQueue()
+  }
+  function processQueue() {
+    if (speaking.current) return
+    const job = q.current.shift()
+    if (!job) return
+    speaking.current = true
+    const opts = { language: 'ko-KR', rate: job.rate, onDone: handleDone, onStopped: handleDone, onError: handleDone }
+    if (voiceId) opts.voice = voiceId
+    else opts.pitch = 0.85
+    Speech.speak(job.text, opts)
+  }
+  function handleDone() {
+    speaking.current = false
+    // 다음 항목 이어서 재생
+    processQueue()
+  }
+  function ttsStopAll() {
+    q.current = []
+    speaking.current = false
+    Speech.stop()
+  }
+
   useEffect(() => {
     resolveVoice().then(setVoiceId)
-    if (Platform.OS === 'android') Speech.speak('', { language: 'ko-KR' })
+    // 안드로이드 첫 호출 웜업
+    if (Platform.OS === 'android') Speech.speak('', { language: 'ko-KR', onDone: () => Speech.stop() })
     return () => {
       stopAuto()
       clearTaunt()
+      ttsStopAll()
     }
   }, [])
 
-  function say(text, rate = 1.0) {
-    if (!text) return
-    Speech.stop()
-    const opts = { language: 'ko-KR', rate }
-    if (voiceId) opts.voice = voiceId
-    else opts.pitch = 0.85
-    Speech.speak(text, opts)
-  }
-
+  // 카운트가 바뀔 때: 숫자 먼저, 12의 배수면 스파이시를 "뒤에" 붙여 큐 재생
   useEffect(() => {
     if (!running) return
     if (count > 0 && count !== lastSpoken.current) {
       lastSpoken.current = count
-      say(`${count}개`)
-      if (count % 12 === 0) say(pick(SPICY))
+      ttsEnqueue(`${count}개`)
+      const now = Date.now()
+      if (count % 12 === 0 && now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
+        lastTauntAt.current = now
+        ttsEnqueue(pick(SPICY))
+      }
     }
   }, [count, running])
 
+  // 랜덤 도발 스케줄: 쿨다운 고려 + 큐에만 추가(겹침 X)
   function scheduleTaunt() {
     clearTaunt()
     const delay = 20000 + Math.floor(Math.random() * 15000)
     tauntTimer.current = setTimeout(() => {
       if (autoTimer.current) {
-        say(pick(SPICY))
+        const now = Date.now()
+        if (now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
+          lastTauntAt.current = now
+          ttsEnqueue(pick(SPICY))
+        }
         scheduleTaunt()
       }
     }, delay)
@@ -92,7 +127,7 @@ export default function TACoach({ route }) {
   function startAuto() {
     if (autoTimer.current) return
     autoTimer.current = setInterval(() => setCount(c => c + 1), intervalMs)
-    say('자동 카운트를 시작합니다.')
+    ttsEnqueue('자동 카운트를 시작합니다.')
     scheduleTaunt()
   }
   function stopAuto() {
@@ -113,7 +148,8 @@ export default function TACoach({ route }) {
             setRunning(true)
             setCount(0)
             lastSpoken.current = 0
-            say(buildGreeting(mode))
+            ttsStopAll() // 시작 전에 큐 초기화
+            ttsEnqueue(buildGreeting(mode))
           }}
         >
           <Text style={S.ovTitle}>바벨몬 조교</Text>
@@ -123,13 +159,28 @@ export default function TACoach({ route }) {
 
       <View style={S.ctrlWrap}>
         <View style={S.rowSmall}>
-          <TouchableOpacity style={S.smallBtn} onPress={() => { setIntervalMs(ms => Math.max(700, ms - 300)); if (autoTimer.current) { stopAuto(); startAuto() } }}>
+          <TouchableOpacity
+            style={S.smallBtn}
+            onPress={() => {
+              setIntervalMs(ms => Math.max(700, ms - 300))
+              if (autoTimer.current) { stopAuto(); startAuto() }
+            }}>
             <Text style={S.smallTxt}>빠르게</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={S.smallBtn} onPress={() => { setIntervalMs(2000); if (autoTimer.current) { stopAuto(); startAuto() } }}>
+          <TouchableOpacity
+            style={S.smallBtn}
+            onPress={() => {
+              setIntervalMs(2000)
+              if (autoTimer.current) { stopAuto(); startAuto() }
+            }}>
             <Text style={S.smallTxt}>보통</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={S.smallBtn} onPress={() => { setIntervalMs(ms => Math.min(4000, ms + 300)); if (autoTimer.current) { stopAuto(); startAuto() } }}>
+          <TouchableOpacity
+            style={S.smallBtn}
+            onPress={() => {
+              setIntervalMs(ms => Math.min(4000, ms + 300))
+              if (autoTimer.current) { stopAuto(); startAuto() }
+            }}>
             <Text style={S.smallTxt}>천천히</Text>
           </TouchableOpacity>
           {!autoTimer.current ? (
@@ -151,10 +202,20 @@ export default function TACoach({ route }) {
           <TouchableOpacity style={S.btn} onPress={() => setCount(c => c + 1)}>
             <Text style={S.btnTxt}>+1</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[S.btn, count === 0 && S.btnDisabled]} disabled={count === 0} onPress={() => setCount(c => Math.max(0, c - 1))}>
+          <TouchableOpacity
+            style={[S.btn, count === 0 && S.btnDisabled]}
+            disabled={count === 0}
+            onPress={() => setCount(c => Math.max(0, c - 1))}>
             <Text style={S.btnTxt}>-1</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[S.btn, S.warn]} onPress={() => { stopAuto(); setCount(0); lastSpoken.current = 0 }}>
+          <TouchableOpacity
+            style={[S.btn, S.warn]}
+            onPress={() => {
+              stopAuto()
+              setCount(0)
+              lastSpoken.current = 0
+              ttsStopAll()
+            }}>
             <Text style={S.btnTxt}>RESET</Text>
           </TouchableOpacity>
         </View>
