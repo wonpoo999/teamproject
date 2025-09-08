@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, ImageBackground, StyleSheet, Animated, Platform, AppState, Linking, ActivityIndicator, TouchableOpacity } from 'react-native'
+import { View, Text, ImageBackground, StyleSheet, Animated, AppState, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import * as Location from 'expo-location'
@@ -9,12 +9,9 @@ import { useI18n } from '../i18n/I18nContext'
 import { apiGet } from '../config/api'
 
 const FONT = 'DungGeunMo'
-
-// 안드로이드 폰트 컷 방지 (전역)
 if (Text.defaultProps == null) Text.defaultProps = {}
 Text.defaultProps.includeFontPadding = true
 
-// 👇 원래 쓰던 다국어 맵 그대로 유지
 const TAUNTS_MAP = {
   none: {
     ko: ['0.00km… 산책 앱을 켰는데 산책은 안 함','첫 좌표에서 평생 살 계획?','오늘도 바닥이랑 베프네','다리는 절전 모드, 폰만 고성능','앉아있는 재능 국가대표'],
@@ -85,12 +82,12 @@ export default function QuestScreen(){
     const factor = Math.max(0.8, Math.min(1.4, bmi/22 * (gender==='M'?1.05:1)))
     const walkKm = Math.round((4.0 * factor) * 10) / 10
     const squats = Math.round(30 * factor)
-    const situps = Math.round(25 * factor)
+    const pushups = Math.round(20 * factor)
 
     const list = [
       { id: 'walk',  type: 'walk_km', target: walkKm, desc: `${t('WALK') || 'WALK'} ${walkKm} km`, auto: true,  done: false },
       { id: 'squat', type: 'squat',   target: squats,  desc: `${t('SQUAT') || 'SQUAT'} ${squats}`,   auto: false, done: false },
-      { id: 'situp', type: 'situp',   target: situps,  desc: `${t('SITUP') || 'SIT-UP'} ${situps}`, auto: false, done: false },
+      { id: 'pushup', type: 'pushup', target: pushups, desc: `${t('PUSHUP') || 'PUSH-UP'} ${pushups}`, auto: false, done: false },
     ]
     await AsyncStorage.setItem('@quest/list', JSON.stringify(list))
     setQuests(list)
@@ -106,21 +103,8 @@ export default function QuestScreen(){
 
   useFocusEffect(
     useMemo(() => () => {
-      (async () => {
-        const sFlag = await AsyncStorage.getItem('@quest/squat_done')
-        if (sFlag === '1') {
-          await AsyncStorage.removeItem('@quest/squat_done')
-          const q = quests.find(x => x.id === 'squat')
-          if (q && !q.done) await markDone('squat')
-        }
-        const uFlag = await AsyncStorage.getItem('@quest/situp_done')
-        if (uFlag === '1') {
-          await AsyncStorage.removeItem('@quest/situp_done')
-          const q = quests.find(x => x.id === 'situp')
-          if (q && !q.done) await markDone('situp')
-        }
-      })()
-    }, [quests])
+      return () => {}
+    }, [])
   )
 
   useEffect(()=>{const sub=AppState.addEventListener('change',s=>{appActiveRef.current=(s==='active')});return()=>sub?.remove?.()},[])
@@ -178,16 +162,15 @@ export default function QuestScreen(){
   const width=anim.interpolate({inputRange:[0,1],outputRange:['0%','100%']})
   const walkQ = quests.find(x=>x.id==='walk')
   const squatQ = quests.find(x=>x.id==='squat')
-  const situpQ = quests.find(x=>x.id==='situp')
+  const pushupQ = quests.find(x=>x.id==='pushup')
   const km = ((meters)/1000).toFixed(2)
   const goalKm = walkQ ? walkQ.target.toFixed(1) : '0.0'
 
-  // ✅ 널가드: 아직 quests 로딩 전 터치 방지
-  const startSquat = () => squatQ && navigation.navigate('SquatCounterSimple', { target: squatQ.target })
-  const startSitup = () => situpQ && navigation.navigate('SitupCounterHand', { target: situpQ.target })
+  const startSquat = () => squatQ && navigation.navigate('TACoach', { mode: 'squat', target: squatQ.target })
+  const startPushup = () => pushupQ && navigation.navigate('TACoach', { mode: 'pushup', target: pushupQ.target })
 
   const QuestRow = ({ item }) => {
-    const onPress = item.id === 'squat' ? startSquat : startSitup
+    const onPress = item.id === 'squat' ? startSquat : item.id === 'pushup' ? startPushup : undefined
     return (
       <View style={styles.rowQ}>
         <Text style={styles.rowText}>{item.desc}</Text>
@@ -213,10 +196,9 @@ export default function QuestScreen(){
         </View>
 
         <View style={styles.subCard}>
-          {quests.filter(x => x.id === 'squat' || x.id === 'situp').map(q => <QuestRow key={q.id} item={q} />)}
+          {quests.filter(x => x.id === 'squat' || x.id === 'pushup').map(q => <QuestRow key={q.id} item={q} />)}
         </View>
 
-        {/* 🔹 RESET 버튼 (i18n 적용) */}
         <TouchableOpacity
           onPress={async () => {
             await AsyncStorage.removeItem('@quest/list')
@@ -235,7 +217,7 @@ export default function QuestScreen(){
 const styles=StyleSheet.create({
   screenTitle:{
     position:'absolute',left:0,right:0,textAlign:'center',color:'#000',
-    fontSize:26, lineHeight:32, // 컷 방지
+    fontSize:26,lineHeight:32,
     textShadowColor:'rgba(255,255,255,0.28)',textShadowOffset:{width:0,height:1},textShadowRadius:2,
     zIndex:10,fontFamily:FONT,fontWeight:'normal',includeFontPadding:true,
   },
