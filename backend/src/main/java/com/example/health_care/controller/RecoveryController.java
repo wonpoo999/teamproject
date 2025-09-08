@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-/**
+/*
  * 비밀번호 복구 모듈 (모든 구성요소를 한 파일로 통합)
  *
  * - [로그인 필요]  PUT /api/profile/security-questions
@@ -28,8 +28,6 @@ import java.util.stream.Collectors;
  * - [공개]        POST /api/recover/reset
  *      { recoveryToken, newPassword } → 비밀번호 재설정
  */
-
-// ======================= Controller =======================
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
