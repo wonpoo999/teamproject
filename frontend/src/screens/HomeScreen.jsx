@@ -117,11 +117,6 @@ export default function HomeScreen() {
     <Pressable onPress={onPress ?? (() => nav.navigate(to))} style={{ alignItems: 'center', width: ICON_SIZE + 8 }}>
       <View style={{ position: 'relative' }}>
         <Image source={iconSrc} style={{ width: ICON_SIZE, height: ICON_SIZE, resizeMode: 'contain' }} />
-        {showBadge ? (
-          <View style={{ position: 'absolute', right: -4, top: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#fff', fontFamily: FONT, fontSize: 14 }}>*</Text>
-          </View>
-        ) : null}
       </View>
       <Text style={styles.labelText} numberOfLines={1} allowFontScaling={false}>{label}</Text>
     </Pressable>
