@@ -1,3 +1,4 @@
+// src/screens/SignupScreen.js
 import { useState, useMemo } from 'react';
 import {
   View,
@@ -15,26 +16,27 @@ import { calcBMI, classifyBMI } from '../utils/bmi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { useI18n } from '../i18n/I18nContext';
+import { useThemeMode } from '../theme/ThemeContext';
 
 const FONT = 'DungGeunMo';
 
-const isValidEmail = (v = '') => {
-  const s = String(v).trim();
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
-};
+const isValidEmail = (v = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim());
+const langFix = (lang) => ({
+  text: { includeFontPadding: true, paddingTop: 2, paddingBottom: 2 },
+  input: { paddingVertical: 14, minHeight: 48, lineHeight: 22, ...(lang === 'ja' || lang === 'zh' ? { paddingTop: 16 } : {}) },
+});
 
 export default function SignupScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [fontsLoaded] = useFonts({
-    [FONT]: require('../../assets/fonts/DungGeunMo.otf'),
-  });
+  const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') });
+
+  const { t, lang, setLang } = useI18n();
+  const { toggleTheme, isDark, theme } = useThemeMode();
+  const fix = langFix(lang);
 
   let auth = null;
-  try {
-    auth = useAuth?.();
-  } catch {
-    auth = null;
-  }
+  try { auth = useAuth?.(); } catch { auth = null; }
 
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +45,15 @@ export default function SignupScreen({ navigation }) {
   const [gender, setGender] = useState('F');
   const [height, setHeight] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [qna, setQna] = useState([
+    { code: 'BIRTHPLACE', labelKey: 'QUESTION_BIRTHPLACE', answer: '' },
+    { code: 'CHILDHOOD_AREA', labelKey: 'QUESTION_CHILDHOOD_AREA', answer: '' },
+    { code: 'PET_NAME', labelKey: 'QUESTION_PET_NAME', answer: '' },
+    { code: 'MOTHER_NAME', labelKey: 'QUESTION_MOTHER_NAME', answer: '' },
+    { code: 'ROLE_MODEL', labelKey: 'QUESTION_ROLE_MODEL', answer: '' },
+  ]);
+  const setQ = (idx, v) => setQna(arr => arr.map((x,i)=> i===idx ? ({...x, answer: v}) : x));
 
   const endpoint = useMemo(() => `${API_BASE_DEBUG}/api/auth/signup`, []);
 
@@ -53,13 +64,13 @@ export default function SignupScreen({ navigation }) {
 
   const onSubmit = async () => {
     if (!id || !password || !weight || !age || !gender || !height) {
-      return Alert.alert('필수 입력', '모든 항목을 입력해 주세요.');
+      return Alert.alert(t('INPUT_REQUIRED'), t('ENTER_ID_PW'));
     }
     if (!isValidEmail(id)) {
-      return Alert.alert('형식 오류', '이메일 형식이 올바르지 않습니다.');
+      return Alert.alert(t('CONFIRM'), t('EMAIL_INVALID'));
     }
     if (String(password).length < 8) {
-      return Alert.alert('형식 오류', '비밀번호는 8자리 이상이어야 합니다.');
+      return Alert.alert(t('CONFIRM'), t('PW_TOO_SHORT'));
     }
 
     const payload = {
@@ -76,15 +87,11 @@ export default function SignupScreen({ navigation }) {
       Number.isNaN(payload.weight) ||
       Number.isNaN(payload.height)
     ) {
-      return Alert.alert('형식 오류', '나이/체중/키는 숫자로 입력하세요.');
+      return Alert.alert(t('CONFIRM'), t('NUMERIC_ONLY'));
     }
 
     try {
       setLoading(true);
-      if (__DEV__) {
-        console.log('▶ 요청:', endpoint);
-        console.log('▶ 보낼 데이터:', payload);
-      }
       const ok = auth?.signup ? await auth.signup(payload) : await signupFallback(payload);
       if (ok) {
         await AsyncStorage.setItem(
@@ -108,15 +115,22 @@ export default function SignupScreen({ navigation }) {
           })
         );
         const bmi = calcBMI(payload.weight, payload.height);
-        const category = classifyBMI(bmi);
-        await AsyncStorage.setItem('@avatar/category_prefill', String(category));
-        Alert.alert('성공', `회원가입 완료! BMI: ${bmi}`);
-        navigation.replace('Login', { bmi, category });
+        await AsyncStorage.setItem('@avatar/category_prefill', String(classifyBMI(bmi)));
+
+        const answers = qna
+          .filter(x => (x.answer || '').trim().length > 0)
+          .map(x => ({ code: x.code, answer: x.answer.trim() }));
+        if (answers.length) {
+          try { await apiPost('/api/recover/register', { answers }); } catch {}
+        }
+
+        Alert.alert(t('CONFIRM'), t('UPDATE_OK'));
+        navigation.replace('Login');
       } else {
-        Alert.alert('가입 실패', '다시 시도해 주세요.');
+        Alert.alert(t('CONFIRM'), t('UPDATE_FAIL'));
       }
     } catch (e) {
-      Alert.alert('가입 실패', e?.message ?? '잠시 후 다시 시도해 주세요.');
+      Alert.alert(t('CONFIRM'), e?.message ?? t('TRY_LATER'));
     } finally {
       setLoading(false);
     }
@@ -126,149 +140,155 @@ export default function SignupScreen({ navigation }) {
 
   const inputStyle = {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.inputBorder,
     borderRadius: 10,
-    padding: 12,
+    paddingHorizontal: 12,
     fontFamily: FONT,
+    color: theme.text,
+    backgroundColor: theme.inputBg,
+    ...fix.input,
   };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#fff' }}
+      style={{ flex: 1, backgroundColor: theme.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingBottom: 24,
+          paddingBottom: insets.bottom + 140,
           paddingTop: insets.top + 80,
           gap: 12,
         }}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'center', marginBottom: 6 }}>
+          {[
+            { k: 'ko', label: '한국어' },
+            { k: 'en', label: 'English' },
+            { k: 'ja', label: '日本語' },
+            { k: 'zh', label: '中文' },
+          ].map(item => (
+            <TouchableOpacity
+              key={item.k}
+              onPress={() => setLang(item.k)}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: lang === item.k ? theme.chipOn : theme.cardBorder,
+                backgroundColor: lang === item.k ? theme.chipOn : theme.chipOff,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: FONT,
+                  color: lang === item.k ? theme.chipOnText : theme.chipOffText,
+                  ...fix.text,
+                }}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          onPress={toggleTheme}
+          style={{
+            position: 'absolute',
+            top: insets.top + 8,
+            right: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: theme.cardBorder,
+            backgroundColor: theme.cardBg,
+          }}
+        >
+          <Text style={{ color: theme.text, fontFamily: FONT }}>{isDark ? 'Light' : 'Dark'}</Text>
+        </TouchableOpacity>
+
         <Text
           style={{
             fontSize: 36,
             fontFamily: FONT,
             marginBottom: 20,
             textAlign: 'center',
+            color: theme.text,
+            ...fix.text,
           }}
         >
-          SIGNUP
+          {(t('SIGNUP') || 'SIGNUP').toUpperCase()}
         </Text>
 
-        <TextInput
-          value={id}
-          onChangeText={setId}
-          placeholder="이메일"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          inputMode="email"
-          style={inputStyle}
-        />
-
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="비밀번호 (8자리 이상)"
-          secureTextEntry
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-
-        <TextInput
-          value={age}
-          onChangeText={setAge}
-          placeholder="나이"
-          keyboardType="numeric"
-          style={inputStyle}
-        />
+        <TextInput value={id} onChangeText={setId} placeholder={t('EMAIL')} autoCapitalize="none" keyboardType="email-address" inputMode="email" style={inputStyle}/>
+        <TextInput value={password} onChangeText={setPassword} placeholder={t('PASSWORD_8')} secureTextEntry autoCapitalize="none" style={inputStyle}/>
+        <TextInput value={age} onChangeText={setAge} placeholder={t('AGE')} keyboardType="numeric" style={inputStyle}/>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity
             onPress={() => setGender('F')}
-            style={{
-              flex: 1,
-              backgroundColor: gender === 'F' ? '#111827' : '#e5e7eb',
-              padding: 12,
-              borderRadius: 10,
-            }}
+            style={{ flex: 1, backgroundColor: gender === 'F' ? theme.text : theme.inputBg, padding: 12, borderRadius: 10 }}
           >
-            <Text
-              style={{
-                fontFamily: FONT,
-                color: gender === 'F' ? '#fff' : '#111',
-                textAlign: 'center',
-              }}
-            >
-              여성
+            <Text style={{ fontFamily: FONT, color: gender === 'F' ? '#fff' : theme.text, textAlign: 'center', ...fix.text }}>
+              {t('GENDER_FEMALE')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setGender('M')}
-            style={{
-              flex: 1,
-              backgroundColor: gender === 'M' ? '#111827' : '#e5e7eb',
-              padding: 12,
-              borderRadius: 10,
-            }}
+            style={{ flex: 1, backgroundColor: gender === 'M' ? theme.text : theme.inputBg, padding: 12, borderRadius: 10 }}
           >
-            <Text
-              style={{
-                fontFamily: FONT,
-                color: gender === 'M' ? '#fff' : '#111',
-                textAlign: 'center',
-              }}
-            >
-              남성
+            <Text style={{ fontFamily: FONT, color: gender === 'M' ? '#fff' : theme.text, textAlign: 'center', ...fix.text }}>
+              {t('GENDER_MALE')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <TextInput
-          value={weight}
-          onChangeText={setWeight}
-          placeholder="체중 (kg)"
-          keyboardType="numeric"
-          style={inputStyle}
-        />
+        <TextInput value={weight} onChangeText={setWeight} placeholder={t('WEIGHT_KG')} keyboardType="numeric" style={inputStyle}/>
+        <TextInput value={height} onChangeText={setHeight} placeholder={t('HEIGHT_CM')} keyboardType="numeric" style={inputStyle}/>
 
-        <TextInput
-          value={height}
-          onChangeText={setHeight}
-          placeholder="키 (cm)"
-          keyboardType="numeric"
-          style={inputStyle}
-        />
+        <View style={{ marginTop: 12, gap: 10 }}>
+          <Text style={{ fontFamily: FONT, fontSize: 18, color: theme.text }}>
+            {t('SECURITY_QNA')} <Text style={{ color: theme.mutedText }}>{t('OPTIONAL')}</Text>
+          </Text>
+          <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
+            {t('SECURITY_DESC_SIGNUP')}
+            {'\n'}
+            {lang==='ko' && '비밀번호 복구: 최소 2문항 / 아이디 복구: 5문항 모두 필요 (5 미만이면 비밀번호만 복구 가능)'}
+            {lang==='en' && 'Password recovery: at least 2 answers.  ID recovery: all 5 required (with <5, only password can be recovered).'}
+            {lang==='ja' && 'パスワード復旧：2問以上。ID復旧：5問すべて必須（5未満はパスワードのみ）。'}
+            {lang==='zh' && '找回密码：至少 2 个答案。找回ID：需 5 个全部（少于 5 个仅可找回密码）。'}
+          </Text>
+
+          {qna.map((row, idx) => (
+            <View key={row.code} style={{ gap: 6 }}>
+              <Text style={{ fontFamily: FONT, color: theme.text, ...fix.text }}>{t(row.labelKey)}</Text>
+              <TextInput value={row.answer} onChangeText={(v)=>setQ(idx, v)} placeholder={t('ANSWER')} style={inputStyle}/>
+            </View>
+          ))}
+        </View>
 
         <TouchableOpacity
           onPress={onSubmit}
           disabled={loading}
-          style={{
-            backgroundColor: '#10b981',
-            padding: 14,
-            borderRadius: 10,
-            opacity: loading ? 0.6 : 1,
-          }}
+          style={{ backgroundColor: '#10b981', padding: 14, borderRadius: 10, opacity: loading ? 0.6 : 1, marginTop: 4 }}
         >
           <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>
-            {loading ? '처리 중…' : '계정 만들기'}
+            {loading ? '…' : (t('CREATE_ACCOUNT') || 'Create account')}
           </Text>
         </TouchableOpacity>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: 8,
-          }}
-        >
-          <Text style={{ color: '#6b7280', fontFamily: FONT }}>이미 계정이 있나요? </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
+          <Text style={{ color: theme.mutedText, fontFamily: FONT }}>
+            {t('ALREADY_HAVE_ACCOUNT')}{' '}
+          </Text>
           <TouchableOpacity onPress={() => navigation.replace('Login')}>
-            <Text style={{ color: '#2563eb', fontFamily: FONT }}>로그인</Text>
+            <Text style={{ color: '#2563eb', fontFamily: FONT }}>{t('LOGIN')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
