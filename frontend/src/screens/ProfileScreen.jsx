@@ -1,15 +1,20 @@
 // src/screens/ProfileScreen.js
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View, Text, TextInput, Pressable, StyleSheet, ImageBackground, Modal, TouchableOpacity } from 'react-native';
+import {
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  View, Text, TextInput, Pressable, StyleSheet, ImageBackground,
+  Modal, TouchableOpacity
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { ORIGIN } from '../config/api';
 import { useFonts } from 'expo-font';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 const FONT = 'DungGeunMo';
 
@@ -20,14 +25,82 @@ Text.defaultProps.maxFontSizeMultiplier = 1;
 TextInput.defaultProps.allowFontScaling = false;
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
+// ===== Utils =====
+const todayKey = () => {
+  const d = new Date(); d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+};
+
+const fetchWithTimeout = (url, opts, ms = 8000) =>
+  Promise.race([
+    fetch(url, opts),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)),
+  ]);
+
+// 출석 + 코인 합산(오늘 코인 리셋/유지)
+async function ensureDailyAttendance() {
+  const K_FIRST='@att/first', K_LAST='@att/last', K_TOTAL='@att/total', K_STREAK='@att/streak';
+  const K_COINS_TOTAL='@coins', K_COINS_TODAY='@coins/today';
+  const today = todayKey();
+  const [first,last,totalStr,streakStr,totalCoinsStr,todayCoinsStr]=await Promise.all([
+    AsyncStorage.getItem(K_FIRST),
+    AsyncStorage.getItem(K_LAST),
+    AsyncStorage.getItem(K_TOTAL),
+    AsyncStorage.getItem(K_STREAK),
+    AsyncStorage.getItem(K_COINS_TOTAL),
+    AsyncStorage.getItem(K_COINS_TODAY),
+  ]);
+  let firstDay = first || today;
+  let lastDay = last || '';
+  let total = Number(totalStr || 0);
+  let streak = Number(streakStr || 0);
+  const coinsTotal = Number(totalCoinsStr || 0);
+  let coinsToday = Number(todayCoinsStr || 0);
+
+  // 날짜 바뀌면 출석/연속 처리 + 오늘 코인 리셋
+  if (lastDay !== today) {
+    let isConsecutive = false;
+    if (lastDay) {
+      const y = new Date(today); y.setDate(y.getDate() - 1);
+      isConsecutive = y.toISOString().slice(0,10) === lastDay;
+    }
+    streak = isConsecutive ? Math.max(1, streak + 1) : 1;
+    total = Math.max(1, total + 1);
+    lastDay = today;
+    coinsToday = 0; // 리셋
+    await AsyncStorage.setItem(K_COINS_TODAY, '0');
+  }
+
+  await Promise.all([
+    AsyncStorage.setItem(K_FIRST, firstDay),
+    AsyncStorage.setItem(K_LAST, lastDay),
+    AsyncStorage.setItem(K_TOTAL, String(total)),
+    AsyncStorage.setItem(K_STREAK, String(streak)),
+  ]);
+
+  return { firstDay, totalDays: total, streak, coins: coinsTotal, todayCoins: coinsToday };
+}
+
+function Row({ k, v }) {
+  const { theme } = useThemeMode();
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+      <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{k}</Text>
+      <Text style={{ fontFamily: FONT, color: theme.text }}>{String(v ?? '-')}</Text>
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const { t } = useI18n();
   const { theme } = useThemeMode();
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') });
-  if (fontsLoaded) {
-    if (!Text.defaultProps.style) Text.defaultProps.style = { fontFamily: FONT, includeFontPadding: true };
-    if (!TextInput.defaultProps.style) TextInput.defaultProps.style = { fontFamily: FONT };
-  }
+  useEffect(() => {
+    if (fontsLoaded) {
+      if (!Text.defaultProps.style) Text.defaultProps.style = { fontFamily: FONT, includeFontPadding: true };
+      if (!TextInput.defaultProps.style) TextInput.defaultProps.style = { fontFamily: FONT };
+    }
+  }, [fontsLoaded]);
 
   const insets = useSafeAreaInsets();
   const auth = useAuth();
@@ -36,6 +109,8 @@ export default function ProfileScreen() {
   const scRef = useRef(null);
 
   const [current, setCurrent] = useState({ id: '', weight: '', height: '', age: '', gender: '' });
+  const [attendance, setAttendance] = useState({ firstDay: '-', totalDays: '-', streak: '-', coins: 0, todayCoins: 0 });
+
   const [editingAccount, setEditingAccount] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
 
@@ -86,7 +161,7 @@ export default function ProfileScreen() {
       let lastErr;
       for (const p of paths) {
         try {
-          const res = await fetch(`${ORIGIN}${p}`, {
+          const res = await fetchWithTimeout(`${ORIGIN}${p}`, {
             method,
             headers: {
               Accept: 'application/json',
@@ -132,10 +207,23 @@ export default function ProfileScreen() {
       newPassword: '',
       confirmPassword: '',
     });
+
+    const att = {
+      firstDay: obj?.firstDay,
+      totalDays: obj?.totalDays ?? obj?.attendanceTotal,
+      streak: obj?.streak ?? obj?.currentStreak,
+      coins: obj?.coins,
+      todayCoins: obj?.todayCoins,
+    };
+    setAttendance(prev => ({ ...prev, ...Object.fromEntries(Object.entries(att).filter(([,v]) => v !== undefined)) }));
   }, []);
 
   const load = useCallback(async () => {
     setErrAccount(''); setErrProfile(''); setOkAccount(''); setOkProfile('');
+    // 로컬 출석/코인 스냅샷
+    const localAtt = await ensureDailyAttendance();
+    setAttendance(a => ({ ...a, ...localAtt }));
+
     let showedPrefill = false;
     try {
       const raw = await AsyncStorage.getItem('@profile/prefill');
@@ -163,20 +251,20 @@ export default function ProfileScreen() {
         return;
       }
       if (!showedPrefill) {
-        setErrProfile(t('UPDATE_FAIL'));
+        setErrProfile(t('TRY_LATER') || '나중에 다시 시도해 주세요.');
         setLoading(false);
       }
     }
   }, [applyToState, fetchFirstOK, logoutToWelcome, userId, t]);
 
   useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const saveAccount = async () => {
     setSavingAccount(true);
-    setErrAccount('');
-    setOkAccount('');
+    setErrAccount(''); setOkAccount('');
     try {
       const nextId = (form.newId || current.id || '').trim();
       if (!nextId || !/^\S+@\S+\.\S+$/.test(nextId)) throw new Error(t('EMAIL_INVALID'));
@@ -206,8 +294,7 @@ export default function ProfileScreen() {
 
   const saveProfile = async () => {
     setSavingProfile(true);
-    setErrProfile('');
-    setOkProfile('');
+    setErrProfile(''); setOkProfile('');
     try {
       const numOk = v => v === '' || !Number.isNaN(Number(v));
       if (!numOk(form.weight) || !numOk(form.height) || !numOk(form.age) || !numOk(form.targetWeight) || !numOk(form.targetCalories)) {
@@ -241,14 +328,13 @@ export default function ProfileScreen() {
   const openRecovery = () => setPwModal(true);
   const verifyPwAndGo = async () => {
     try {
-      // 서버에 비번 확인 API가 따로 없을 수 있으므로, 로그인 재검증 방식 사용
       const res = await auth.login(current.id, pwInput);
       if (res === true || res === 'ok' || (res && typeof res === 'object' && (res.ok || res.success))) {
         setPwModal(false);
         setPwInput('');
-        nav.navigate('RecoverySetup'); // 등록/수정 공용
+        nav.navigate('RecoverySetup');
       } else throw new Error(t('ERR_WRONG_PW'));
-    } catch (e) {
+    } catch {
       setPwInput('');
       alert(t('ERR_WRONG_PW'));
     }
@@ -262,34 +348,30 @@ export default function ProfileScreen() {
     );
   }
 
-  if (loading) {
-    return (
-      <ImageBackground source={theme.homeBg} style={{ flex: 1 }} resizeMode="cover">
-        <Text style={[styles.screenTitle, { top: insets.top + 8, color: theme.text }]}>{t('PROFILE_TITLE')}</Text>
-        <View style={[styles.center, { paddingTop: insets.top + 96 }]}>
-          <ActivityIndicator />
-          <Text style={{ marginTop: 8, color: theme.text, fontFamily: FONT, fontSize: 14, lineHeight: 18, includeFontPadding: true }}>{t('LOADING')}</Text>
-        </View>
-      </ImageBackground>
-    );
-  }
-
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={{ flex: 1 }}>
       <ImageBackground source={theme.homeBg} style={{ flex: 1 }} resizeMode="cover">
-        <Text style={[styles.screenTitle, { top: insets.top + 8, color: theme.text }]}>{t('PROFILE_TITLE')}</Text>
+        <ThemeToggle align="right" />
+        <Text style={[styles.screenTitle, { top: insets.top + 8, color: theme.text }]}>{t('PROFILE')}</Text>
 
-        <ScrollView ref={scRef}
+        <ScrollView
+          ref={scRef}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.container, { paddingTop: insets.top + 108, paddingBottom: insets.bottom + 200 }]}>
-
-          {/* Attendance 카드 (Security Q&A 버튼 제거) */}
+          contentContainerStyle={[styles.container, { paddingTop: insets.top + 108, paddingBottom: insets.bottom + 200 }]}
+        >
+          {/* Attendance */}
           <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>{'Attendance'}</Text>
-            {/* 여기에 출석/코인 UI (기존 로직 유지) */}
+            <Text style={[styles.cardTitle, { color: theme.text }]}>{t('ATTENDANCE')}</Text>
+            <Row k={t('FIRST_DAY')} v={attendance.firstDay} />
+            <Row k={t('TOTAL_DAYS')} v={attendance.totalDays} />
+            <Row k={t('CURRENT_STREAK')} v={attendance.streak} />
+            <Row
+              k={t('COINS')}
+              v={`${attendance.coins ?? 0}${attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}`}
+            />
           </View>
 
-          {/* Account 카드 */}
+          {/* Account */}
           <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
             <Text style={[styles.cardTitle, { color: theme.text }]}>{t('ACCOUNT_INFO')}</Text>
             {!editingAccount ? (
@@ -304,7 +386,6 @@ export default function ProfileScreen() {
                   <Text style={styles.primaryBtnText}>{t('EDIT')}</Text>
                 </Pressable>
 
-                {/* 유일한 보안질문 버튼 */}
                 <Pressable onPress={openRecovery} style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder }]}>
                   <Text style={[styles.ghostBtnText, { color: theme.text }]}>{t('SECURITY_QNA')}</Text>
                 </Pressable>
@@ -340,9 +421,9 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Profile 카드 */}
+          {/* Profile */}
           <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>{t('PROFILE_INFO')}</Text>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>{t('PROFILE')}</Text>
             {!editingProfile ? (
               <>
                 <View style={styles.rowBetween}><Text style={[styles.label, { color: theme.text }]}>{t('WEIGHT')}</Text><Text style={[styles.value, { color: theme.text }]}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
@@ -459,10 +540,7 @@ const styles = StyleSheet.create({
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { paddingHorizontal: 16, gap: 16 },
-  card: {
-    borderWidth: 1, borderRadius: 16, padding: 16, gap: 12,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
-  },
+  card: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   cardTitle: { fontSize: 18, lineHeight: 22, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', fontFamily: FONT, fontWeight: 'normal', includeFontPadding: true },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   label: { fontFamily: FONT, fontWeight: 'normal', fontSize: 16, lineHeight: 20, includeFontPadding: true },

@@ -1,14 +1,8 @@
 // src/screens/SignupScreen.js
 import { useState, useMemo } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, Alert, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { apiPost, API_BASE_DEBUG } from '../config/api.js';
@@ -32,7 +26,7 @@ export default function SignupScreen({ navigation }) {
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') });
 
   const { t, lang, setLang } = useI18n();
-  const { toggleTheme, isDark, theme } = useThemeMode();
+  const { theme } = useThemeMode();
   const fix = langFix(lang);
 
   let auth = null;
@@ -66,12 +60,8 @@ export default function SignupScreen({ navigation }) {
     if (!id || !password || !weight || !age || !gender || !height) {
       return Alert.alert(t('INPUT_REQUIRED'), t('ENTER_ID_PW'));
     }
-    if (!isValidEmail(id)) {
-      return Alert.alert(t('CONFIRM'), t('EMAIL_INVALID'));
-    }
-    if (String(password).length < 8) {
-      return Alert.alert(t('CONFIRM'), t('PW_TOO_SHORT'));
-    }
+    if (!isValidEmail(id)) return Alert.alert(t('CONFIRM'), t('EMAIL_INVALID'));
+    if (String(password).length < 8) return Alert.alert(t('CONFIRM'), t('PW_TOO_SHORT'));
 
     const payload = {
       id: id.trim(),
@@ -82,47 +72,25 @@ export default function SignupScreen({ navigation }) {
       height: Number(height),
     };
 
-    if (
-      Number.isNaN(payload.age) ||
-      Number.isNaN(payload.weight) ||
-      Number.isNaN(payload.height)
-    ) {
-      return Alert.alert(t('CONFIRM'), t('NUMERIC_ONLY'));
+    if (Number.isNaN(payload.age) || Number.isNaN(payload.weight) || Number.isNaN(payload.height)) {
+      return Alert.alert(t('CONFIRM'), t('NUM_ONLY'));
     }
 
     try {
       setLoading(true);
       const ok = auth?.signup ? await auth.signup(payload) : await signupFallback(payload);
       if (ok) {
-        await AsyncStorage.setItem(
-          '@profile/prefill',
-          JSON.stringify({
-            id: payload.id,
-            email: payload.id,
-            weight: payload.weight,
-            height: payload.height,
-            age: payload.age,
-            gender: payload.gender,
-          })
-        );
-        await AsyncStorage.setItem(
-          'goal_draft',
-          JSON.stringify({
-            weight: payload.weight,
-            height: payload.height,
-            age: payload.age,
-            gender: payload.gender,
-          })
-        );
+        await AsyncStorage.setItem('@profile/prefill', JSON.stringify({
+          id: payload.id, email: payload.id, weight: payload.weight, height: payload.height, age: payload.age, gender: payload.gender,
+        }));
+        await AsyncStorage.setItem('goal_draft', JSON.stringify({
+          weight: payload.weight, height: payload.height, age: payload.age, gender: payload.gender,
+        }));
         const bmi = calcBMI(payload.weight, payload.height);
         await AsyncStorage.setItem('@avatar/category_prefill', String(classifyBMI(bmi)));
 
-        const answers = qna
-          .filter(x => (x.answer || '').trim().length > 0)
-          .map(x => ({ code: x.code, answer: x.answer.trim() }));
-        if (answers.length) {
-          try { await apiPost('/api/recover/register', { answers }); } catch {}
-        }
+        const answers = qna.filter(x => (x.answer || '').trim().length > 0).map(x => ({ code: x.code, answer: x.answer.trim() }));
+        if (answers.length) { try { await apiPost('/api/recover/register', { answers }); } catch {} }
 
         Alert.alert(t('CONFIRM'), t('UPDATE_OK'));
         navigation.replace('Login');
@@ -130,7 +98,7 @@ export default function SignupScreen({ navigation }) {
         Alert.alert(t('CONFIRM'), t('UPDATE_FAIL'));
       }
     } catch (e) {
-      Alert.alert(t('CONFIRM'), e?.message ?? t('TRY_LATER'));
+      Alert.alert(t('CONFIRM'), e?.message ?? t('TRY_AGAIN'));
     } finally {
       setLoading(false);
     }
@@ -139,14 +107,8 @@ export default function SignupScreen({ navigation }) {
   if (!fontsLoaded) return null;
 
   const inputStyle = {
-    borderWidth: 1,
-    borderColor: theme.inputBorder,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontFamily: FONT,
-    color: theme.text,
-    backgroundColor: theme.inputBg,
-    ...fix.input,
+    borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 10,
+    paddingHorizontal: 12, fontFamily: FONT, color: theme.text, backgroundColor: theme.inputBg, ...fix.input,
   };
 
   return (
@@ -156,14 +118,10 @@ export default function SignupScreen({ navigation }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 140,
-          paddingTop: insets.top + 80,
-          gap: 12,
-        }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 140, paddingTop: insets.top + 80, gap: 12 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* 언어 선택 */}
         <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'center', marginBottom: 6 }}>
           {[
             { k: 'ko', label: '한국어' },
@@ -175,86 +133,51 @@ export default function SignupScreen({ navigation }) {
               key={item.k}
               onPress={() => setLang(item.k)}
               style={{
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 10,
-                borderWidth: 1,
+                paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1,
                 borderColor: lang === item.k ? theme.chipOn : theme.cardBorder,
                 backgroundColor: lang === item.k ? theme.chipOn : theme.chipOff,
               }}
             >
-              <Text
-                style={{
-                  fontFamily: FONT,
-                  color: lang === item.k ? theme.chipOnText : theme.chipOffText,
-                  ...fix.text,
-                }}
-              >
+              <Text style={{ fontFamily: FONT, color: lang === item.k ? theme.chipOnText : theme.chipOffText, ...fix.text }}>
                 {item.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity
-          onPress={toggleTheme}
-          style={{
-            position: 'absolute',
-            top: insets.top + 8,
-            right: 16,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: theme.cardBorder,
-            backgroundColor: theme.cardBg,
-          }}
-        >
-          <Text style={{ color: theme.text, fontFamily: FONT }}>{isDark ? 'Light' : 'Dark'}</Text>
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontSize: 36,
-            fontFamily: FONT,
-            marginBottom: 20,
-            textAlign: 'center',
-            color: theme.text,
-            ...fix.text,
-          }}
-        >
-          {(t('SIGNUP') || 'SIGNUP').toUpperCase()}
+        <Text style={{ fontSize: 36, fontFamily: FONT, marginBottom: 20, textAlign: 'center', color: theme.text, ...fix.text }}>
+          {(t('SIGN_UP') || 'SIGN UP').toUpperCase()}
         </Text>
 
-        <TextInput value={id} onChangeText={setId} placeholder={t('EMAIL')} autoCapitalize="none" keyboardType="email-address" inputMode="email" style={inputStyle}/>
-        <TextInput value={password} onChangeText={setPassword} placeholder={t('PASSWORD_8')} secureTextEntry autoCapitalize="none" style={inputStyle}/>
-        <TextInput value={age} onChangeText={setAge} placeholder={t('AGE')} keyboardType="numeric" style={inputStyle}/>
+        <TextInput value={id} onChangeText={setId} placeholder={t('EMAIL')} placeholderTextColor={theme.mutedText}
+          autoCapitalize="none" keyboardType="email-address" inputMode="email" style={inputStyle}/>
+        <TextInput value={password} onChangeText={setPassword} placeholder={t('PASSWORD_8')} placeholderTextColor={theme.mutedText}
+          secureTextEntry autoCapitalize="none" style={inputStyle}/>
+        <TextInput value={age} onChangeText={setAge} placeholder={t('AGE')} placeholderTextColor={theme.mutedText}
+          keyboardType="numeric" style={inputStyle}/>
 
+        {/* 성별 버튼 – 다크에서도 가독성 */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TouchableOpacity
-            onPress={() => setGender('F')}
-            style={{ flex: 1, backgroundColor: gender === 'F' ? theme.text : theme.inputBg, padding: 12, borderRadius: 10 }}
-          >
-            <Text style={{ fontFamily: FONT, color: gender === 'F' ? '#fff' : theme.text, textAlign: 'center', ...fix.text }}>
-              {t('GENDER_FEMALE')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setGender('M')}
-            style={{ flex: 1, backgroundColor: gender === 'M' ? theme.text : theme.inputBg, padding: 12, borderRadius: 10 }}
-          >
-            <Text style={{ fontFamily: FONT, color: gender === 'M' ? '#fff' : theme.text, textAlign: 'center', ...fix.text }}>
-              {t('GENDER_MALE')}
-            </Text>
-          </TouchableOpacity>
+          {['F','M'].map(g => {
+            const on = gender === g;
+            const label = g === 'F' ? t('GENDER_FEMALE') : t('GENDER_MALE');
+            return (
+              <TouchableOpacity key={g} onPress={() => setGender(g)}
+                style={{ flex: 1, backgroundColor: on ? theme.text : theme.inputBg, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.inputBorder }}>
+                <Text style={{ fontFamily: FONT, color: on ? '#fff' : theme.text, textAlign: 'center', ...fix.text }}>{label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        <TextInput value={weight} onChangeText={setWeight} placeholder={t('WEIGHT_KG')} keyboardType="numeric" style={inputStyle}/>
-        <TextInput value={height} onChangeText={setHeight} placeholder={t('HEIGHT_CM')} keyboardType="numeric" style={inputStyle}/>
+        <TextInput value={weight} onChangeText={setWeight} placeholder={t('WEIGHT_KG')} placeholderTextColor={theme.mutedText}
+          keyboardType="numeric" style={inputStyle}/>
+        <TextInput value={height} onChangeText={setHeight} placeholder={t('HEIGHT_CM')} placeholderTextColor={theme.mutedText}
+          keyboardType="numeric" style={inputStyle}/>
 
         <View style={{ marginTop: 12, gap: 10 }}>
           <Text style={{ fontFamily: FONT, fontSize: 18, color: theme.text }}>
-            {t('SECURITY_QNA')} <Text style={{ color: theme.mutedText }}>{t('OPTIONAL')}</Text>
+            {t('SECURITY_QNA')} <Text style={{ color: theme.mutedText }}>{t('SECURITY_QNA_OPTIONAL')}</Text>
           </Text>
           <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
             {t('SECURITY_DESC_SIGNUP')}
@@ -268,25 +191,26 @@ export default function SignupScreen({ navigation }) {
           {qna.map((row, idx) => (
             <View key={row.code} style={{ gap: 6 }}>
               <Text style={{ fontFamily: FONT, color: theme.text, ...fix.text }}>{t(row.labelKey)}</Text>
-              <TextInput value={row.answer} onChangeText={(v)=>setQ(idx, v)} placeholder={t('ANSWER')} style={inputStyle}/>
+              <TextInput
+                value={row.answer}
+                onChangeText={(v)=>setQ(idx, v)}
+                placeholder={t('ANSWER')}
+                placeholderTextColor={theme.mutedText}
+                style={inputStyle}
+              />
             </View>
           ))}
         </View>
 
-        <TouchableOpacity
-          onPress={onSubmit}
-          disabled={loading}
-          style={{ backgroundColor: '#10b981', padding: 14, borderRadius: 10, opacity: loading ? 0.6 : 1, marginTop: 4 }}
-        >
+        <TouchableOpacity onPress={onSubmit} disabled={loading}
+          style={{ backgroundColor: '#10b981', padding: 14, borderRadius: 10, opacity: loading ? 0.6 : 1, marginTop: 4 }}>
           <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>
             {loading ? '…' : (t('CREATE_ACCOUNT') || 'Create account')}
           </Text>
         </TouchableOpacity>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
-          <Text style={{ color: theme.mutedText, fontFamily: FONT }}>
-            {t('ALREADY_HAVE_ACCOUNT')}{' '}
-          </Text>
+          <Text style={{ color: theme.mutedText, fontFamily: FONT }}>{t('ALREADY_HAVE_ACCOUNT')}{' '}</Text>
           <TouchableOpacity onPress={() => navigation.replace('Login')}>
             <Text style={{ color: '#2563eb', fontFamily: FONT }}>{t('LOGIN')}</Text>
           </TouchableOpacity>

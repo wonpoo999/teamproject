@@ -12,7 +12,7 @@ export default function RecoveryFlow() {
   const route = useRoute();
   const mode = route.params?.mode === 'findId' ? 'findId' : 'resetPw';
   const { t } = useI18n();
-  const { colors } = useThemeMode();
+   const { theme: colors } = useThemeMode();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState('');

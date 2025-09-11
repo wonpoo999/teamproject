@@ -9,7 +9,7 @@ const FONT = 'DungGeunMo';
 
 export default function SecurityQnaManager() {
   const { t } = useI18n();
-  const { colors } = useThemeMode();
+  const { theme: colors } = useThemeMode();
   const insets = useSafeAreaInsets();
 
   const [qna, setQna] = useState([
@@ -50,7 +50,7 @@ export default function SecurityQnaManager() {
             value={row.answer}
             onChangeText={(v)=>setQ(idx, v)}
             placeholder={t('ANSWER')}
-            placeholderTextColor={'#9aa0a6'}
+            placeholderTextColor={colors.mutedText}
             style={inputStyle}
           />
         </View>

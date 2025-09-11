@@ -1,4 +1,3 @@
-// src/screens/QuestScreen.js
 import { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View, Text, ImageBackground, StyleSheet, Animated, AppState,
@@ -19,12 +18,13 @@ Text.defaultProps.includeFontPadding = true;
 
 const AWARD_PER_QUEST = 1;
 
+// ====== 다국어 도발/멘트 ======
 const TAUNTS_MAP = {
   none: {
-    ko: ['0.00km… 산책 앱을 켰는데 산책은 안 함','첫 좌표에서 평생 살 계획?','오늘도 바닥이랑 베프네','다리는 절전 모드, 폰만 고성능','앉아있는 재능 국가대표'],
-    en: ['0.00km… Opened the app but no walk','Planning to live at the first GPS point forever?','Best friends with the floor again','Legs in power save, phone on turbo','National-team level at sitting'],
-    ja: ['0.00km… アプリ開いたのに歩いてない','最初の座標で一生暮らすの？','今日も床と親友','足は省電力、スマホはハイスペ','座りっぱなしの才能は代表クラス'],
-    zh: ['0.00km… 打开了应用却没走','打算一辈子待在第一个坐标？','今天又和地板做朋友','腿在省电模式，手机在高性能','坐着的天赋国家级'],
+    ko: ['0.00km… 산책 앱 켰는데 산책은 안 함','첫 좌표에서 평생 살 계획?','오늘도 바닥이랑 베프네','다리는 절전, 폰은 고성능','앉아있는 재능 국가대표'],
+    en: ['0.00km… Opened the app but no walk','Planning to live at the first GPS point?','Best friends with the floor again','Legs in power-save, phone on turbo','National-team level at sitting'],
+    ja: ['0.00km… アプリ開いたのに歩いてない','最初の座標で一生暮らすの？','今日も床と親友','足は省電力、スマホはハイパワー','座りっぱなしの才能は代表級'],
+    zh: ['0.00km… 打开了应用却没走','打算一直待在第一个坐标？','今天又和地板做朋友','腿在省电模式，手机在高性能','坐着的天赋国家级'],
   },
   done: {
     ko: ['오케이 인정. 오늘만','완료. 변명 금지 모드 진입','터보 엔진 잠깐 켰네'],
@@ -39,7 +39,6 @@ const TAUNTS_MAP = {
     zh: ['先给定位权限，再来指点','GPS锁不住，借口倒挺多'],
   },
 };
-
 const TAUNTS = (lang) => ({
   none: TAUNTS_MAP.none[lang] || TAUNTS_MAP.none.ko,
   done: TAUNTS_MAP.done[lang] || TAUNTS_MAP.done.ko,
@@ -59,9 +58,9 @@ export default function QuestScreen(){
 
   const [perm,setPerm]=useState('undetermined');
   const [meters,setMeters]=useState(0);
-  const [sessionMeters,setSessionMeters]=useState(0);
   const [quests, setQuests] = useState([]);
 
+  // 코인은 계속 적립하지만 이 화면에서는 표시하지 않음
   const [coins, setCoins] = useState(0);
   const [awardedWalk, setAwardedWalk] = useState(false);
 
@@ -113,19 +112,19 @@ export default function QuestScreen(){
     const pushups = Math.round(20 * factor);
 
     const list = [
-      { id: 'walk',  type: 'walk_km', target: walkKm, desc: `${t('WALK')} ${walkKm} km`,  auto: true,  done: false, rewarded:false },
-      { id: 'squat', type: 'squat',   target: squats,  desc: `${t('SQUAT')} ${squats}`,    auto: false, done: false, rewarded:false },
-      { id: 'pushup',type: 'pushup',  target: pushups, desc: `${t('PUSHUP')} ${pushups}`,  auto: false, done: false, rewarded:false },
+      { id: 'walk',  type: 'walk_km', target: walkKm, desc: `${t('WALK')||'WALK'} ${walkKm} km`,  auto: true,  done: false, rewarded:false },
+      { id: 'squat', type: 'squat',   target: squats,  desc: `SQUAT ${squats}`,    auto: false, done: false, rewarded:false },
+      { id: 'pushup',type: 'pushup',  target: pushups, desc: `PUSH-UP ${pushups}`, auto: false, done: false, rewarded:false },
     ];
     await AsyncStorage.setItem('@quest/list', JSON.stringify(list));
     setQuests(list);
   }
 
   useEffect(()=>{ (async()=>{ await loadOrGenQuests(); await loadCoins(); })() }, []);
-
-  useFocusEffect(useMemo(() => () => { return () => {} }, []));
+  useFocusEffect(useMemo(() => { return () => {}; }, []));
 
   useEffect(()=>{const sub=AppState.addEventListener('change',s=>{appActiveRef.current=(s==='active')});return()=>sub?.remove?.()},[]);
+
   useEffect(()=>{let mounted=true;(async()=>{
     const {status}=await Location.requestForegroundPermissionsAsync().catch(()=>({status:'denied'}));
     if (!mounted) return;
@@ -152,7 +151,6 @@ export default function QuestScreen(){
         const vOk=v>=0.7&&v<=4.5;
         const sOk=typeof speed==='number'?speed>=0.7&&speed<=4.5:true;
         if(!(vOk&&sOk))return;
-        setSessionMeters(vv=>vv+d);
         setMeters(prev=>prev+d);
       }
     )
@@ -211,18 +209,14 @@ export default function QuestScreen(){
   const walkQ = quests.find(x=>x.id==='walk');
   const squatQ = quests.find(x=>x.id==='squat');
   const pushupQ = quests.find(x=>x.id==='pushup');
-  const km = ((meters)/1000).toFixed(2);
+  const km = (meters/1000).toFixed(2);
   const goalKm = walkQ ? walkQ.target.toFixed(1) : '0.0';
 
   const startSquat = () => squatQ && navigation.navigate('TACoach', {
-    mode: 'squat',
-    target: squatQ.target,
-    onComplete: () => markManualDone('squat'),
+    mode: 'squat', target: squatQ.target, onComplete: () => markManualDone('squat'),
   });
   const startPushup = () => pushupQ && navigation.navigate('TACoach', {
-    mode: 'pushup',
-    target: pushupQ.target,
-    onComplete: () => markManualDone('pushup'),
+    mode: 'pushup', target: pushupQ.target, onComplete: () => markManualDone('pushup'),
   });
 
   const canSquat = !!squatQ;
@@ -232,32 +226,41 @@ export default function QuestScreen(){
     ? require('../../assets/background/home_dark.png')
     : require('../../assets/background/home.png');
 
+  const CARD_BG = isDark ? 'rgba(17,24,39,0.86)' : 'rgba(255,255,255,0.86)';
+  const CARD_BORDER = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const TXT_MAIN = isDark ? '#e5e7eb' : '#111';
+  const TXT_SUB = isDark ? '#cbd5e1' : '#000';
+
   return(
     <ImageBackground source={bg} style={{flex:1}} resizeMode="cover">
-      <Text style={[styles.screenTitle,{top:insets.top+8}]}>{t('DAILY_QUESTS')}</Text>
+      {/* 상단 타이틀 */}
+      <Text style={[styles.screenTitle,{top:insets.top+8, color: isDark ? '#fff' : '#000'}]}>
+        {t('QUEST')}
+      </Text>
 
-      <View style={[styles.coinPill, { top: insets.top + 10 }]}>
-        <Text style={styles.coinEmoji}>🪙</Text>
-        <Text style={styles.coinTxt}>{String(coins)}</Text>
-      </View>
+      {/* 본문 */}
+      <View style={{flex:1, paddingTop: insets.top + 86, paddingHorizontal: 18}}>
+        <View style={[styles.card, { backgroundColor: CARD_BG, borderColor: CARD_BORDER }]}>
+          <Text style={[styles.title,{ color: TXT_MAIN }]}>{t('QUEST')}</Text>
+          <Text style={[styles.questMain,{ color: TXT_MAIN }]}>
+            {(t('WALK') || 'WALK')} {goalKm} km
+          </Text>
 
-      <View style={{paddingTop:insets.top+88,paddingHorizontal:18,gap:16}}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{t('DAILY_QUESTS')}</Text>
-          <Text style={styles.questMain}>{t('WALK')} {goalKm} km</Text>
-          <View style={styles.barWrap}>
-            <Animated.View style={[styles.barFill,{width}]}/>
-            <Text style={styles.barText}>{km} / {goalKm} km</Text>
+          <View style={[styles.barWrap,{ borderColor: TXT_SUB, backgroundColor: isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)'}]}>
+            <Animated.View style={[styles.barFill,{width, backgroundColor: isDark?'rgba(34,197,94,0.9)':'rgba(34,197,94,0.85)'}]}/>
+            <Text style={[styles.barText,{ color: TXT_MAIN }]}>{km} / {goalKm} km</Text>
           </View>
-          <Text style={styles.quip}>{quip}</Text>
+
+          <Text style={[styles.quip,{ color: TXT_SUB }]}>{quip}</Text>
         </View>
 
+        <View style={{ height: 16 }} />
         <View style={styles.quickRow}>
           <TouchableOpacity onPress={startSquat} disabled={!canSquat} style={[styles.quickBtn, !canSquat && styles.disabled]}>
-            <Text style={styles.quickTxt}>{t('START_SQUAT')}</Text>
+            <Text style={styles.quickTxt}>{t('START_SQUAT') || 'START SQUAT'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={startPushup} disabled={!canPush} style={[styles.quickBtn, !canPush && styles.disabled]}>
-            <Text style={styles.quickTxt}>{t('START_PUSHUP')}</Text>
+            <Text style={styles.quickTxt}>{t('START_PUSHUP') || 'START PUSH-UP'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -268,10 +271,11 @@ export default function QuestScreen(){
             await AsyncStorage.removeItem('@quest/awarded_walk');
             await loadOrGenQuests();
             await loadCoins();
+            setMeters(0);
           }}
-          style={[styles.btn, { marginTop: 20, alignSelf: 'center', backgroundColor: '#ef4444' }]}
+          style={[styles.btn, { alignSelf: 'center', backgroundColor: '#ef4444', marginTop: 18 }]}
         >
-          <Text style={styles.btnText}>{t('RESET_QUESTS')}</Text>
+          <Text style={styles.btnText}>{t('RESET_QUESTS') || 'RESET'}</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -280,39 +284,31 @@ export default function QuestScreen(){
 
 const styles=StyleSheet.create({
   screenTitle:{
-    position:'absolute',left:0,right:0,textAlign:'center',color:'#000',
+    position:'absolute',left:0,right:0,textAlign:'center',
     fontSize:26,lineHeight:32,
-    textShadowColor:'rgba(255,255,255,0.28)',textShadowOffset:{width:0,height:1},textShadowRadius:2,
+    textShadowColor:'rgba(0,0,0,0.25)',textShadowOffset:{width:0,height:1},textShadowRadius:2,
     zIndex:10,fontFamily:FONT,fontWeight:'normal',includeFontPadding:true,
   },
   center:{flex:1,alignItems:'center',justifyContent:'center'},
-  card:{backgroundColor:'rgba(255,255,255,0.8)',borderRadius:24,padding:18,gap:12},
-  title:{fontFamily:FONT,fontSize:20,lineHeight:24,color:'#111',includeFontPadding:true},
-  questMain:{fontFamily:FONT,fontSize:28,lineHeight:34,color:'#111',includeFontPadding:true},
-  barWrap:{height:26,borderWidth:2,borderColor:'#111',borderRadius:10,overflow:'hidden',justifyContent:'center',backgroundColor:'rgba(0,0,0,0.05)'},
-  barFill:{position:'absolute',left:0,top:0,bottom:0,backgroundColor:'rgba(34,197,94,0.85)'},
-  barText:{textAlign:'center',fontFamily:FONT,fontSize:14,lineHeight:17,color:'#111',includeFontPadding:true},
-  quip:{fontFamily:FONT,fontSize:14,lineHeight:17,color:'#000',marginTop:2,includeFontPadding:true},
+
+  card:{
+    borderWidth:1,borderRadius:24,padding:18,gap:12,
+    shadowColor:'#000',shadowOpacity:0.18,shadowRadius:10,shadowOffset:{width:0,height:6},
+    elevation:4,
+  },
+  title:{fontFamily:FONT,fontSize:20,lineHeight:24,includeFontPadding:true},
+  questMain:{fontFamily:FONT,fontSize:28,lineHeight:34,includeFontPadding:true},
+
+  barWrap:{height:26,borderWidth:2,borderRadius:10,overflow:'hidden',justifyContent:'center'},
+  barFill:{position:'absolute',left:0,top:0,bottom:0},
+  barText:{textAlign:'center',fontFamily:FONT,fontSize:14,lineHeight:17,includeFontPadding:true},
+  quip:{fontFamily:FONT,fontSize:14,lineHeight:17,marginTop:2,includeFontPadding:true},
 
   quickRow:{ flexDirection:'row', gap:10 },
   quickBtn:{ flex:1, backgroundColor:'#111827', borderRadius:12, paddingVertical:12, alignItems:'center' },
   quickTxt:{ fontFamily:FONT, color:'#fff', fontSize:16, lineHeight:20, includeFontPadding:true },
   disabled:{ opacity:0.5 },
 
-  btn:{paddingHorizontal:12,paddingVertical:6,backgroundColor:'#111827',borderRadius:8},
-  btnText:{fontFamily:FONT,color:'#fff',fontSize:12,lineHeight:15,includeFontPadding:true},
-
-  coinPill:{
-    position:'absolute',
-    right:12,
-    backgroundColor:'rgba(17,24,39,0.9)',
-    flexDirection:'row',
-    alignItems:'center',
-    paddingHorizontal:10,
-    paddingVertical:6,
-    borderRadius:14,
-    zIndex:20,
-  },
-  coinEmoji:{ fontSize:16, marginRight:6 },
-  coinTxt:{ color:'#fff', fontFamily:FONT, fontSize:14, lineHeight:16, includeFontPadding:true },
+  btn:{paddingHorizontal:14,paddingVertical:10,borderRadius:10},
+  btnText:{fontFamily:FONT,color:'#fff',fontSize:14,lineHeight:16,includeFontPadding:true},
 });

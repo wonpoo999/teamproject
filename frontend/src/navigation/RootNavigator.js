@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
 
+// Screens
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
@@ -23,7 +24,6 @@ import HealthyCatchGameScreen from '../screens/HealthyCatchGameScreen';
 import TACoach from '../screens/TACoach';
 import VoicePickerScreen from '../screens/VoicePickerScreen';
 
-// 복구 화면(단일 세트)
 import {
   RecoverySetupScreen,
   RecoveryFlowScreen,
@@ -32,36 +32,22 @@ import {
 
 const Stack = createNativeStackNavigator();
 
-// 헤더에서 다크모드 토글 버튼
+/** 헤더 우측 다크/라이트 토글 (전역 단일) */
 function HeaderThemeToggle() {
-  const { toggleTheme, mode, colors } = useThemeMode();
+  const { toggleTheme, mode, theme } = useThemeMode();
   const { t } = useI18n();
-  const label =
-    mode === 'dark'
-      ? t('LIGHT') || 'Light'
-      : t('DARK') || 'Dark';
-
+  const label = mode === 'dark' ? (t('LIGHT') || 'LIGHT') : (t('DARK') || 'DARK');
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      activeOpacity={0.8}
       onPress={toggleTheme}
       style={{
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.inputBorder,
-        backgroundColor: colors.ghostBg,
+        paddingVertical: 6, paddingHorizontal: 14,
+        borderRadius: 16, borderWidth: 1,
+        borderColor: theme.inputBorder, backgroundColor: theme.ghostBg,
       }}
     >
-      <Text
-        style={{
-          fontFamily: 'DungGeunMo',
-          color: colors.text,
-        }}
-      >
-        {label}
-      </Text>
+      <Text style={{ fontFamily: 'DungGeunMo', color: theme.text }}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -71,46 +57,22 @@ const commonHeader = {
   headerTitle: '',
   headerTransparent: true,
   headerShadowVisible: false,
-  headerStyle: { backgroundColor: 'transparent', elevation: 0 },
-  headerBackTitleVisible: false,
+  headerStyle: { backgroundColor: 'transparent' },
   headerTintColor: '#fff',
-  headerTitleStyle: { fontFamily: 'DungGeunMo', fontSize: 20 },
-  // 다크모드 토글 버튼 하나만
   headerRight: () => <HeaderThemeToggle />,
-  headerLeft: () => null, // ← 뒤로가기 중첩 방지
 };
 
 function AuthStack() {
   const { t } = useI18n();
   return (
     <Stack.Navigator screenOptions={commonHeader}>
-      <Stack.Screen
-        name="Welcome"
-        component={WelcomeScreen}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen
-        name="RecoverySetup"
-        component={RecoverySetupScreen}
-        options={{ title: t('RECOVERY_SETUP') }}
-      />
-      <Stack.Screen
-        name="RecoveryFlow"
-        component={RecoveryFlowScreen}
-        options={{ title: t('RECOVERY') }}
-      />
-      <Stack.Screen
-        name="SecurityQnaManager"
-        component={SecurityQnaManagerScreen}
-        options={{ title: t('SECURITY_QNA') }}
-      />
-      <Stack.Screen
-        name="VoicePicker"
-        component={VoicePickerScreen}
-        options={{ title: t('VOICE_PICK') || 'VOICE_PICK' }}
-      />
+      <Stack.Screen name="RecoverySetup" component={RecoverySetupScreen} options={{ title: t('RECOVERY_SETUP') }} />
+      <Stack.Screen name="RecoveryFlow" component={RecoveryFlowScreen} options={{ title: t('RECOVERY') }} />
+      <Stack.Screen name="SecurityQnaManager" component={SecurityQnaManagerScreen} options={{ title: t('SECURITY_QNA') }} />
+      <Stack.Screen name="VoicePicker" component={VoicePickerScreen} options={{ title: t('VOICE_PICK') || 'VOICE PICK' }} />
     </Stack.Navigator>
   );
 }
@@ -118,77 +80,45 @@ function AuthStack() {
 function AppStack({ initialRouteName = 'Home' }) {
   const { t } = useI18n();
   return (
-    <Stack.Navigator
-      screenOptions={commonHeader}
-      initialRouteName={initialRouteName}
-    >
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ headerShown: false }}
-      />
+    <Stack.Navigator screenOptions={commonHeader} initialRouteName={initialRouteName}>
+      {/* 홈은 헤더 숨김(홈 전용 토글/코인 배치 유지) */}
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Goal" component={GoalScreen} />
       <Stack.Screen name="Camera" component={CameraScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="DietLog" component={DietLogScreen} />
-      <Stack.Screen name="Data" component={DataScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="Burning" component={QuestScreen} />
-      <Stack.Screen name="Ranking" component={RankingScreen} />
-      <Stack.Screen
-        name="RecoverySetup"
-        component={RecoverySetupScreen}
-        options={{ title: t('RECOVERY_SETUP') }}
-      />
-      <Stack.Screen
-        name="RecoveryFlow"
-        component={RecoveryFlowScreen}
-        options={{ title: t('RECOVERY') }}
-      />
-      <Stack.Screen
-        name="SecurityQnaManager"
-        component={SecurityQnaManagerScreen}
-        options={{ title: t('SECURITY_QNA') }}
-      />
-      <Stack.Screen
-        name="HealthyCatch"
-        component={HealthyCatchGameScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="TACoach"
-        component={TACoach}
-        options={{ headerShown: true, title: '' }}
-      />
-      <Stack.Screen
-        name="VoicePicker"
-        component={VoicePickerScreen}
-        options={{ title: t('VOICE_PICK') || 'VOICE_PICK' }}
-      />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t('SETTING') || 'SETTING' }} />
+
+      <Stack.Screen name="DietLog" component={DietLogScreen} options={{ title: t('FOOD_LOG') || '식단 기록' }} />
+      <Stack.Screen name="FoodLog" component={DietLogScreen} options={{ title: t('FOOD_LOG') || '식단 기록' }} />
+
+      <Stack.Screen name="Data" component={DataScreen} options={{ title: t('AT_A_GLANCE') || '한눈에' }} />
+      <Stack.Screen name="Overview" component={DataScreen} options={{ title: t('AT_A_GLANCE') || '한눈에' }} />
+
+      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: t('PROFILE') || '프로필' }} />
+      <Stack.Screen name="Quest" component={QuestScreen} options={{ title: t('DAILY_QUEST') || '일일 퀘스트' }} />
+      <Stack.Screen name="Ranking" component={RankingScreen} options={{ title: t('RANKING') || '랭킹' }} />
+
+      <Stack.Screen name="RecoverySetup" component={RecoverySetupScreen} options={{ title: t('RECOVERY_SETUP') }} />
+      <Stack.Screen name="RecoveryFlow" component={RecoveryFlowScreen} options={{ title: t('RECOVERY') }} />
+      <Stack.Screen name="SecurityQnaManager" component={SecurityQnaManagerScreen} options={{ title: t('SECURITY_QNA') }} />
+
+      <Stack.Screen name="HealthyCatch" component={HealthyCatchGameScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TACoach" component={TACoach} options={{ title: '' }} />
+      <Stack.Screen name="VoicePicker" component={VoicePickerScreen} options={{ title: t('VOICE_PICK') || 'VOICE PICK' }} />
     </Stack.Navigator>
   );
 }
 
 export default function RootNavigator() {
   const { ready, isAuthenticated, needsGoalSetup } = useAuth();
-  const [fontsLoaded] = useFonts({
-    DungGeunMo: require('../../assets/fonts/DungGeunMo.otf'),
-  });
+  const [fontsLoaded] = useFonts({ DungGeunMo: require('../../assets/fonts/DungGeunMo.otf') });
 
   if (!ready || !fontsLoaded) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator />
       </View>
     );
   }
-
   if (!isAuthenticated) return <AuthStack />;
 
   return (

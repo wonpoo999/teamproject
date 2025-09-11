@@ -1,3 +1,4 @@
+// src/screens/LoginScreen.js
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform
@@ -12,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const FONT = 'DungGeunMo';
 
 const langFix = (lang) => ({
-  text: { includeFontPadding: true, lineHeight: 22 },
+  text: { includeFontPadding: true, lineHeight: 22, paddingTop: 2, paddingBottom: 2 },
   input: {
     paddingVertical: 16,
     minHeight: 50,
@@ -110,7 +111,7 @@ export default function LoginScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom + 140 }}
+        contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom + 220, minHeight: 720 }}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6 }}>
           <LangBtn k="ko" label="한국어" />
@@ -119,9 +120,9 @@ export default function LoginScreen() {
           <LangBtn k="zh" label="中文" />
         </View>
 
-        {/* 헤더에 토글 있으므로 스크린 내부 토글 제거 */}
+        {/* 스크린 내부 다크 토글은 없음(이모지 토글만 전역 유지) */}
 
-        <Text style={{ fontSize: 32, textAlign: 'center', marginBottom: 8, fontFamily: FONT, color: theme.text, ...fix.text }}>
+        <Text style={{ fontSize: 40, lineHeight: 46, textAlign: 'center', marginBottom: 16, fontFamily: FONT, color: theme.text, ...fix.text }}>
           {t('LOGIN')}
         </Text>
 
@@ -156,10 +157,12 @@ export default function LoginScreen() {
           <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>{loading ? '…' : t('LOGIN')}</Text>
         </TouchableOpacity>
 
-        <View style={{ flexDirection: 'row', gap: 18, justifyContent: 'center', paddingTop: 14 }}>
+        {/* 아이디/비밀번호 찾기 – 같은 라인 정렬 */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 14 }}>
           <TouchableOpacity onPress={() => navigation.navigate('RecoveryFlow', { mode: 'findId' })}>
             <Text style={{ fontFamily: FONT, color: '#60a5fa' }}>{t('FIND_ID')}</Text>
           </TouchableOpacity>
+          <Text style={{ color: '#64748b' }}>|</Text>
           <TouchableOpacity onPress={() => navigation.navigate('RecoveryFlow', { mode: 'resetPw' })}>
             <Text style={{ fontFamily: FONT, color: '#60a5fa' }}>{t('PW_RECOVERY')}</Text>
           </TouchableOpacity>

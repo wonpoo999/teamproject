@@ -52,4 +52,4 @@ export default function WelcomeScreen() {
       </View>
     </ImageBackground>
   );
-}6
+}
