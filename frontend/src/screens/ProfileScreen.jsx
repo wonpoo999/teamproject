@@ -1,4 +1,3 @@
-// src/screens/ProfileScreen.js
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
@@ -15,6 +14,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
+import { checkInToday, getStatus } from '../utils/attendance'; // ★ 새 출석 모듈만 사용
 
 const FONT = 'DungGeunMo';
 
@@ -36,50 +36,6 @@ const fetchWithTimeout = (url, opts, ms = 8000) =>
     fetch(url, opts),
     new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)),
   ]);
-
-// 출석 + 코인 합산(오늘 코인 리셋/유지)
-async function ensureDailyAttendance() {
-  const K_FIRST='@att/first', K_LAST='@att/last', K_TOTAL='@att/total', K_STREAK='@att/streak';
-  const K_COINS_TOTAL='@coins', K_COINS_TODAY='@coins/today';
-  const today = todayKey();
-  const [first,last,totalStr,streakStr,totalCoinsStr,todayCoinsStr]=await Promise.all([
-    AsyncStorage.getItem(K_FIRST),
-    AsyncStorage.getItem(K_LAST),
-    AsyncStorage.getItem(K_TOTAL),
-    AsyncStorage.getItem(K_STREAK),
-    AsyncStorage.getItem(K_COINS_TOTAL),
-    AsyncStorage.getItem(K_COINS_TODAY),
-  ]);
-  let firstDay = first || today;
-  let lastDay = last || '';
-  let total = Number(totalStr || 0);
-  let streak = Number(streakStr || 0);
-  const coinsTotal = Number(totalCoinsStr || 0);
-  let coinsToday = Number(todayCoinsStr || 0);
-
-  // 날짜 바뀌면 출석/연속 처리 + 오늘 코인 리셋
-  if (lastDay !== today) {
-    let isConsecutive = false;
-    if (lastDay) {
-      const y = new Date(today); y.setDate(y.getDate() - 1);
-      isConsecutive = y.toISOString().slice(0,10) === lastDay;
-    }
-    streak = isConsecutive ? Math.max(1, streak + 1) : 1;
-    total = Math.max(1, total + 1);
-    lastDay = today;
-    coinsToday = 0; // 리셋
-    await AsyncStorage.setItem(K_COINS_TODAY, '0');
-  }
-
-  await Promise.all([
-    AsyncStorage.setItem(K_FIRST, firstDay),
-    AsyncStorage.setItem(K_LAST, lastDay),
-    AsyncStorage.setItem(K_TOTAL, String(total)),
-    AsyncStorage.setItem(K_STREAK, String(streak)),
-  ]);
-
-  return { firstDay, totalDays: total, streak, coins: coinsTotal, todayCoins: coinsToday };
-}
 
 function Row({ k, v }) {
   const { theme } = useThemeMode();
@@ -104,7 +60,6 @@ export default function ProfileScreen() {
 
   const insets = useSafeAreaInsets();
   const auth = useAuth();
-  const userId = auth?.user?.id || null;
   const nav = useNavigation();
   const scRef = useRef(null);
 
@@ -208,39 +163,50 @@ export default function ProfileScreen() {
       confirmPassword: '',
     });
 
+    // 서버가 같은 필드 내려줄 경우 대응
     const att = {
-      firstDay: obj?.firstDay,
-      totalDays: obj?.totalDays ?? obj?.attendanceTotal,
-      streak: obj?.streak ?? obj?.currentStreak,
+      firstDay: obj?.firstDay ?? obj?.firstDate ?? '-',
+      totalDays: obj?.totalDays ?? obj?.attendanceTotal ?? '-',
+      streak: (obj?.streak ?? obj?.currentStreak),
       coins: obj?.coins,
       todayCoins: obj?.todayCoins,
     };
     setAttendance(prev => ({ ...prev, ...Object.fromEntries(Object.entries(att).filter(([,v]) => v !== undefined)) }));
   }, []);
 
+  const loadAttendance = useCallback(async () => {
+    try {
+      await checkInToday(); // 오늘 접속 반영
+      const st = await getStatus();
+      const today = todayKey();
+      setAttendance({
+        firstDay: st.firstDate || '-',
+        totalDays: st.totalDays ?? 0,
+        streak: st.lastDate === today ? (st.currentStreak ?? 0) : '-', // 규칙: 오늘 미로그인 → ‘-’
+        coins: st.coins ?? 0,
+        todayCoins: st.todayCoins ?? 0,
+      });
+    } catch {
+      // 무시하고 기본값 유지
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setErrAccount(''); setErrProfile(''); setOkAccount(''); setOkProfile('');
-    // 로컬 출석/코인 스냅샷
-    const localAtt = await ensureDailyAttendance();
-    setAttendance(a => ({ ...a, ...localAtt }));
+    await loadAttendance();
 
+    // 프로필 서버/프리필
     let showedPrefill = false;
     try {
       const raw = await AsyncStorage.getItem('@profile/prefill');
       if (raw) {
         const prefill = JSON.parse(raw);
-        if (!prefill?.id || !userId || String(prefill.id) === String(userId)) {
-          applyToState(prefill);
-          setLoading(false);
-          showedPrefill = true;
-        } else {
-          await AsyncStorage.removeItem('@profile/prefill');
-        }
+        applyToState(prefill);
+        showedPrefill = true;
       }
     } catch {}
     try {
       const { data, used } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/']);
-      setGetEndpoint(used || '/api/profile');
       if (data) applyToState(data);
       setLoading(false);
       try { await AsyncStorage.removeItem('@profile/prefill'); } catch {}
@@ -255,10 +221,10 @@ export default function ProfileScreen() {
         setLoading(false);
       }
     }
-  }, [applyToState, fetchFirstOK, logoutToWelcome, userId, t]);
+  }, [applyToState, fetchFirstOK, logoutToWelcome, t, loadAttendance]);
 
   useEffect(() => { load(); }, [load]);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { loadAttendance(); }, [loadAttendance]));
 
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
@@ -274,7 +240,7 @@ export default function ProfileScreen() {
         if (form.newPassword !== form.confirmPassword) throw new Error(t('PW_MISMATCH'));
       }
       const payload = { id: nextId, ...(changingPw ? { newPassword: form.newPassword } : {}) };
-      const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean);
+      const candidates = ['/api/profile', '/api/profile/'];
       await fetchFirstOK('PUT', candidates, payload);
       setOkAccount(t('UPDATE_OK'));
       setEditingAccount(false);
@@ -298,7 +264,7 @@ export default function ProfileScreen() {
     try {
       const numOk = v => v === '' || !Number.isNaN(Number(v));
       if (!numOk(form.weight) || !numOk(form.height) || !numOk(form.age) || !numOk(form.targetWeight) || !numOk(form.targetCalories)) {
-        throw new Error(t('NUMERIC_ONLY'));
+        throw new Error(t('NUM_ONLY'));
       }
       const payload = {
         id: (current.id || '').trim(),
@@ -309,7 +275,7 @@ export default function ProfileScreen() {
         ...(form.targetWeight !== '' ? { targetWeight: Number(form.targetWeight) } : {}),
         ...(form.targetCalories !== '' ? { targetCalories: Number(form.targetCalories) } : {}),
       };
-      const candidates = [getEndpoint, '/api/profile', '/api/profile/'].filter(Boolean);
+      const candidates = ['/api/profile', '/api/profile/'];
       await fetchFirstOK('PUT', candidates, payload);
       setOkProfile(t('UPDATE_OK'));
       setEditingProfile(false);
@@ -363,8 +329,8 @@ export default function ProfileScreen() {
           <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
             <Text style={[styles.cardTitle, { color: theme.text }]}>{t('ATTENDANCE')}</Text>
             <Row k={t('FIRST_DAY')} v={attendance.firstDay} />
-            <Row k={t('TOTAL_DAYS')} v={attendance.totalDays} />
-            <Row k={t('CURRENT_STREAK')} v={attendance.streak} />
+            <Row k={t('TOTAL_LOGIN_DAYS')} v={attendance.totalDays} />
+            <Row k={t('CONSECUTIVE_LOGIN_DAYS')} v={attendance.streak} />
             <Row
               k={t('COINS')}
               v={`${attendance.coins ?? 0}${attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}`}

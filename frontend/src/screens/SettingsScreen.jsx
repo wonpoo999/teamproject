@@ -26,22 +26,34 @@ export default function SettingsScreen() {
 
   const onLogout = async () => { try { await AsyncStorage.multiRemove(['@token','@coins']); } catch {} await logout(); };
 
+  const langChips = [
+    { k:'ko', label: t('LANG_KO_NATIVE') },
+    { k:'en', label: t('LANG_EN_NATIVE') },
+    { k:'ja', label: t('LANG_JA_NATIVE') },
+    { k:'zh', label: t('LANG_ZH_NATIVE') },
+  ];
+
   return (
     <ImageBackground source={bg} style={{ flex: 1 }} resizeMode="cover">
       <Text style={[styles.screenTitle, { top: topTitle, color: isDark ? '#fff' : '#000' }]}>{t('SETTINGS') || 'SETTING'}</Text>
 
       <View style={[styles.wrap, { paddingTop: contentTop }]}>
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+          {/* 언어 라벨은 로케일에 맞춰 표시 (언어 / Language / 言語 / 语言) */}
           <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('LANGUAGE')}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {[{k:'ko',label:'KOREAN'},{k:'en',label:'English'},{k:'ja',label:'JAPANESE'},{k:'zh',label:'CHINESE'}].map(it=>{
+
+          {/* 칩은 네이티브 표기, 줄바꿈 허용 */}
+          <View style={styles.langRow}>
+            {langChips.map(it=>{
               const on = lang===it.k;
               return (
-                <Pressable key={it.k} onPress={()=>setLang(it.k)} style={{
-                  paddingHorizontal:12, height:40, borderRadius:12, borderWidth:1,
-                  borderColor:on?theme.inputBorder:theme.cardBorder, backgroundColor:on?theme.chipOn:theme.chipOff,
-                  alignItems:'center', justifyContent:'center'
-                }}>
+                <Pressable key={it.k} onPress={()=>setLang(it.k)} style={[
+                  styles.chip,
+                  {
+                    borderColor:on?theme.inputBorder:theme.cardBorder,
+                    backgroundColor:on?theme.chipOn:theme.chipOff,
+                  }
+                ]}>
                   <Text style={{ fontFamily:FONT, color:on?theme.chipOnText:theme.chipOffText }}>{it.label}</Text>
                 </Pressable>
               );
@@ -74,6 +86,12 @@ const styles = StyleSheet.create({
   screenTitle:{ position:'absolute', left:0, right:0, textAlign:'center', fontFamily:FONT, fontSize:28, zIndex:10 },
   card:{ borderRadius:22, padding:18, gap:12, borderWidth:1 },
   sectionTitle:{ fontFamily:FONT, fontSize:18, lineHeight:24, paddingBottom:2 },
+  langRow:{ flexDirection:'row', flexWrap:'wrap' },
+  chip:{
+    paddingHorizontal:12, height:40, borderRadius:12, borderWidth:1,
+    alignItems:'center', justifyContent:'center',
+    marginRight:8, marginBottom:8
+  },
   voiceBtn:{ borderRadius:14, paddingVertical:16, paddingHorizontal:18 },
   voiceBtnText:{ fontFamily:FONT, color:'#fff', fontSize:18, lineHeight:22, paddingBottom:2 },
   voiceCurrent:{ fontFamily:FONT, opacity:0.85, marginTop:6 },

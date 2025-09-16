@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform
@@ -13,12 +12,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const FONT = 'DungGeunMo';
 
 const langFix = (lang) => ({
-  text: { includeFontPadding: true, lineHeight: 22, paddingTop: 2, paddingBottom: 2 },
+  // 입력 필드만 언어별 패딩 보정
   input: {
     paddingVertical: 16,
     minHeight: 50,
     lineHeight: 22,
-    includeFontPadding: true,
+    includeFontPadding: false,
     ...(lang === 'ja' || lang === 'zh' ? { paddingTop: 18, paddingBottom: 14 } : {}),
   },
 });
@@ -96,33 +95,47 @@ export default function LoginScreen() {
     <TouchableOpacity
       onPress={() => setLang(k)}
       style={{
-        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, marginRight: 8,
+        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, marginRight: 8, marginBottom: 8,
         borderWidth: 1, borderColor: lang === k ? theme.chipOn : theme.cardBorder,
         backgroundColor: lang === k ? theme.chipOn : theme.chipOff,
       }}
     >
-      <Text style={{ fontFamily: FONT, color: lang === k ? theme.chipOnText : theme.chipOffText, ...fix.text }}>{label}</Text>
+      <Text style={{ fontFamily: FONT, color: lang === k ? theme.chipOnText : theme.chipOffText }}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.bg }}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom + 220, minHeight: 720 }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6 }}>
+        {/* 언어 버튼 – 네이티브 표기 */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
           <LangBtn k="ko" label="한국어" />
           <LangBtn k="en" label="English" />
           <LangBtn k="ja" label="日本語" />
           <LangBtn k="zh" label="中文" />
         </View>
 
-        {/* 스크린 내부 다크 토글은 없음(이모지 토글만 전역 유지) */}
-
-        <Text style={{ fontSize: 40, lineHeight: 46, textAlign: 'center', marginBottom: 16, fontFamily: FONT, color: theme.text, ...fix.text }}>
+        {/* 제목: 밑둥 잘림 방지 (넉넉한 lineHeight + 살짝 하단 패딩) */}
+        <Text
+          style={{
+            fontSize: 44,
+            lineHeight: 56,          // 넉넉한 라인박스
+            paddingBottom: 2,        // 글꼴 descender 보정
+            textAlign: 'center',
+            marginBottom: 16,
+            fontFamily: FONT,
+            color: theme.text,
+          }}
+        >
           {t('LOGIN')}
         </Text>
 
@@ -154,10 +167,12 @@ export default function LoginScreen() {
           disabled={loading}
           style={{ backgroundColor: loading ? '#93c5fd' : '#2563eb', padding: 14, borderRadius: 12, marginTop: 6 }}
         >
-          <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>{loading ? '…' : t('LOGIN')}</Text>
+          <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>
+            {loading ? '…' : t('LOGIN')}
+          </Text>
         </TouchableOpacity>
 
-        {/* 아이디/비밀번호 찾기 – 같은 라인 정렬 */}
+        {/* 아이디/비번 찾기 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 14 }}>
           <TouchableOpacity onPress={() => navigation.navigate('RecoveryFlow', { mode: 'findId' })}>
             <Text style={{ fontFamily: FONT, color: '#60a5fa' }}>{t('FIND_ID')}</Text>
@@ -169,7 +184,7 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Signup')} style={{ alignItems: 'center', paddingTop: 6 }}>
-          <Text style={{ fontFamily: FONT, color: '#10b981', ...fix.text }}>{t('GO_SIGNUP')}</Text>
+          <Text style={{ fontFamily: FONT, color: '#10b981' }}>{t('GO_SIGNUP')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

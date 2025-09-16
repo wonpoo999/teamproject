@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { decode as atob } from 'base-64'
 import { apiPost, setAuthToken, clearAuthToken } from '../config/api'
-import { useI18n } from '../i18n/I18nContext' // >>> [ADDED]
+import { useI18n } from '../i18n/I18nContext' // >>> using i18n
 
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
@@ -11,7 +11,7 @@ export const useAuth = () => useContext(Ctx)
 const goalKey = (userId) => `goalsetup_${String(userId || '').replace(/[^a-zA-Z0-9._-]/g, '_')}`
 
 export default function AuthProvider({ children }) {
-  const { t } = useI18n() // >>> [ADDED]
+  const { t } = useI18n()
   const [ready, setReady] = useState(false)
   const [isAuthenticated, setAuthed] = useState(false)
   const [user, setUser] = useState(null)
@@ -78,10 +78,10 @@ export default function AuthProvider({ children }) {
       setNeedsGoalSetup(await loadGoalFlag(userId))
       return true
     } catch (e) {
-      // >>> [ADDED] 401/인증 실패 메시지 매핑
+      // 존재하는 i18n 키로 매핑
       const msg = String(e?.message || '')
       if (msg.includes('401') || /Invalid credentials|Unauthorized/i.test(msg)) {
-        throw new Error(t('INVALID_CREDENTIALS'))
+        throw new Error(t('ERR_INVALID_CRED'))
       }
       throw e
     }

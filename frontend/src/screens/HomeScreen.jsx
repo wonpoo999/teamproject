@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.jsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, ImageBackground, Pressable, Image, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +7,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CharacterAvatar from '../components/CharacterAvatar';
+import { checkInToday } from '../utils/attendance';
 
 const FONT = 'DungGeunMo';
 const BG_LIGHT = require('../../assets/background/home.png');
@@ -32,37 +32,35 @@ export default function HomeScreen() {
   const TARGET = 500;
   useEffect(() => {
     (async () => {
+      // 출석 갱신(오늘 접속 기록)
+      try { await checkInToday(); } catch {}
       const v = await AsyncStorage.getItem('@kcal/today').catch(() => '0');
       setKcal(Number(v || 0));
     })();
   }, []);
 
-  const topY = insets.top + 8;
-
-  // === 사이즈 최종 반영 ===
   const { height: H } = Dimensions.get('window');
-  // 아바타 조금 더 축소
+  const topY = insets.top + 8;
+  const TOOLBAR_H = 40; // 다크토글/코인 높이 기준
+  const TAB_ICON = 80;  // 하단 아령 아이콘 크기
   const AVATAR_SIZE = Math.max(170, Math.min(200, Math.floor(H * 0.26)));
-  // 아령 아이콘 확대
-  const DUMBBELL_SIZE = 80;
-  const labelColor = '#ef4444';
 
   return (
     <ImageBackground source={BG} style={{ flex: 1 }} resizeMode="cover">
-      {/* 우상단 다크모드 토글(40px pill) */}
-      <ThemeToggle align="right" />
+      {/* 우상단 다크모드 토글 */}
+      <ThemeToggle align="right" style={{ position: 'absolute', top: topY, right: 12, height: TOOLBAR_H }} />
 
-      {/* 좌상단 코인 배지 (토글과 동일 높이) */}
+      {/* 좌상단 코인 배지 */}
       <View style={{
-        position: 'absolute', top: topY + 4, left: 12, zIndex: 90,
-        backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: 18, paddingHorizontal: 12, height: 40,
+        position: 'absolute', top: topY, left: 12, zIndex: 90,
+        backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: 18, paddingHorizontal: 12, height: TOOLBAR_H,
         flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
       }}>
         <Text style={{ fontFamily: FONT, color: '#ffd369', fontSize: 16 }}>🪙</Text>
         <Text style={{ fontFamily: FONT, color: '#fff', fontSize: 16 }}>1</Text>
       </View>
 
-      {/* 상단 카드 2개: 중앙 정렬 */}
+      {/* 상단 카드 2개 */}
       <View style={{
         marginTop: insets.top + 120,
         paddingHorizontal: 16,
@@ -97,10 +95,17 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* 캐릭터 (축소 적용) */}
-      <CharacterAvatar style={{ marginTop: 4 }} size={AVATAR_SIZE} />
+      {/* 캐릭터: '아래쪽' 고정(탭 위 여백 16) */}
+      <View style={{
+        position: 'absolute',
+        left: 0, right: 0,
+        bottom: insets.bottom + TAB_ICON + 16,
+        alignItems: 'center'
+      }}>
+        <CharacterAvatar size={AVATAR_SIZE} />
+      </View>
 
-      {/* 하단: 아령 탭 (아이콘 크게, 라벨 빨강) */}
+      {/* 하단: 아령 탭 */}
       <View style={{
         position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 10,
         flexDirection: 'row', justifyContent: 'space-around'
@@ -112,9 +117,9 @@ export default function HomeScreen() {
           { icon: ICONS.setting, label: t('SETTINGS') || 'Settings', to: 'Settings' },
         ].map((it) => (
           <Pressable key={it.to} onPress={() => nav.navigate(it.to)} style={{ alignItems: 'center' }}>
-            <Image source={it.icon} resizeMode="contain" style={{ width: DUMBBELL_SIZE, height: DUMBBELL_SIZE, marginBottom: 2 }} />
+            <Image source={it.icon} resizeMode="contain" style={{ width: TAB_ICON, height: TAB_ICON, marginBottom: 2 }} />
             <Text style={{
-              fontFamily: FONT, fontSize: 16, color: labelColor,
+              fontFamily: FONT, fontSize: 16, color: '#ef4444',
               includeFontPadding: true, paddingTop: 1, paddingBottom: 1,
             }}>
               {it.label}
