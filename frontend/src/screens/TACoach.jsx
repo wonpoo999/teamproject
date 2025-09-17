@@ -224,10 +224,11 @@ export default function TACoach({ route }) {
   }
   const TONE_TITLE = { ko: '톤', en: 'Tone', ja: 'トーン', zh: '音色' }
   const UI = {
-    reps: { ko: 'REPS', en: 'REPS', ja: 'REPS', zh: 'REPS' },
-    reset: { ko: 'RESET', en: 'RESET', ja: 'RESET', zh: 'RESET' },
-    pause: { ko: 'PAUSE', en: 'PAUSE', ja: 'PAUSE', zh: 'PAUSE' },
-    start: { ko: 'START', en: 'START', ja: 'START', zh: 'START' },
+    reps:  { ko: '반복',   en: 'REPS',  ja: '回数',   zh: '次数' },
+    reset: { ko: '리셋',   en: 'RESET', ja: 'リセット', zh: '重置' },
+    pause: { ko: '일시정지', en: 'PAUSE', ja: '一時停止', zh: '暂停' },
+    start: { ko: '시작',   en: 'START', ja: '開始',   zh: '开始' },
+
     autoStart: {
       ko: '자동 카운트를 시작합니다.',
       en: 'Starting auto counting.',

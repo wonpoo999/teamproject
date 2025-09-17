@@ -1,4 +1,4 @@
-// src/utils/body.js
+// src/utils/bmi.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiGet } from '../config/api';
 

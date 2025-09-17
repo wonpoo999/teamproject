@@ -1,4 +1,5 @@
 // src/i18n/I18nContext.js
+
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -22,7 +23,7 @@ const DICT = {
 
     PROFILE_TITLE:'프로필', ACCOUNT_INFO:'계정 정보', CURRENT_EMAIL:'현재 이메일',
     PROFILE_INFO:'프로필', WEIGHT:'체중(kg)', HEIGHT:'키(cm)', WEIGHT_KG:'체중(kg)',
-    HEIGHT_CM:'키(cm)', AGE:'나이', GENDER:'성별', MALE:'남성', FEMALE:'여성',
+    HEIGHT_CM:'키(cm)', AGE:'나이', GENDER:'성별', MALE:'남성', FEMALE:'여성', GENDER_MALE: '남성', GENDER_FEMALE: '여성',
     TARGET_WEIGHT:'목표 체중(kg)', TARGET_CALORIES:'목표 칼로리(kcal)',
 
     DARK:'다크', LIGHT:'라이트', PROFILE:'프로필', SETTINGS:'설정', RANKING:'랭킹', QUEST:'퀘스트',
@@ -86,9 +87,9 @@ const DICT = {
 
     PROFILE_TITLE:'PROFILE', ACCOUNT_INFO:'Account', CURRENT_EMAIL:'Current email',
     PROFILE_INFO:'Profile', WEIGHT:'Weight (kg)', HEIGHT:'Height (cm)', WEIGHT_KG:'Weight (kg)', HEIGHT_CM:'Height (cm)',
-    AGE:'Age', GENDER:'Gender', MALE:'Male', FEMALE:'Female', TARGET_WEIGHT:'Target weight (kg)', TARGET_CALORIES:'Target calories (kcal)',
+    AGE:'Age', GENDER:'Gender', GENDER_MALE: 'Male', GENDER_FEMALE: 'Female', MALE:'Male', FEMALE:'Female', TARGET_WEIGHT:'Target weight (kg)', TARGET_CALORIES:'Target calories (kcal)',
 
-    DARK:'Dark', LIGHT:'Light', PROFILE:'Profile', SETTINGS:'Settings', RANKING:'Ranking', QUEST:'QUEST',
+    DARK:'Dark', LIGHT:'Light', PROFILE:'Profile', SETTINGS:'Setting', RANKING:'Ranking', QUEST:'Quest',
 
     FOOD_LOG:'Food log', AT_A_GLANCE:'Overview', HOME_MEAL:'Food log', HOME_DATA:'Overview', HOME_OVERALL:'Overview',
 
@@ -137,7 +138,7 @@ const DICT = {
     PROCESSING:'処理中…', CREATE_ACCOUNT:'アカウント作成', ALREADY_HAVE_ACCOUNT:'すでにアカウントがありますか？',
 
     PROFILE_TITLE:'PROFILE', ACCOUNT_INFO:'アカウント', CURRENT_EMAIL:'現在のメール', PROFILE_INFO:'プロフィール',
-    WEIGHT:'体重(kg)', HEIGHT:'身長(cm)', WEIGHT_KG:'体重(kg)', HEIGHT_CM:'身長(cm)', AGE:'年齢', GENDER:'性別',
+    WEIGHT:'体重(kg)', HEIGHT:'身長(cm)', WEIGHT_KG:'体重(kg)', HEIGHT_CM:'身長(cm)', AGE:'年齢', GENDER:'性別', GENDER_MALE: '男性', GENDER_FEMALE: '女性',
     MALE:'男性', FEMALE:'女性', TARGET_WEIGHT:'目標体重(kg)', TARGET_CALORIES:'目標カロリー(kcal)',
 
     DARK:'ダーク', LIGHT:'ライト', PROFILE:'プロフィール', SETTINGS:'設定', RANKING:'ランキング', QUEST:'クエスト',
@@ -194,7 +195,7 @@ const DICT = {
     UPDATE_OK:'已成功更新。', UPDATE_FAIL:'更新失败。', TRY_LATER:'稍后再试。',
 
     PROFILE_TITLE:'PROFILE', ACCOUNT_INFO:'账户', CURRENT_EMAIL:'当前邮箱', PROFILE_INFO:'个人资料',
-    WEIGHT:'体重(kg)', HEIGHT:'身高(cm)', WEIGHT_KG:'体重(kg)', HEIGHT_CM:'身高(cm)', AGE:'年龄', GENDER:'性别',
+    WEIGHT:'体重(kg)', HEIGHT:'身高(cm)', WEIGHT_KG:'体重(kg)', HEIGHT_CM:'身高(cm)', AGE:'年龄', GENDER:'性别', GENDER_MALE: '男性', GENDER_FEMALE: '女性',
     MALE:'男', FEMALE:'女', TARGET_WEIGHT:'目标体重(kg)', TARGET_CALORIES:'目标卡路里(kcal)',
 
     DARK:'深色', LIGHT:'浅色', PROFILE:'个人资料', SETTINGS:'设置', RANKING:'排行榜', QUEST:'任务',
