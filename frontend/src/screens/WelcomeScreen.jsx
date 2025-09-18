@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Image, ImageBackground, Pressable, useWindowDimensions} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import BgmFab from '../bgm/BgmFab';
 
 const BG = require('../../assets/background/main.png');     
 const LOGIN = require('../../assets/ui/loginbtn.png');        
@@ -19,6 +20,7 @@ export default function WelcomeScreen() {
 
   return (
     <ImageBackground source={BG} style={{ flex: 1 }} resizeMode="cover">
+      <BgmFab align="right" />
       <View
         style={{
           position: 'absolute',

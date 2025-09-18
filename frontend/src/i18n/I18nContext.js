@@ -35,6 +35,7 @@ const DICT = {
     TOTAL_LOGIN_DAYS:'통산 로그인 일자',
     CONSECUTIVE_LOGIN_DAYS:'연속 로그인 일자',
     UNTIL_NEXT_TOTAL_LOGIN_BONUS:'다음 통산 로그인 보너스까지 앞으로',
+    DETAILS: '자세히',
     INFORMATION:'정보',
 
     // 추가
@@ -100,7 +101,7 @@ const DICT = {
     INFORMATION:'Information',
 
     // 추가
-    COINS:'Coins',
+    COINS:'Coins', DETAILS: 'DETAILS',
 
     COIN_INFO:'Coin bonus info',
     LOGIN_COIN_IN:(d)=>`Daily login coin in ${d} day(s)`,
@@ -149,7 +150,7 @@ const DICT = {
     TOTAL_LOGIN_DAYS:'通算ログイン日数',
     CONSECUTIVE_LOGIN_DAYS:'連続ログイン日数',
     UNTIL_NEXT_TOTAL_LOGIN_BONUS:'次の通算ログインボーナスまで',
-    INFORMATION:'情報',
+    INFORMATION:'情報', DETAILS: '詳細',
 
     CUM_LOGIN_DAYS:'通算ログイン日数',
     CONSEC_LOGIN_DAYS:'連続ログイン日数',
@@ -206,7 +207,7 @@ const DICT = {
     TOTAL_LOGIN_DAYS:'累计登录天数',
     CONSECUTIVE_LOGIN_DAYS:'连续登录天数',
     UNTIL_NEXT_TOTAL_LOGIN_BONUS:'距离下次累计登录奖励还需',
-    INFORMATION:'信息',
+    INFORMATION:'信息', DETAILS: '详细',
 
     CUM_LOGIN_DAYS:'累计登录天数',
     CONSEC_LOGIN_DAYS:'连续登录天数',

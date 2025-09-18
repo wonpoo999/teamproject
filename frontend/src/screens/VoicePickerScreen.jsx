@@ -1,58 +1,148 @@
 // src/screens/VoicePickerScreen.js
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ImageBackground, Alert } from 'react-native';
 import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useI18n } from '../i18n/I18nContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeMode } from '../theme/ThemeContext';
+import { useBgm } from '../bgm/BgmContext';
 
 const STORE_KEY = '@tts/voiceId';
+const K_UNSUPPORTED = '@tts/unsupportedIds';
 const FONT = 'DungGeunMo';
+
+function langLabel(language='') {
+  const ln = language.toLowerCase();
+  if (ln.startsWith('ko')) return '한국어';
+  if (ln.startsWith('en')) return 'English';
+  if (ln.startsWith('ja')) return '日本語';
+  if (ln.startsWith('zh')) return '中文';
+  return '기타';
+}
+const PRIMARY_TABS = ['ko','en','ja','zh','other'];
 
 export default function VoicePickerScreen() {
   const { t } = useI18n();
   const { isDark, theme } = useThemeMode();
   const insets = useSafeAreaInsets();
+  const bgm = useBgm();
+
+  const [voicesAll, setVoicesAll] = useState([]);
   const [voices, setVoices] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('all');
+  const [tab, setTab] = useState('ko');
+  const [unsupported, setUnsupported] = useState(new Set());
 
-  const bg = isDark
-    ? require('../../assets/background/home_dark.png')
-    : require('../../assets/background/home.png');
+  const bg = isDark ? require('../../assets/background/home_dark.png') : require('../../assets/background/home.png');
 
+  // 불러오기
   useEffect(() => {
     (async () => {
       const saved = await AsyncStorage.getItem(STORE_KEY);
       setSelectedId(saved || null);
-      const vs = await Speech.getAvailableVoicesAsync();
-      setVoices(vs || []);
+
+      // unsupported DB
+      let us = [];
+      try { us = JSON.parse((await AsyncStorage.getItem(K_UNSUPPORTED)) || '[]'); } catch {}
+      const usSet = new Set(us || []);
+      setUnsupported(usSet);
+
+      const list = (await Speech.getAvailableVoicesAsync()) || [];
+
+      // (language+name) 중복 제거
+      const uniq = [];
+      const seen = new Set();
+      for (const v of list) {
+        const key = `${(v.language||'').toLowerCase()}|${(v.name||'').toLowerCase()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniq.push(v);
+      }
+
+      setVoicesAll(uniq);
       setLoading(false);
     })();
   }, []);
 
-  const filtered = useMemo(() => {
-    const list = tab === 'all' ? voices : voices.filter(v => (v.language || '').toLowerCase().startsWith(tab));
-    return list.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  }, [voices, tab]);
+  // 탭 필터링 + unsupported 제거
+  useEffect(() => {
+    const filtered = voicesAll.filter(v => !unsupported.has(v.identifier));
+    const out = filtered.filter(v => {
+      const l = (v.language || '').toLowerCase();
+      if (tab === 'ko') return l.startsWith('ko');
+      if (tab === 'en') return l.startsWith('en');
+      if (tab === 'ja') return l.startsWith('ja');
+      if (tab === 'zh') return l.startsWith('zh');
+      return !(l.startsWith('ko') || l.startsWith('en') || l.startsWith('ja') || l.startsWith('zh')); // other
+    });
+    setVoices(out.sort((a,b)=> (a.name||'').localeCompare(b.name||'')));
+  }, [voicesAll, tab, unsupported]);
 
-  function sampleTextFor(language = '') {
+  function sampleText(language = '') {
     const ln = (language || '').toLowerCase();
-    if (ln.startsWith('en')) return 'Hello, this is a sample voice.';
-    if (ln.startsWith('ja')) return 'こんにちは、サンプルボイスです。';
-    if (ln.startsWith('zh')) return '你好，这是示例语音。';
-    return '안녕하세요. 테스트 음성입니다.';
+    if (ln.startsWith('en')) return 'Hello, this is a longer sample voice for preview.';
+    if (ln.startsWith('ja')) return 'こんにちは、これはプレビュー用の少し長めのサンプル音声です。';
+    if (ln.startsWith('zh')) return '你好，这是用于预览的稍长一些的示例语音。';
+    return '안녕하세요, 이것은 미리듣기를 위한 조금 더 긴 샘플 음성입니다.';
   }
 
+  // 미반응/1초 미만 자동 배제 로직
   async function preview(item) {
     Speech.stop();
-    Speech.speak(sampleTextFor(item.language), {
+    const text = sampleText(item.language);
+    let started = false;
+    let t0 = 0;
+
+    const stopDuck = () => { try { bgm.duck(false); } catch {} };
+
+    const timeout = setTimeout(async () => {
+      if (!started) {
+        // onStart가 안 왔으면 미지원으로 판단 → 배제
+        await markUnsupported(item.identifier);
+        stopDuck();
+        Alert.alert('안내', '해당 보이스는 이 기기에서 사용할 수 없어요. 목록에서 숨겼습니다.');
+      }
+    }, 1800);
+
+    try { await bgm.duck(true); } catch {}
+
+    Speech.speak(text, {
       language: (item.language || 'ko-KR'),
       voice: item.identifier,
-      rate: 1.0, pitch: 1.0,
+      rate: 1.0,
+      pitch: 1.0,
+      onStart: () => { started = true; t0 = Date.now(); },
+      onDone: async () => {
+        clearTimeout(timeout);
+        stopDuck();
+        const dur = Date.now() - t0;
+        if (!started || dur < 1000) {
+          await markUnsupported(item.identifier);
+          Alert.alert('안내', '해당 보이스는 재생 길이가 너무 짧거나 정상 동작하지 않아 숨겼습니다.');
+        }
+      },
+      onStopped: () => { clearTimeout(timeout); stopDuck(); },
+      onError: async () => {
+        clearTimeout(timeout);
+        stopDuck();
+        await markUnsupported(item.identifier);
+        Alert.alert('안내', '해당 보이스는 이 기기에서 사용할 수 없어요. 목록에서 숨겼습니다.');
+      },
     });
+  }
+
+  async function markUnsupported(id) {
+    if (!id) return;
+    setUnsupported(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev); next.add(id);
+      AsyncStorage.setItem(K_UNSUPPORTED, JSON.stringify(Array.from(next))).catch(()=>{});
+      return next;
+    });
+    // 화면에서도 바로 제거
+    setVoices(prev => prev.filter(v => v.identifier !== id));
   }
 
   async function save(item) {
@@ -61,16 +151,11 @@ export default function VoicePickerScreen() {
     else await AsyncStorage.removeItem(STORE_KEY);
   }
 
-  const FilterBtn = ({ k, label }) => {
-    const on = tab === k;
+  const TabBtn = ({ code, label }) => {
+    const on = tab === code;
     return (
-      <TouchableOpacity
-        onPress={() => setTab(k)}
-        style={[
-          S.filterBtn,
-          { borderColor: theme.cardBorder, backgroundColor: on ? theme.primary : theme.ghostBg },
-        ]}
-      >
+      <TouchableOpacity onPress={()=>setTab(code)}
+        style={[S.filterBtn, { borderColor: theme.cardBorder, backgroundColor: on ? theme.primary : theme.ghostBg }]}>
         <Text style={[S.filterTxt, { color: on ? '#fff' : theme.text }]}>{label}</Text>
       </TouchableOpacity>
     );
@@ -86,16 +171,12 @@ export default function VoicePickerScreen() {
 
   const renderItem = ({ item }) => {
     const isSel = selectedId === item.identifier;
-    const langLabel =
-      (item.language || '').toLowerCase().startsWith('ko') ? '한국어' :
-      (item.language || '').toLowerCase().startsWith('en') ? 'English' :
-      (item.language || '').toLowerCase().startsWith('ja') ? '日本語' :
-      (item.language || '').toLowerCase().startsWith('zh') ? '中文' : (item.language || '').toUpperCase();
+    const ll = langLabel(item.language || '');
 
     return (
       <View style={[S.row, { backgroundColor: theme.cardBg, borderColor: isSel ? '#10b981' : theme.cardBorder }]}>
         <View style={{ flex: 1 }}>
-          <Text style={[S.name, { color: theme.text }]} numberOfLines={1}>{item.name || '(no name)'} · {langLabel}</Text>
+          <Text style={[S.name, { color: theme.text }]} numberOfLines={1}>{item.name || '(no name)'} · {ll}</Text>
           <Text style={[S.meta, { color: theme.mutedText }]} numberOfLines={1}>{item.identifier}</Text>
         </View>
         <TouchableOpacity style={[S.btn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder }]} onPress={() => preview(item)}>
@@ -110,16 +191,14 @@ export default function VoicePickerScreen() {
 
   return (
     <ImageBackground source={bg} style={{ flex: 1 }} resizeMode="cover">
-      {/* 헤더 토글만 사용 — 화면 내 토글 제거 */}
       <View style={S.wrap}>
         <TitleBar />
-
-        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 10 }}>
-          <FilterBtn k="ko" label="한국어" />
-          <FilterBtn k="en" label="English" />
-          <FilterBtn k="ja" label="日本語" />
-          <FilterBtn k="zh" label="中文" />
-          <FilterBtn k="all" label={t('ALL') || '전체'} />
+        <View style={{ flexDirection:'row', gap:8, paddingHorizontal:16, marginBottom:10, flexWrap:'wrap' }}>
+          <TabBtn code="ko" label="한국어" />
+          <TabBtn code="en" label="English" />
+          <TabBtn code="ja" label="日本語" />
+          <TabBtn code="zh" label="中文" />
+          <TabBtn code="other" label="기타" />
         </View>
 
         <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
@@ -132,7 +211,7 @@ export default function VoicePickerScreen() {
           <Text style={[S.meta, { color: theme.text, paddingHorizontal: 16 }]}>{t('LOADING') || '로딩 중…'}</Text>
         ) : (
           <FlatList
-            data={filtered}
+            data={voices}
             keyExtractor={(item, idx) => item.identifier || String(idx)}
             renderItem={renderItem}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

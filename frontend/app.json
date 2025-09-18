@@ -4,7 +4,8 @@
       "expo-secure-store",
       "expo-localization",
       "expo-camera",
-      "expo-font"
+      "expo-font",
+      "expo-audio"
     ],
     "android": {
       "permissions": [

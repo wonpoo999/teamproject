@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BgmFab from '../bgm/BgmFab';
 
 const FONT = 'DungGeunMo';
 
@@ -112,6 +113,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
+      <BgmFab align="right" />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom + 220, minHeight: 720 }}

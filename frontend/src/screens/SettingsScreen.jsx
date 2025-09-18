@@ -1,3 +1,4 @@
+// src/screens/SettingsScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ImageBackground, StyleSheet, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +7,8 @@ import { useI18n } from '../i18n/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import Slider from '@react-native-community/slider';
+import { useBgm } from '../bgm/BgmContext';
 
 const FONT = 'DungGeunMo';
 
@@ -15,6 +18,7 @@ export default function SettingsScreen() {
   const { t, setLang, lang } = useI18n();
   const navigation = useNavigation();
   const { logout } = useAuth();
+  const bgm = useBgm();
 
   const bg = isDark ? require('../../assets/background/home_dark.png') : require('../../assets/background/home.png');
   const topTitle = insets.top + 8;
@@ -39,20 +43,16 @@ export default function SettingsScreen() {
 
       <View style={[styles.wrap, { paddingTop: contentTop }]}>
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
-          {/* 언어 라벨은 로케일에 맞춰 표시 (언어 / Language / 言語 / 语言) */}
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('LANGUAGE')}</Text>
 
-          {/* 칩은 네이티브 표기, 줄바꿈 허용 */}
+          {/* 언어 */}
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('LANGUAGE')}</Text>
           <View style={styles.langRow}>
             {langChips.map(it=>{
               const on = lang===it.k;
               return (
                 <Pressable key={it.k} onPress={()=>setLang(it.k)} style={[
                   styles.chip,
-                  {
-                    borderColor:on?theme.inputBorder:theme.cardBorder,
-                    backgroundColor:on?theme.chipOn:theme.chipOff,
-                  }
+                  { borderColor:on?theme.inputBorder:theme.cardBorder, backgroundColor:on?theme.chipOn:theme.chipOff }
                 ]}>
                   <Text style={{ fontFamily:FONT, color:on?theme.chipOnText:theme.chipOffText }}>{it.label}</Text>
                 </Pressable>
@@ -60,18 +60,42 @@ export default function SettingsScreen() {
             })}
           </View>
 
+          {/* SFX */}
           <Text style={[styles.sectionTitle, { marginTop: 18, color: theme.text }]}>{t('SFX')}</Text>
           <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between' }}>
             <Text style={{ fontFamily:FONT, color: theme.mutedText }}>{sfx ? 'ON' : 'OFF'}</Text>
             <Switch value={sfx} onValueChange={onSfx} />
           </View>
 
+          {/* BGM */}
+          <Text style={[styles.sectionTitle, { marginTop: 18, color: theme.text }]}>{t('BGM') || 'BGM'}</Text>
+          <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between' }}>
+            <Text style={{ fontFamily:FONT, color: theme.mutedText }}>{bgm.enabled ? 'ON' : 'OFF'}</Text>
+            <Switch value={!!bgm.enabled} onValueChange={bgm.setEnabled} />
+          </View>
+          <View style={{ marginTop: 10 }}>
+            <Text style={{ fontFamily:FONT, color: theme.mutedText }}>
+              {(t('VOLUME')||'Volume')}: {Math.round((Number(bgm.volume)||0)*100)}%
+            </Text>
+            <Slider
+              value={Number(bgm.volume) || 0}
+              onValueChange={(v)=>bgm.setVolume(Number(v))}
+              minimumValue={0}
+              maximumValue={1}
+              step={0.01}
+              minimumTrackTintColor={'#10b981'}
+              maximumTrackTintColor={theme.inputBorder}
+            />
+          </View>
+
+          {/* 음성 */}
           <Text style={[styles.sectionTitle, { marginTop: 18, color: theme.text }]}>{t('VOICE')}</Text>
           <Pressable onPress={() => navigation.navigate('VoicePicker')} style={[styles.voiceBtn, { backgroundColor: '#0f172a' }]}>
             <Text style={styles.voiceBtnText}>{t('VOICE_SELECT')}</Text>
           </Pressable>
           <Text style={[styles.voiceCurrent, { color: theme.mutedText }]}>{t('VOICE_CURRENT')}</Text>
 
+          {/* 로그아웃 */}
           <Pressable onPress={onLogout} style={styles.logoutBtn}>
             <Text style={styles.logoutText}>{t('LOG_OUT')}</Text>
           </Pressable>
@@ -87,11 +111,7 @@ const styles = StyleSheet.create({
   card:{ borderRadius:22, padding:18, gap:12, borderWidth:1 },
   sectionTitle:{ fontFamily:FONT, fontSize:18, lineHeight:24, paddingBottom:2 },
   langRow:{ flexDirection:'row', flexWrap:'wrap' },
-  chip:{
-    paddingHorizontal:12, height:40, borderRadius:12, borderWidth:1,
-    alignItems:'center', justifyContent:'center',
-    marginRight:8, marginBottom:8
-  },
+  chip:{ paddingHorizontal:12, height:40, borderRadius:12, borderWidth:1, alignItems:'center', justifyContent:'center', marginRight:8, marginBottom:8 },
   voiceBtn:{ borderRadius:14, paddingVertical:16, paddingHorizontal:18 },
   voiceBtnText:{ fontFamily:FONT, color:'#fff', fontSize:18, lineHeight:22, paddingBottom:2 },
   voiceCurrent:{ fontFamily:FONT, opacity:0.85, marginTop:6 },

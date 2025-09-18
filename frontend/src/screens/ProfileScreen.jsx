@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+// src/screens/ProfileScreen.js — 최종본 (코인 [자세히] & 보너스 예측, attendance 표기 보강)
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
   View, Text, TextInput, Pressable, StyleSheet, ImageBackground,
@@ -14,7 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
-import { checkInToday, getStatus } from '../utils/attendance'; // ★ 새 출석 모듈만 사용
+import { checkInToday, getStatus } from '../utils/attendance';
 
 const FONT = 'DungGeunMo';
 
@@ -25,12 +26,6 @@ Text.defaultProps.maxFontSizeMultiplier = 1;
 TextInput.defaultProps.allowFontScaling = false;
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
-// ===== Utils =====
-const todayKey = () => {
-  const d = new Date(); d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
-};
-
 const fetchWithTimeout = (url, opts, ms = 8000) =>
   Promise.race([
     fetch(url, opts),
@@ -40,7 +35,7 @@ const fetchWithTimeout = (url, opts, ms = 8000) =>
 function Row({ k, v }) {
   const { theme } = useThemeMode();
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, alignItems: 'center' }}>
       <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{k}</Text>
       <Text style={{ fontFamily: FONT, color: theme.text }}>{String(v ?? '-')}</Text>
     </View>
@@ -51,6 +46,7 @@ export default function ProfileScreen() {
   const { t } = useI18n();
   const { theme } = useThemeMode();
   const [fontsLoaded] = useFonts({ [FONT]: require('../../assets/fonts/DungGeunMo.otf') });
+
   useEffect(() => {
     if (fontsLoaded) {
       if (!Text.defaultProps.style) Text.defaultProps.style = { fontFamily: FONT, includeFontPadding: true };
@@ -64,7 +60,10 @@ export default function ProfileScreen() {
   const scRef = useRef(null);
 
   const [current, setCurrent] = useState({ id: '', weight: '', height: '', age: '', gender: '' });
-  const [attendance, setAttendance] = useState({ firstDay: '-', totalDays: '-', streak: '-', coins: 0, todayCoins: 0 });
+  const [attendance, setAttendance] = useState({
+    firstDay: '-', totalDays: 0, streak: 0, coins: 0, todayCoins: 0,
+    monthKey: '', monthStreak: 0, monthDays: 0,
+  });
 
   const [editingAccount, setEditingAccount] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -81,9 +80,11 @@ export default function ProfileScreen() {
   const [errProfile, setErrProfile] = useState('');
   const [okAccount, setOkAccount] = useState('');
   const [okProfile, setOkProfile] = useState('');
-  const [getEndpoint, setGetEndpoint] = useState(null);
   const [pwModal, setPwModal] = useState(false);
   const [pwInput, setPwInput] = useState('');
+
+  // 코인 자세히 모달
+  const [coinModal, setCoinModal] = useState(false);
 
   const getAuth = useCallback(async () => {
     const ctxType = auth?.tokenType || auth?.token_type || 'Bearer';
@@ -163,31 +164,37 @@ export default function ProfileScreen() {
       confirmPassword: '',
     });
 
-    // 서버가 같은 필드 내려줄 경우 대응
+    // 서버가 출석을 같이 주는 경우 흡수
     const att = {
-      firstDay: obj?.firstDay ?? obj?.firstDate ?? '-',
-      totalDays: obj?.totalDays ?? obj?.attendanceTotal ?? '-',
+      firstDay: obj?.firstDay ?? obj?.firstDate,
+      totalDays: obj?.totalDays ?? obj?.attendanceTotal,
       streak: (obj?.streak ?? obj?.currentStreak),
       coins: obj?.coins,
       todayCoins: obj?.todayCoins,
+      monthKey: obj?.monthKey,
+      monthStreak: obj?.monthStreak,
+      monthDays: obj?.monthDays,
     };
-    setAttendance(prev => ({ ...prev, ...Object.fromEntries(Object.entries(att).filter(([,v]) => v !== undefined)) }));
+    const merged = Object.fromEntries(Object.entries(att).filter(([,v]) => v !== undefined));
+    if (Object.keys(merged).length) setAttendance(prev => ({ ...prev, ...merged }));
   }, []);
 
   const loadAttendance = useCallback(async () => {
     try {
       await checkInToday(); // 오늘 접속 반영
       const st = await getStatus();
-      const today = todayKey();
       setAttendance({
         firstDay: st.firstDate || '-',
         totalDays: st.totalDays ?? 0,
-        streak: st.lastDate === today ? (st.currentStreak ?? 0) : '-', // 규칙: 오늘 미로그인 → ‘-’
+        streak: st.currentStreak ?? 0,
         coins: st.coins ?? 0,
         todayCoins: st.todayCoins ?? 0,
+        monthKey: st.monthKey || '',
+        monthStreak: st.monthStreak ?? 0,
+        monthDays: st.monthDays ?? 0,
       });
     } catch {
-      // 무시하고 기본값 유지
+      // 실패해도 화면 유지
     }
   }, []);
 
@@ -195,7 +202,6 @@ export default function ProfileScreen() {
     setErrAccount(''); setErrProfile(''); setOkAccount(''); setOkProfile('');
     await loadAttendance();
 
-    // 프로필 서버/프리필
     let showedPrefill = false;
     try {
       const raw = await AsyncStorage.getItem('@profile/prefill');
@@ -206,7 +212,7 @@ export default function ProfileScreen() {
       }
     } catch {}
     try {
-      const { data, used } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/']);
+      const { data } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/']);
       if (data) applyToState(data);
       setLoading(false);
       try { await AsyncStorage.removeItem('@profile/prefill'); } catch {}
@@ -306,6 +312,28 @@ export default function ProfileScreen() {
     }
   };
 
+  // ----- 코인 보너스 예측 -----
+  const coinForecast = useMemo(() => {
+    const total = attendance.totalDays || 0;
+    const mod30 = total % 30;
+    const evenNextIn = (total % 2 === 0) ? 2 : 1;          // 2일마다 +1 (짝수날)
+    const next30In = (mod30 === 0) ? 30 : (30 - mod30);    // 30일마다 +30
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const dim = new Date(year, month + 1, 0).getDate();
+    const day = now.getDate();
+    const leftToMonthEnd = dim - day;
+
+    // 이번 달 지금까지 "개근 유지" 여부 추정:
+    // our tracker: monthDays == 오늘날짜, 그리고 monthStreak == monthDays 면 지금까지 안 빠짐
+    const perfectSoFar = (attendance.monthDays === day) && (attendance.monthStreak === attendance.monthDays);
+    const monthBonusIn = perfectSoFar ? leftToMonthEnd : null; // null이면 이번 달 개근 보너스는 이미 불가
+
+    return { evenNextIn, next30In, monthBonusIn, day, dim, leftToMonthEnd, perfectSoFar, total };
+  }, [attendance]);
+
   if (!fontsLoaded) {
     return (
       <View style={[styles.center, { backgroundColor: theme.bg }]}>
@@ -331,10 +359,22 @@ export default function ProfileScreen() {
             <Row k={t('FIRST_DAY')} v={attendance.firstDay} />
             <Row k={t('TOTAL_LOGIN_DAYS')} v={attendance.totalDays} />
             <Row k={t('CONSECUTIVE_LOGIN_DAYS')} v={attendance.streak} />
-            <Row
-              k={t('COINS')}
-              v={`${attendance.coins ?? 0}${attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}`}
-            />
+
+            {/* 코인 + [자세히] */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
+              <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{t('COINS')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+               <Text style={{ fontFamily: FONT, color: theme.text }}>
+                 {(attendance.coins ?? 0)}
+                 {attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
+               </Text>
+                <TouchableOpacity onPress={() => setCoinModal(true)} hitSlop={8}>
+                  <Text style={{ fontFamily: FONT, color: theme.mutedText, textDecorationLine: 'underline' }}>
+                    {t('DETAILS') || '자세히'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           {/* Account */}
@@ -485,6 +525,41 @@ export default function ProfileScreen() {
                   <Text style={[styles.ghostBtnText, { color: theme.text }]}>{t('CANCEL')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={verifyPwAndGo} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex:1 }]}>
+                  <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* 코인 자세히 모달 */}
+        <Modal visible={coinModal} transparent animationType="fade" onRequestClose={() => setCoinModal(false)}>
+          <View style={{ flex:1, backgroundColor: theme.scrim, alignItems:'center', justifyContent:'center', padding:16 }}>
+            <View style={{ width:'100%', borderRadius:16, backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth:1, padding:16, gap:10 }}>
+              <Text style={{ fontFamily: FONT, color: theme.text, fontSize: 18, marginBottom: 4 }}>
+                {t('COINS')} {`· ${attendance.coins ?? 0}`}{attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
+              </Text>
+
+              <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
+                {`보너스 규칙: 2일마다 +1, 30일마다 +30, 이달 개근 시 +15`}
+              </Text>
+
+              <View style={{ height: 10 }} />
+
+              <Text style={{ fontFamily: FONT, color: theme.text }}>
+                {`다음 +1 코인(2일마다): ${coinForecast.evenNextIn}일 후 (통산 ${coinForecast.total + coinForecast.evenNextIn}일째)`}
+              </Text>
+              <Text style={{ fontFamily: FONT, color: theme.text }}>
+                {`다음 +30 코인(30일마다): ${coinForecast.next30In}일 후 (통산 ${coinForecast.total + coinForecast.next30In}일째)`}
+              </Text>
+              <Text style={{ fontFamily: FONT, color: theme.text }}>
+                {coinForecast.monthBonusIn == null
+                  ? `이달 개근 +15: 이번 달은 개근 불가 (중간 누락 존재)`
+                  : `이달 개근 +15: ${coinForecast.monthBonusIn}일 후 (월말)`}
+              </Text>
+
+              <View style={{ flexDirection:'row', gap:10, marginTop: 12 }}>
+                <TouchableOpacity onPress={() => setCoinModal(false)} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex:1 }]}>
                   <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>
                 </TouchableOpacity>
               </View>

@@ -1,4 +1,3 @@
-// src/screens/SignupScreen.js
 import { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert, ScrollView,
@@ -12,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
+import BgmFab from '../bgm/BgmFab';
 
 const FONT = 'DungGeunMo';
 
@@ -20,6 +20,9 @@ const langFix = (lang) => ({
   text: { includeFontPadding: true, paddingTop: 2, paddingBottom: 2 },
   input: { paddingVertical: 14, minHeight: 48, lineHeight: 22, ...(lang === 'ja' || lang === 'zh' ? { paddingTop: 16 } : {}) },
 });
+
+// 추가: (선택) 라벨
+const OPTIONAL = { ko: '(선택)', en: '(optional)', ja: '（任意）', zh: '（可选）' };
 
 export default function SignupScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -39,6 +42,9 @@ export default function SignupScreen({ navigation }) {
   const [gender, setGender] = useState('F');
   const [height, setHeight] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 접기/펼치기 스위치
+  const [qnaOpen, setQnaOpen] = useState(false);
 
   const [qna, setQna] = useState([
     { code: 'BIRTHPLACE', labelKey: 'QUESTION_BIRTHPLACE', answer: '' },
@@ -83,13 +89,16 @@ export default function SignupScreen({ navigation }) {
         await AsyncStorage.setItem('@profile/prefill', JSON.stringify({
           id: payload.id, email: payload.id, weight: payload.weight, height: payload.height, age: payload.age, gender: payload.gender,
         }));
+        await AsyncStorage.setItem('last_user_id', payload.id);
         await AsyncStorage.setItem('goal_draft', JSON.stringify({
           weight: payload.weight, height: payload.height, age: payload.age, gender: payload.gender,
         }));
         const bmi = calcBMI(payload.weight, payload.height);
         await AsyncStorage.setItem('@avatar/category_prefill', String(classifyBMI(bmi)));
 
-        const answers = qna.filter(x => (x.answer || '').trim().length > 0).map(x => ({ code: x.code, answer: x.answer.trim() }));
+        const answers = qna
+          .filter(x => (x.answer || '').trim().length > 0)
+          .map(x => ({ code: x.code, answer: x.answer.trim() }));
         if (answers.length) { try { await apiPost('/api/recover/register', { answers }); } catch {} }
 
         Alert.alert(t('CONFIRM'), t('UPDATE_OK'));
@@ -117,6 +126,7 @@ export default function SignupScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
+      <BgmFab align="right" />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 140, paddingTop: insets.top + 80, gap: 12 }}
         keyboardShouldPersistTaps="handled"
@@ -156,7 +166,7 @@ export default function SignupScreen({ navigation }) {
         <TextInput value={age} onChangeText={setAge} placeholder={t('AGE')} placeholderTextColor={theme.mutedText}
           keyboardType="numeric" style={inputStyle}/>
 
-        {/* 성별 버튼 – 다크에서도 가독성 */}
+        {/* 성별 버튼 */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {['F','M'].map(g => {
             const on = gender === g;
@@ -175,31 +185,46 @@ export default function SignupScreen({ navigation }) {
         <TextInput value={height} onChangeText={setHeight} placeholder={t('HEIGHT_CM')} placeholderTextColor={theme.mutedText}
           keyboardType="numeric" style={inputStyle}/>
 
+        {/* 보안 질문 (접기/펼치기) */}
         <View style={{ marginTop: 12, gap: 10 }}>
-          <Text style={{ fontFamily: FONT, fontSize: 18, color: theme.text }}>
-            {t('SECURITY_QNA')} <Text style={{ color: theme.mutedText }}>{t('SECURITY_QNA_OPTIONAL')}</Text>
-          </Text>
-          <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
-            {t('SECURITY_DESC_SIGNUP')}
-            {'\n'}
-            {lang==='ko' && '비밀번호 복구: 최소 2문항 / 아이디 복구: 5문항 모두 필요 (5 미만이면 비밀번호만 복구 가능)'}
-            {lang==='en' && 'Password recovery: at least 2 answers.  ID recovery: all 5 required (with <5, only password can be recovered).'}
-            {lang==='ja' && 'パスワード復旧：2問以上。ID復旧：5問すべて必須（5未満はパスワードのみ）。'}
-            {lang==='zh' && '找回密码：至少 2 个答案。找回ID：需 5 个全部（少于 5 个仅可找回密码）。'}
-          </Text>
+          <TouchableOpacity
+            onPress={() => setQnaOpen(x=>!x)}
+            style={{
+              flexDirection:'row', alignItems:'center', justifyContent:'space-between',
+              backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth:1, borderRadius:12, padding:12
+            }}
+          >
+            <Text style={{ fontFamily: FONT, fontSize: 18, color: theme.text }}>
+              {(t('SECURITY_QNA') || '보안 질문')} <Text style={{ color: theme.mutedText }}>{OPTIONAL[lang] || OPTIONAL.ko}</Text>
+            </Text>
+            <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{qnaOpen ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
 
-          {qna.map((row, idx) => (
-            <View key={row.code} style={{ gap: 6 }}>
-              <Text style={{ fontFamily: FONT, color: theme.text, ...fix.text }}>{t(row.labelKey)}</Text>
-              <TextInput
-                value={row.answer}
-                onChangeText={(v)=>setQ(idx, v)}
-                placeholder={t('ANSWER')}
-                placeholderTextColor={theme.mutedText}
-                style={inputStyle}
-              />
-            </View>
-          ))}
+          {qnaOpen && (
+            <>
+              <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
+                {t('SECURITY_DESC_SIGNUP')}
+                {'\n'}
+                {lang==='ko' && '비밀번호 복구: 최소 2문항 / 아이디 복구: 5문항 모두 필요 (5 미만이면 비밀번호만 복구 가능)'}
+                {lang==='en' && 'Password recovery: at least 2 answers.  ID recovery: all 5 required (with <5, only password can be recovered).'}
+                {lang==='ja' && 'パスワード復旧：2問以上。ID復旧：5問すべて必須（5未満はパスワードのみ）。'}
+                {lang==='zh' && '找回密码：至少 2 个答案。找回ID：需 5 个全部（少于 5 个仅可找回密码）。'}
+              </Text>
+
+              {qna.map((row, idx) => (
+                <View key={row.code} style={{ gap: 6 }}>
+                  <Text style={{ fontFamily: FONT, color: theme.text, ...fix.text }}>{t(row.labelKey)}</Text>
+                  <TextInput
+                    value={row.answer}
+                    onChangeText={(v)=>setQ(idx, v)}
+                    placeholder={t('ANSWER')}
+                    placeholderTextColor={theme.mutedText}
+                    style={inputStyle}
+                  />
+                </View>
+              ))}
+            </>
+          )}
         </View>
 
         <TouchableOpacity onPress={onSubmit} disabled={loading}

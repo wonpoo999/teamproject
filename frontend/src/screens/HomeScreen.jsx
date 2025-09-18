@@ -1,13 +1,15 @@
+// frontend/src/screens/HomeScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, ImageBackground, Pressable, Image, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import ThemeToggle from '../components/ThemeToggle';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CharacterAvatar from '../components/CharacterAvatar';
-import { checkInToday } from '../utils/attendance';
+import { checkInToday, getStatus } from '../utils/attendance';
+import { useBgm } from '../bgm/BgmContext';
 
 const FONT = 'DungGeunMo';
 const BG_LIGHT = require('../../assets/background/home.png');
@@ -26,41 +28,50 @@ export default function HomeScreen() {
   const { t } = useI18n();
   const nav = useNavigation();
   const BG = isDark ? BG_DARK : BG_LIGHT;
+  const bgm = useBgm();
 
-  // 오늘 칼로리
   const [kcal, setKcal] = useState(0);
+  const [coins, setCoins] = useState(0);
   const TARGET = 500;
+
   useEffect(() => {
     (async () => {
-      // 출석 갱신(오늘 접속 기록)
       try { await checkInToday(); } catch {}
       const v = await AsyncStorage.getItem('@kcal/today').catch(() => '0');
       setKcal(Number(v || 0));
     })();
   }, []);
 
+  useFocusEffect(React.useCallback(() => {
+    bgm.play('menu');
+    (async () => {
+      const st = await getStatus();
+      setCoins(Number(st?.coins || 0));
+    })();
+    return () => {};
+  }, [bgm]));
+
   const { height: H } = Dimensions.get('window');
   const topY = insets.top + 8;
-  const TOOLBAR_H = 40; // 다크토글/코인 높이 기준
-  const TAB_ICON = 80;  // 하단 아령 아이콘 크기
+  const TOOLBAR_H = 40;
+  const TAB_ICON = 80;
   const AVATAR_SIZE = Math.max(170, Math.min(200, Math.floor(H * 0.26)));
 
   return (
     <ImageBackground source={BG} style={{ flex: 1 }} resizeMode="cover">
-      {/* 우상단 다크모드 토글 */}
       <ThemeToggle align="right" style={{ position: 'absolute', top: topY, right: 12, height: TOOLBAR_H }} />
 
-      {/* 좌상단 코인 배지 */}
+      {/* 좌상단 코인 */}
       <View style={{
         position: 'absolute', top: topY, left: 12, zIndex: 90,
         backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: 18, paddingHorizontal: 12, height: TOOLBAR_H,
         flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
       }}>
         <Text style={{ fontFamily: FONT, color: '#ffd369', fontSize: 16 }}>🪙</Text>
-        <Text style={{ fontFamily: FONT, color: '#fff', fontSize: 16 }}>1</Text>
+        <Text style={{ fontFamily: FONT, color: '#fff', fontSize: 16 }}>{coins}</Text>
       </View>
 
-      {/* 상단 카드 2개 */}
+      {/* 상단 카드 */}
       <View style={{
         marginTop: insets.top + 120,
         paddingHorizontal: 16,
@@ -95,7 +106,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* 캐릭터: '아래쪽' 고정(탭 위 여백 16) */}
+      {/* 캐릭터 */}
       <View style={{
         position: 'absolute',
         left: 0, right: 0,
@@ -105,7 +116,7 @@ export default function HomeScreen() {
         <CharacterAvatar size={AVATAR_SIZE} />
       </View>
 
-      {/* 하단: 아령 탭 */}
+      {/* 하단 탭 */}
       <View style={{
         position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 10,
         flexDirection: 'row', justifyContent: 'space-around'

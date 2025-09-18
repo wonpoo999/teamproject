@@ -1,22 +1,21 @@
-// TACoach.js — ✅ 최종본
-import { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, Platform } from 'react-native'
-import * as Speech from 'expo-speech'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useI18n } from '../i18n/I18nContext' // [ADDED] i18n 사용
+// src/screens/TACoach.js — expo-audio 덕킹 반영 최종본
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, Platform } from 'react-native';
+import * as Speech from 'expo-speech';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useI18n } from '../i18n/I18nContext';
+import { useBgm } from '../bgm/BgmContext';
 
-const { width: W, height: H } = Dimensions.get('window')
+const { width: W, height: H } = Dimensions.get('window');
 
-// [CHANGED] 모드 라벨을 언어별로 제공
 const MODE_LABEL = {
   squat: { ko: '스쿼트', en: 'SQUAT', ja: 'スクワット', zh: '深蹲' },
   pushup: { ko: '푸쉬업', en: 'PUSH-UP', ja: 'プッシュアップ', zh: '俯卧撑' },
-}
+};
 
-const TA_IMG = require('../../assets/char/ta.png')
-const STORE_KEY = '@tts/voiceId'
+const TA_IMG = require('../../assets/char/ta.png');
+const STORE_KEY = '@tts/voiceId';
 
-// [ADDED] 언어별 격려/도발 대사
 const MOTIVATE_MAP = {
   ko: [
     '좋아요! 이렇게 꾸준히 하면 금방 늘어요.',
@@ -86,7 +85,7 @@ const MOTIVATE_MAP = {
     '再辛苦也是为了明天的你！',
     '节奏很好，坚持到最后！',
   ],
-}
+};
 
 const SPICY_MAP = {
   ko: [
@@ -161,201 +160,188 @@ const SPICY_MAP = {
     '热情丢哪了？',
     '很快你就不敢直视镜子里的自己。',
   ],
-}
+};
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// [ADDED] 언어별 인사 + 시간대
 function buildGreeting(mode = 'squat', lang = 'ko') {
-  const h = new Date().getHours()
+  const h = new Date().getHours();
   const tod = (l => {
-    if (l === 'en') return h < 5 ? 'early morning' : h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
-    if (l === 'ja') return h < 5 ? '早朝' : h < 12 ? '朝' : h < 18 ? '午後' : '夜'
-    if (l === 'zh') return h < 5 ? '清晨' : h < 12 ? '早上' : h < 18 ? '下午' : '晚上'
-    return h < 5 ? '새벽' : h < 12 ? '아침' : h < 18 ? '오후' : '저녁'
-  })(lang)
+    if (l === 'en') return h < 5 ? 'early morning' : h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+    if (l === 'ja') return h < 5 ? '早朝' : h < 12 ? '朝' : h < 18 ? '午後' : '夜';
+    if (l === 'zh') return h < 5 ? '清晨' : h < 12 ? '早上' : h < 18 ? '下午' : '晚上';
+    return h < 5 ? '새벽' : h < 12 ? '아침' : h < 18 ? '오후' : '저녁';
+  })(lang);
 
-  const modeName = MODE_LABEL[mode]?.[lang] || MODE_LABEL.squat[lang] || 'WORKOUT'
-  if (lang === 'en') return `Hi! I'm your Barbelmon trainer. Let's enjoy ${modeName.toLowerCase()} this ${tod}!`
-  if (lang === 'ja') return `こんにちは！ バーベルモンのトレーナーです。${tod}も${modeName}を楽しくやりましょう！`
-  if (lang === 'zh') return `你好！我是杠铃蒙教练。这个${tod}一起开心地做${modeName}吧！`
-  return `안녕하세요! 바벨몬 트레이너에요. ${tod}에도 ${modeName} 신나게 해봐요!`
+  const modeName = MODE_LABEL[mode]?.[lang] || MODE_LABEL.squat[lang] || 'WORKOUT';
+  if (lang === 'en') return `Hi! I'm your Barbelmon trainer. Let's enjoy ${modeName.toLowerCase()} this ${tod}!`;
+  if (lang === 'ja') return `こんにちは！ バーベルモンのトレーナーです。${tod}も${modeName}を楽しくやりましょう！`;
+  if (lang === 'zh') return `你好！我是杠铃蒙教练。这个${tod}一起开心地做${modeName}吧！`;
+  return `안녕하세요! 바벨몬 트레이너에요. ${tod}에도 ${modeName} 신나게 해봐요!`;
 }
 
-// [CHANGED] 저장된 보이스 우선 사용 + 기본 언어 매핑
 function langToSpeechLocale(lang) {
-  if (lang === 'en') return 'en-US'
-  if (lang === 'ja') return 'ja-JP'
-  if (lang === 'zh') return 'zh-CN'
-  return 'ko-KR'
+  if (lang === 'en') return 'en-US';
+  if (lang === 'ja') return 'ja-JP';
+  if (lang === 'zh') return 'zh-CN';
+  return 'ko-KR';
 }
 
 async function resolveVoice() {
-  const saved = await AsyncStorage.getItem(STORE_KEY)
-  if (saved) return saved
+  const saved = await AsyncStorage.getItem(STORE_KEY);
+  if (saved) return saved;
   try {
-    const vs = await Speech.getAvailableVoicesAsync()
-    const ko = (vs || []).filter(v => (v.language || '').toLowerCase().startsWith('ko'))
+    const vs = await Speech.getAvailableVoicesAsync();
+    const ko = (vs || []).filter(v => (v.language || '').toLowerCase().startsWith('ko'));
     const male =
       ko.find(v => String(v.gender || '').toLowerCase() === 'male') ||
-      ko.find(v => /male|남성|man|min|male1|male2/i.test(String(v.name || '')))
-    return (male || ko[0])?.identifier || null
-  } catch { return null }
+      ko.find(v => /male|남성|man|min|male1|male2/i.test(String(v.name || '')));
+    return (male || ko[0])?.identifier || null;
+  } catch { return null; }
 }
 
 export default function TACoach({ route }) {
-  const mode = route?.params?.mode || 'squat'
-  const target = route?.params?.target // (참고: 필요시 사용할 수 있도록 남김)
+  const mode = route?.params?.mode || 'squat';
+  const target = route?.params?.target;
 
-  const { t, lang } = useI18n() // [ADDED] 언어/번역 사용
+  const { t, lang } = useI18n();
+  const bgm = useBgm();
 
-  const [running, setRunning] = useState(false)
-  const [count, setCount] = useState(0)
-  const [voiceId, setVoiceId] = useState(null)
+  const [running, setRunning] = useState(false);
+  const [count, setCount] = useState(0);
+  const [voiceId, setVoiceId] = useState(null);
 
-  const intervalMs = 3000
+  const intervalMs = 3000;
 
-  // [CHANGED] 톤 라벨 언어화
-  const TONES = ['soft', 'hard', 'mix']
+  const TONES = ['soft', 'hard', 'mix'];
   const TONE_LABEL = {
     soft: { ko: '소프트', en: 'Soft', ja: 'ソフト', zh: '柔和' },
     hard: { ko: '하드', en: 'Hard', ja: 'ハード', zh: '强硬' },
     mix:  { ko: '믹스', en: 'Mix',  ja: 'ミックス', zh: '混合' },
-  }
-  const TONE_TITLE = { ko: '톤', en: 'Tone', ja: 'トーン', zh: '音色' }
+  };
+  const TONE_TITLE = { ko: '톤', en: 'Tone', ja: 'トーン', zh: '音色' };
   const UI = {
     reps:  { ko: '반복',   en: 'REPS',  ja: '回数',   zh: '次数' },
     reset: { ko: '리셋',   en: 'RESET', ja: 'リセット', zh: '重置' },
     pause: { ko: '일시정지', en: 'PAUSE', ja: '一時停止', zh: '暂停' },
     start: { ko: '시작',   en: 'START', ja: '開始',   zh: '开始' },
-
     autoStart: {
       ko: '자동 카운트를 시작합니다.',
       en: 'Starting auto counting.',
       ja: '自動カウントを開始します。',
       zh: '开始自动计数。',
     },
-    switchedTo: { // "{tone} 톤으로 전환"
+    switchedTo: {
       ko: (s) => `${s} 톤으로 전환`,
       en: (s) => `Switched to ${s} tone`,
       ja: (s) => `${s} トーンに切り替え`,
       zh: (s) => `切换为 ${s} 音色`,
     },
-  }
+  };
 
-  const [toneIdx, setToneIdx] = useState(0)
-  const toneRef = useRef(TONES[0])
+  const [toneIdx, setToneIdx] = useState(0);
+  const toneRef = useRef(TONES[0]);
+  useEffect(() => { toneRef.current = TONES[toneIdx]; }, [toneIdx]);
 
-  useEffect(() => { toneRef.current = TONES[toneIdx] }, [toneIdx])
-
-  function pickMotivate(l) {
-    return pick(MOTIVATE_MAP[l] || MOTIVATE_MAP.ko)
-  }
-  function pickSpicy(l) {
-    return pick(SPICY_MAP[l] || SPICY_MAP.ko)
-  }
-
+  function pickMotivate(l) { return pick(MOTIVATE_MAP[l] || MOTIVATE_MAP.ko); }
+  function pickSpicy(l)    { return pick(SPICY_MAP[l] || SPICY_MAP.ko); }
   function pickLineByTone() {
-    const t = toneRef.current
-    if (t === 'soft') return pickMotivate(lang)           // [CHANGED] 언어 적용
-    if (t === 'hard') return pickSpicy(lang)              // [CHANGED]
-    return Math.random() < 0.5 ? pickMotivate(lang) : pickSpicy(lang) // [CHANGED]
+    const t = toneRef.current;
+    if (t === 'soft') return pickMotivate(lang);
+    if (t === 'hard') return pickSpicy(lang);
+    return Math.random() < 0.5 ? pickMotivate(lang) : pickSpicy(lang);
   }
 
-  const loopOn = useRef(false)
-  const timeoutRef = useRef(null)
-  const countRef = useRef(0)
-  const lastTauntAt = useRef(0)
-  const startedOnceRef = useRef(false)
-  const TAUNT_COOLDOWN_MS = 12000
-
-  function speak(text, rate = 1.0) {
-    return new Promise(resolve => {
-      const opts = {
-        language: langToSpeechLocale(lang), // [CHANGED] 현재 언어로 발화
-        rate,
-        onDone: resolve,
-        onStopped: resolve,
-        onError: resolve,
-      }
-      if (voiceId) opts.voice = voiceId
-      else opts.pitch = 0.9
-      Speech.speak(text, opts)
-    })
-  }
+  const loopOn = useRef(false);
+  const timeoutRef = useRef(null);
+  const countRef = useRef(0);
+  const lastTauntAt = useRef(0);
+  const startedOnceRef = useRef(false);
+  const TAUNT_COOLDOWN_MS = 12000;
 
   function clearTimer() {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
+    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+  }
+
+  function speak(text, rate = 1.0) {
+    return new Promise(async (resolve) => {
+      const opts = {
+        language: langToSpeechLocale(lang),
+        rate,
+        onDone: () => { bgm.duck(false); resolve(); },
+        onStopped: () => { bgm.duck(false); resolve(); },
+        onError: () => { bgm.duck(false); resolve(); },
+      };
+      if (voiceId) opts.voice = voiceId; else opts.pitch = 0.9;
+      try { await bgm.duck(true); } catch {}
+      Speech.speak(text, opts);
+    });
   }
 
   async function loop() {
-    if (!loopOn.current) return
-    const next = countRef.current + 1
-    setCount(next)
-    countRef.current = next
+    if (!loopOn.current) return;
+    const next = countRef.current + 1;
+    setCount(next);
+    countRef.current = next;
 
-    const t0 = Date.now()
-    await speak(String(next), 1.03) // [CHANGED] 숫자만 각 언어로 읽힘
-    const numberDur = Date.now() - t0
+    const t0 = Date.now();
+    await speak(String(next), 1.03);
+    const numberDur = Date.now() - t0;
 
-    const now = Date.now()
+    const now = Date.now();
     if (next % 12 === 0 && now - lastTauntAt.current > TAUNT_COOLDOWN_MS) {
-      lastTauntAt.current = now
-      await speak(pickLineByTone(), 1.0)
+      lastTauntAt.current = now;
+      await speak(pickLineByTone(), 1.0);
     }
 
-    const rest = Math.max(0, intervalMs - numberDur)
-    timeoutRef.current = setTimeout(loop, rest)
+    const rest = Math.max(0, intervalMs - numberDur);
+    timeoutRef.current = setTimeout(loop, rest);
   }
 
   async function startAuto() {
-    if (loopOn.current) return
-    loopOn.current = true
-    clearTimer()
-    try { Speech.stop() } catch {}
+    if (loopOn.current) return;
+    loopOn.current = true;
+    clearTimer();
+    try { Speech.stop(); } catch {}
     if (!startedOnceRef.current) {
-      startedOnceRef.current = true
-      await speak(buildGreeting(mode, lang), 1.0)     // [CHANGED] 인사말 다국어
-      await speak(UI.autoStart[lang] || UI.autoStart.ko, 1.0)
+      startedOnceRef.current = true;
+      await speak(buildGreeting(mode, lang), 1.0);
+      await speak(UI.autoStart[lang] || UI.autoStart.ko, 1.0);
     }
-    loop()
-    setRunning(true)
+    loop();
+    setRunning(true);
   }
 
   function stopAuto() {
-    loopOn.current = false
-    clearTimer()
-    try { Speech.stop() } catch {}
-    setRunning(false)
+    loopOn.current = false;
+    clearTimer();
+    try { Speech.stop(); } catch {}
+    setRunning(false);
   }
 
   function cycleTone() {
-    const next = (toneIdx + 1) % TONES.length
-    setToneIdx(next)
-    const toneName = (TONE_LABEL[TONES[next]]?.[lang]) || TONE_LABEL[TONES[next]]?.ko
-    if (running) speak((UI.switchedTo[lang] || UI.switchedTo.ko)(toneName), 1.0)
+    const next = (toneIdx + 1) % TONES.length;
+    setToneIdx(next);
+    const toneName = (TONE_LABEL[TONES[next]]?.[lang]) || TONE_LABEL[TONES[next]]?.ko;
+    if (running) speak((UI.switchedTo[lang] || UI.switchedTo.ko)(toneName), 1.0);
   }
 
   useEffect(() => {
-    resolveVoice().then(setVoiceId)
+    resolveVoice().then(setVoiceId);
     if (Platform.OS === 'android') {
-      // 안드로이드 초기 TTS warm-up
-      Speech.speak('', { language: langToSpeechLocale(lang), onDone: () => Speech.stop() })
+      Speech.speak('', { language: langToSpeechLocale(lang), onDone: () => Speech.stop() });
     }
-    return () => { stopAuto() }
+    return () => { stopAuto(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang]) // [ADDED] 언어 변경 시 보이스/locale 재세팅
+  }, [lang]);
 
-  const toneLabel = (TONE_LABEL[TONES[toneIdx]]?.[lang]) || TONE_LABEL[TONES[toneIdx]]?.ko
-  const toneTitle = TONE_TITLE[lang] || TONE_TITLE.ko
-  const modeTitle = (MODE_LABEL[mode]?.[lang] || MODE_LABEL.squat[lang] || 'WORKOUT').toUpperCase()
-  const repsText = UI.reps[lang] || UI.reps.ko
-  const resetText = UI.reset[lang] || UI.reset.ko
-  const pauseText = UI.pause[lang] || UI.pause.ko
-  const startText = UI.start[lang] || UI.start.ko
+  const toneLabel = (TONE_LABEL[TONES[toneIdx]]?.[lang]) || TONE_LABEL[TONES[toneIdx]]?.ko;
+  const toneTitle = TONE_TITLE[lang] || TONE_TITLE.ko;
+  const modeTitle = (MODE_LABEL[mode]?.[lang] || MODE_LABEL.squat[lang] || 'WORKOUT').toUpperCase();
+  const repsText = UI.reps[lang] || UI.reps.ko;
+  const resetText = UI.reset[lang] || UI.reset.ko;
+  const pauseText = UI.pause[lang] || UI.pause.ko;
+  const startText = UI.start[lang] || UI.start.ko;
 
   return (
     <View style={S.wrap}>
@@ -386,7 +372,7 @@ export default function TACoach({ route }) {
       <View style={S.bottomRow}>
         <TouchableOpacity
           style={[S.ctrlBtn, S.resetBtn]}
-          onPress={() => { stopAuto(); setCount(0); countRef.current = 0; startedOnceRef.current = false }}
+          onPress={() => { stopAuto(); setCount(0); countRef.current = 0; startedOnceRef.current = false; }}
         >
           <Text style={S.ctrlTxt}>{resetText}</Text>
         </TouchableOpacity>
@@ -401,7 +387,7 @@ export default function TACoach({ route }) {
         )}
       </View>
     </View>
-  )
+  );
 }
 
 const S = StyleSheet.create({
@@ -447,4 +433,4 @@ const S = StyleSheet.create({
   startBtn: { backgroundColor: '#10b981', borderWidth: 1, borderColor: 'rgba(16,185,129,0.7)' },
   pauseBtn: { backgroundColor: '#334155', borderWidth: 1, borderColor: 'rgba(148,163,184,0.5)' },
   resetBtn: { backgroundColor: '#ef4444', borderWidth: 1, borderColor: 'rgba(239,68,68,0.7)' },
-})
+});
