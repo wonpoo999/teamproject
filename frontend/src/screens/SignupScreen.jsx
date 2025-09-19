@@ -1,3 +1,4 @@
+// src/screens/SignupScreen.js — 최종본 (화면 내 BGM Fab 제거: 전역(App)만 사용)
 import { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert, ScrollView,
@@ -11,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
-import BgmFab from '../bgm/BgmFab';
 
 const FONT = 'DungGeunMo';
 
@@ -20,8 +20,6 @@ const langFix = (lang) => ({
   text: { includeFontPadding: true, paddingTop: 2, paddingBottom: 2 },
   input: { paddingVertical: 14, minHeight: 48, lineHeight: 22, ...(lang === 'ja' || lang === 'zh' ? { paddingTop: 16 } : {}) },
 });
-
-// 추가: (선택) 라벨
 const OPTIONAL = { ko: '(선택)', en: '(optional)', ja: '（任意）', zh: '（可选）' };
 
 export default function SignupScreen({ navigation }) {
@@ -43,9 +41,7 @@ export default function SignupScreen({ navigation }) {
   const [height, setHeight] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 접기/펼치기 스위치
   const [qnaOpen, setQnaOpen] = useState(false);
-
   const [qna, setQna] = useState([
     { code: 'BIRTHPLACE', labelKey: 'QUESTION_BIRTHPLACE', answer: '' },
     { code: 'CHILDHOOD_AREA', labelKey: 'QUESTION_CHILDHOOD_AREA', answer: '' },
@@ -126,7 +122,6 @@ export default function SignupScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <BgmFab align="right" />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 140, paddingTop: insets.top + 80, gap: 12 }}
         keyboardShouldPersistTaps="handled"

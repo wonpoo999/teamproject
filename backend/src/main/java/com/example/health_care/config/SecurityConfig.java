@@ -35,7 +35,8 @@ public class SecurityConfig {
                         "/api/auth/**", // 로그인/회원가입 등
                         "/error", // 스프링 기본 에러 엔드포인트
                         "/api/recover/**" ,// >>> [ADDED] 비밀번호 복구(시작/검증/재설정) 공개 엔드포인트
-                        "/api/food/debug/**"
+                        "/api/food/debug/**",
+                        "/api/attendance/**" 
         };
 
         @Bean
@@ -54,6 +55,8 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/ranking").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signup")
                                                 .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/attendance/checkin").authenticated()
+                                                .requestMatchers(HttpMethod.GET,  "/api/attendance/**").authenticated()
                                                 .requestMatchers("/api/auth/logout", "/body", "/api/profile")
                                                 .authenticated() // 로그아웃, 바디프로필, 프로필 추가
                                                 .requestMatchers("/api/food/public/**").permitAll()

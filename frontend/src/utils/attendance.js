@@ -1,4 +1,4 @@
-// src/utils/attendance.js
+// src/utils/attendance.js — 최종본 (KST·토큰키·/calendar 우선·POST /checkin 반영)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { ORIGIN } from '../config/api';
@@ -8,30 +8,36 @@ const K = {
   last: '@att/lastDate',
   total: '@att/totalDays',
   streak: '@att/streak',
-  monthKey: '@att/monthKey',
-  monthStreak: '@att/monthStreak',
-  monthDays: '@att/monthDays',
   coins: '@att/coins',
   todayCoins: '@att/todayCoins',
   syncedFirst: '@att/syncedFirstOnce',
   syncedStatus: '@att/syncedStatusOnce',
+  // per-month: @att/log/2025-09 => [1,5,9,...]
 };
 
-const keyDay   = (d = new Date()) => { const t = new Date(d); t.setHours(0,0,0,0); return t.toISOString().slice(0,10); };
-const keyMonth = (d = new Date()) => keyDay(d).slice(0,7);
-const daysInMonth = (d = new Date()) => new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
-const diffDays = (a, b) => Math.round((Date.parse(b+'T00:00:00') - Date.parse(a+'T00:00:00'))/86400000);
+// ---- KST 안전한 날짜 포맷 ----
+const pad = (n) => String(n).padStart(2, '0');
+const toKstDate = (d = new Date()) => {
+  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+  return new Date(utcMs + 9 * 60 * 60000);
+};
+export const dayKey = (d = new Date()) => {
+  const k = toKstDate(d);
+  const y = k.getUTCFullYear();
+  const m = pad(k.getUTCMonth() + 1);
+  const dd = pad(k.getUTCDate());
+  return `${y}-${m}-${dd}`;
+};
+export const monthKey = (d = new Date()) => dayKey(d).slice(0, 7);
 
-async function readMap() {
-  const arr = await AsyncStorage.multiGet(Object.values(K));
+async function readMany(keys) {
+  const arr = await AsyncStorage.multiGet(keys);
   return Object.fromEntries(arr);
 }
-async function writeMap(obj) {
-  const pairs = Object.entries(obj).map(([k,v]) => [k, String(v)]);
-  await AsyncStorage.multiSet(pairs);
+async function writeMany(obj) {
+  await AsyncStorage.multiSet(Object.entries(obj).map(([k, v]) => [k, String(v)]));
 }
-
-async function getAuthHeader() {
+const authHeader = async () => {
   try {
     const s = await SecureStore.getItemAsync('accessToken');
     if (s) {
@@ -39,7 +45,8 @@ async function getAuthHeader() {
       return { Authorization: m ? `${m[1]} ${m[2]}` : `Bearer ${s}` };
     }
   } catch {}
-  for (const k of ['token','authToken','@auth/token']) {
+  // << 토큰 저장키 전부 탐색: '@token' 포함 >>
+  for (const k of ['@token', 'token', 'authToken', '@auth/token']) {
     const v = await AsyncStorage.getItem(k);
     if (v) {
       const m = String(v).match(/^(Bearer|Basic|Token)\s+(.+)$/i);
@@ -47,219 +54,235 @@ async function getAuthHeader() {
     }
   }
   return {};
-}
+};
 
-/** 서버에서 첫 로그인일만 보정 (1회) */
-async function trySyncFirstFromServer() {
-  const synced = await AsyncStorage.getItem(K.syncedFirst);
-  if (synced === '1') return;
-
+async function getEmail() {
   try {
-    const headers = { Accept: 'application/json', ...(await getAuthHeader()) };
-    const res = await fetch(`${ORIGIN}/api/attendance/first-login`, { headers });
-    if (!res.ok) throw new Error();
-    const j = await res.json().catch(()=>null);
-    const f = j?.firstDate ? String(j.firstDate).slice(0,10) : null;
-    if (f) {
-      const m = await readMap();
-      const localFirst = m[K.first];
-      const nextFirst = (!localFirst || f < localFirst) ? f : localFirst;
-      await writeMap({ [K.first]: nextFirst || f });
+    const r = await fetch(`${ORIGIN}/api/profile`, { headers: { Accept: 'application/json', ...(await authHeader()) } });
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      const id = j?.id || j?.email;
+      if (id) return String(id);
     }
   } catch {}
-  await AsyncStorage.setItem(K.syncedFirst, '1');
-}
-
-/** (선택) 서버 상태 동기화 (제공 시) 1회 */
-export async function syncStatusFromServerOnce() {
-  const synced = await AsyncStorage.getItem(K.syncedStatus);
-  if (synced === '1') return;
-
   try {
-    const headers = { Accept: 'application/json', ...(await getAuthHeader()) };
-    const res = await fetch(`${ORIGIN}/api/attendance/status`, { headers });
-    if (!res.ok) throw new Error();
-    const j = await res.json().catch(()=>null);
-    if (j) {
-      const today = keyDay();
-      const m = await readMap();
-      await writeMap({
-        [K.first]: j.firstDate || m[K.first] || today,
-        [K.last]:  j.lastDate  || m[K.last]  || today,
-        [K.total]: Number(j.totalDays || m[K.total] || 0),
-        [K.streak]: Number(j.currentStreak || m[K.streak] || 0),
-        [K.monthKey]: m[K.monthKey] || keyMonth(),
-        [K.monthStreak]: Number(m[K.monthStreak] || 0),
-        [K.monthDays]: Number(m[K.monthDays] || 0),
-        [K.coins]: Number(m[K.coins] || 0),
-        [K.todayCoins]: Number(m[K.todayCoins] || 0),
-      });
+    const raw = await AsyncStorage.getItem('@profile/prefill');
+    if (raw) {
+      const j = JSON.parse(raw);
+      if (j?.id || j?.email) return String(j.id || j.email);
     }
   } catch {}
-  await AsyncStorage.setItem(K.syncedStatus, '1');
+  const last = await AsyncStorage.getItem('last_user_id');
+  return last || '';
 }
 
-/** total/streak/coins 정합성 보정 (첫날 보정 이후 “4일 고정” 같은 문제 해결) */
-async function ensureCoherent() {
-  const today = keyDay();
-  const mk = keyMonth();
-  const dim = daysInMonth();
+// ---------- 서버 동기화 (오늘로 덮어쓰기 절대 금지) ----------
+export async function syncFirstFromServer() {
+  try {
+    const email = await getEmail();
+    const q = email ? `?email=${encodeURIComponent(email)}` : '';
+    const r = await fetch(`${ORIGIN}/api/attendance/first-login${q}`, {
+      headers: { Accept: 'application/json', ...(await authHeader()) },
+    });
+    if (!r.ok) return false;
+    const j = await r.json().catch(() => null);
+    const serverFirst = j?.firstDate ? String(j.firstDate).slice(0, 10) : null;
+    if (!serverFirst) return false;
 
-  const m = await readMap();
-
-  let first = m[K.first] || today;
-  let last  = m[K.last]  || today;
-  let total = Number(m[K.total] || 0);
-  let streak= Number(m[K.streak] || 0);
-  let mKey  = m[K.monthKey] || mk;
-  let mStreak = Number(m[K.monthStreak] || 0);
-  let mDays   = Number(m[K.monthDays] || 0);
-  let coins   = Number(m[K.coins] || 0);
-  let todayCoins = Number(m[K.todayCoins] || 0);
-
-  // 🔧 첫날 기준으로 통산 최소값 보정: diff+1 이상이 되도록
-  if (first && first <= today) {
-    const minTotal = diffDays(first, today) + 1;
-    if (!Number.isFinite(total) || total < minTotal) total = minTotal;
-    if (!Number.isFinite(streak) || streak <= 0) streak = 1;
-    if (streak > total) streak = total;
+    const cur = await AsyncStorage.getItem(K.first);
+    const next = cur ? (cur < serverFirst ? cur : serverFirst) : serverFirst; // 절대 뒤로 미루지 않음
+    await AsyncStorage.setItem(K.first, next);
+    await AsyncStorage.setItem(K.syncedFirst, '1');
+    return true;
+  } catch {
+    return false;
   }
-
-  // 마지막 접속일은 오늘로 보정(최소)
-  if (last !== today) last = today;
-
-  // 월 키 초기화
-  if (!mKey) mKey = mk;
-
-  // 코인 기대치(과거 월 개근 보너스는 알 수 없어 “현재 달”만 반영)
-  const evenBonusAll = Math.floor(total / 2);
-  const thirtyBonusAll = Math.floor(total / 30) * 30;
-  const monthBonus = (mKey === mk && mStreak === dim) ? 15 : 0;
-  const expected = evenBonusAll + thirtyBonusAll + monthBonus;
-
-  if (!Number.isFinite(coins) || coins < expected) coins = expected;
-  if (!Number.isFinite(todayCoins) || todayCoins < 0) todayCoins = 0;
-
-  await writeMap({
-    [K.first]: first, [K.last]: last,
-    [K.total]: total, [K.streak]: streak,
-    [K.monthKey]: mKey, [K.monthStreak]: mStreak, [K.monthDays]: mDays,
-    [K.coins]: coins, [K.todayCoins]: todayCoins,
-  });
 }
 
-// ---- 외부 API ----
-export async function addCoins(n=0) {
-  const today = keyDay();
-  const m = await readMap();
-  let coins = Number(m[K.coins] || 0);
-  let todayCoins = Number(m[K.todayCoins] || 0);
-  const last = m[K.last];
+export async function syncStatusFromServer() {
+  try {
+    const email = await getEmail();
+    const q = email ? `?email=${encodeURIComponent(email)}` : '';
+    const r = await fetch(`${ORIGIN}/api/attendance/status${q}`, {
+      headers: { Accept: 'application/json', ...(await authHeader()) },
+    });
+    if (!r.ok) return false;
 
-  if (last !== today) todayCoins = 0;
-  coins += Number(n || 0);
-  todayCoins += Number(n || 0);
+    const j = await r.json().catch(() => null);
+    if (!j) return false;
 
-  await writeMap({ [K.coins]: coins, [K.todayCoins]: todayCoins, [K.last]: last || today });
-  return { coins, todayCoins };
+    const cur = await readMany([K.first, K.last, K.total, K.streak, K.coins, K.todayCoins]);
+    const data = {};
+    if (j.firstDate) data[K.first] = String(j.firstDate).slice(0, 10);
+    if (j.lastDate) data[K.last] = String(j.lastDate).slice(0, 10);
+    if (j.totalDays != null) data[K.total] = Number(j.totalDays);
+    if (j.currentStreak != null) data[K.streak] = Number(j.currentStreak);
+    if (j.coins != null) data[K.coins] = Number(j.coins);
+    data[K.todayCoins] = Number(j.todayCoins ?? cur[K.todayCoins] ?? 0);
+
+    await writeMany({ ...cur, ...data });
+    await AsyncStorage.setItem(K.syncedStatus, '1');
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/** 규칙: 2일마다 +1, 30일마다 +30, 해당 달 개근 시 +15 */
+// 앱 시작 시 1회 강제 동기화(프로필 첫날이 오늘로 뜨는 문제 방지)
+export async function initialSyncAttendance() {
+  const okFirst = await syncFirstFromServer();
+  const okStatus = await syncStatusFromServer();
+  if (!okFirst) await AsyncStorage.setItem(K.syncedFirst, '0');
+  if (!okStatus) await AsyncStorage.setItem(K.syncedStatus, '0');
+}
+
+// ---------- 로컬 유틸 ----------
+const logKey = (ym) => `@att/log/${ym}`;
+async function addToMonthLog(dateStr) {
+  const ym = dateStr.slice(0, 7);
+  const day = Number(dateStr.slice(8, 10));
+  try {
+    const raw = await AsyncStorage.getItem(logKey(ym));
+    const arr = raw ? JSON.parse(raw) : [];
+    if (!arr.includes(day)) {
+      arr.push(day);
+      arr.sort((a, b) => a - b);
+      await AsyncStorage.setItem(logKey(ym), JSON.stringify(arr));
+    }
+  } catch {}
+}
+
+// ---------- 체크인(서버 우선: POST /checkin) ----------
 export async function checkInToday() {
-  await trySyncFirstFromServer();
-  await syncStatusFromServerOnce();
-  await ensureCoherent();
+  const today = dayKey();
+  // 서버 기록 시도
+  try {
+    const email = await getEmail();
+    const body = email ? { date: today, email } : { date: today };
+    const r = await fetch(`${ORIGIN}/api/attendance/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(await authHeader()) },
+      body: JSON.stringify(body),
+    });
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      if (j) {
+        // 상태 반영
+        const cur = await readMany([K.first, K.last, K.total, K.streak, K.coins, K.todayCoins]);
+        const data = {};
+        if (j.firstDate) data[K.first] = String(j.firstDate).slice(0, 10);
+        if (j.lastDate) data[K.last] = String(j.lastDate).slice(0, 10);
+        if (j.totalDays != null) data[K.total] = Number(j.totalDays);
+        if (j.currentStreak != null) data[K.streak] = Number(j.currentStreak);
+        if (j.coins != null) data[K.coins] = Number(j.coins);
+        data[K.todayCoins] = Number(j.todayCoins ?? 0);
+        await writeMany({ ...cur, ...data });
+        await addToMonthLog(today);
+        return getStatus();
+      }
+    }
+  } catch {}
 
-  const today = keyDay();
-  const mk = keyMonth();
-  const dim = daysInMonth();
-  const m = await readMap();
+  // 서버 실패 시: 보수적 로컬 갱신 (첫날은 서버 동기화에서만 결정)
+  await syncFirstFromServer();
+  const m = await readMany([K.first, K.last, K.total, K.streak, K.coins]);
+  const last = m[K.last];
+  const sameDay = last === today;
 
-  let first = m[K.first] || today;
-  let last  = m[K.last]  || today;
   let total = Number(m[K.total] || 0);
-  let streak= Number(m[K.streak] || 0);
-  let mKey  = m[K.monthKey] || mk;
-  let mStreak = Number(m[K.monthStreak] || 0);
-  let mDays   = Number(m[K.monthDays] || 0);
-  let coins   = Number(m[K.coins] || 0);
-  let todayCoins = Number(m[K.todayCoins] || 0);
+  let streak = Number(m[K.streak] || 0);
+  let coins = Number(m[K.coins] || 0);
+  let todayCoins = 0;
 
-  const firstToday = last !== today;
+  if (!sameDay) {
+    total += 1;
+    const diff = last ? Math.round((Date.parse(today) - Date.parse(last)) / 86400000) : 0;
+    streak = !last ? Math.max(1, streak) : (diff > 1 ? 1 : (streak > 0 ? streak + 1 : 1));
 
-  if (firstToday) {
-    todayCoins = 0;
-    const missed = !!last && diffDays(last, today) > 1;
+    if (total % 2 === 0) { coins += 1; todayCoins += 1; }
+    if (total % 30 === 0) { coins += 30; todayCoins += 30; }
 
-    total = (Number.isFinite(total) ? total : 0) + 1;
-    streak = missed ? 1 : (Number.isFinite(streak) && streak > 0 ? streak + 1 : 1);
-    if (streak > total) streak = total;
-
-    const changedMonth = mKey !== mk;
-    mStreak = changedMonth ? 1 : (missed ? 1 : (Number.isFinite(mStreak) && mStreak > 0 ? mStreak + 1 : 1));
-    mDays   = changedMonth ? 1 : (Number.isFinite(mDays) ? mDays + 1 : 1);
-    mKey    = mk;
-
-    // 보상
-    let bonus = 0;
-    if (total % 2 === 0) bonus += 1;
-    if (total % 30 === 0) bonus += 30;
-    if (mStreak === dim)  bonus += 15;
-
-    coins += bonus;
-    todayCoins += bonus;
-
-    await writeMap({
-      [K.first]: first,
-      [K.last]:  today,
+    await writeMany({
+      [K.last]: today,
       [K.total]: total,
       [K.streak]: streak,
-      [K.monthKey]: mKey,
-      [K.monthStreak]: mStreak,
-      [K.monthDays]: mDays,
       [K.coins]: coins,
       [K.todayCoins]: todayCoins,
     });
+    await addToMonthLog(today);
+  } else {
+    await AsyncStorage.setItem(K.todayCoins, String(0));
   }
 
-  // 한번 더 정합성 점검(특히 “첫날만 과거로 보정되던” 케이스)
-  await ensureCoherent();
   return getStatus();
 }
 
 export async function getStatus() {
-  await ensureCoherent();
-  const m = await readMap();
-  const first = m[K.first] || null;
-  const last  = m[K.last]  || null;
-  let total   = Number(m[K.total] || 0);
-  let streak  = Number(m[K.streak] || 0);
-  const mk    = m[K.monthKey] || keyMonth();
-  const ms    = Number(m[K.monthStreak] || 0);
-  const md    = Number(m[K.monthDays] || 0);
-  const coins = Number(m[K.coins] || 0);
-  const todayCoins = Number(m[K.todayCoins] || 0);
-
-  if (total <= 0 && streak > 0) total = streak;
-  if (streak > total) streak = total;
-
+  const m = await readMany([K.first, K.last, K.total, K.streak, K.coins, K.todayCoins]);
   return {
-    firstDate: first,
-    lastDate: last,
-    totalDays: total,
-    currentStreak: Math.max(0, streak),
-    monthKey: mk,
-    monthStreak: ms,
-    monthDays: md,
-    coins,
-    todayCoins,
+    firstDate: m[K.first] || null,
+    lastDate: m[K.last] || null,
+    totalDays: Number(m[K.total] || 0),
+    currentStreak: Number(m[K.streak] || 0),
+    coins: Number(m[K.coins] || 0),
+    todayCoins: Number(m[K.todayCoins] || 0),
   };
 }
 
+export async function addCoins(n = 0) {
+  const m = await readMany([K.coins, K.todayCoins, K.last]);
+  const today = dayKey();
+  let coins = Number(m[K.coins] || 0);
+  let todayCoins = Number(m[K.todayCoins] || 0);
+  if (m[K.last] !== today) todayCoins = 0;
+  coins += Number(n || 0); todayCoins += Number(n || 0);
+  await writeMany({ [K.coins]: coins, [K.todayCoins]: todayCoins, [K.last]: today });
+  return { coins, todayCoins };
+}
+
 export async function spendCoins(n) {
-  const m = await readMap();
+  const m = await readMany([K.coins]);
   const coins = Number(m[K.coins] || 0);
   if (coins < n) return false;
-  await writeMap({ [K.coins]: coins - n });
+  await AsyncStorage.setItem(K.coins, String(coins - n));
   return true;
+}
+
+// 월 달력: /calendar(우선) → /history → 로컬
+export async function getMonthLog(ym = monthKey()) {
+  // YYYY-MM 보장
+  if (!/^\d{4}-\d{2}$/.test(ym)) return [];
+  const hdrs = { Accept: 'application/json', ...(await authHeader()) };
+  const email = await getEmail();
+  const qEmail = email ? `&email=${encodeURIComponent(email)}` : '';
+
+  // 1) /calendar → { days:[1,5,9,...] }
+  try {
+    const r = await fetch(`${ORIGIN}/api/attendance/calendar?month=${encodeURIComponent(ym)}${qEmail}`, { headers: hdrs });
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      if (Array.isArray(j?.days)) return j.days.map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+      if (Array.isArray(j?.dates)) {
+        return j.dates.map(d => Number(String(d).slice(8,10))).filter(Number.isFinite).sort((a,b)=>a-b);
+      }
+    }
+  } catch {}
+
+  // 2) /history → { dates:["YYYY-MM-DD", ...] }
+  try {
+    const r2 = await fetch(`${ORIGIN}/api/attendance/history?month=${encodeURIComponent(ym)}${qEmail}`, { headers: hdrs });
+    if (r2.ok) {
+      const j2 = await r2.json().catch(() => null);
+      if (Array.isArray(j2?.dates)) {
+        return j2.dates.map(d => Number(String(d).slice(8,10))).filter(Number.isFinite).sort((a,b)=>a-b);
+      }
+    }
+  } catch {}
+
+  // 3) 로컬 폴백
+  try {
+    const raw = await AsyncStorage.getItem(`@att/log/${ym}`);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite).sort((a,b)=>a-b) : [];
+  } catch { return []; }
 }

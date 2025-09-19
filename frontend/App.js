@@ -1,6 +1,5 @@
-// App.js
 import { registerRootComponent } from 'expo';
-import React, { useEffect, useRef } from 'react'; // ← useRef 추가
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,8 +13,13 @@ import { ThemeProvider, useThemeMode } from './src/theme/ThemeContext';
 import { fontForLang } from './src/components/fonts';
 import ThemeToggle from './src/components/ThemeToggle';
 import { BgmProvider, useBgm } from './src/bgm/BgmContext';
+// ⬇ 출석 동기화 추가
+import { initialSyncAttendance } from './src/utils/attendance';
 
 const navRef = createNavigationContainerRef();
+
+// 다크모드 버튼만 웰컴에서 숨김
+const HIDE_THEME_ON = new Set(['Welcome']);
 
 function applyGlobalFontWithLang(fontFamily, lang) {
   if (!Text.defaultProps) Text.defaultProps = {};
@@ -61,13 +65,15 @@ function Loading() {
 function AppShell() {
   const { isDark } = useThemeMode();
   const { applyRoute } = useBgm();
-  const lastRouteName = useRef('');
+  const [routeName, setRouteName] = useState('');
 
-  const updateBgmByRoute = () => {
+  // 앱 구동 시 1회: DB 기준 출석/첫날 동기화
+  useEffect(() => { initialSyncAttendance().catch(() => {}); }, []);
+
+  const updateByRoute = () => {
     try {
       const name = navRef?.getCurrentRoute?.()?.name || '';
-      if (!name || name === lastRouteName.current) return; // 같은 라우트면 스킵
-      lastRouteName.current = name;
+      setRouteName(name);
       applyRoute(name);
     } catch {}
   };
@@ -77,13 +83,15 @@ function AppShell() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationContainer
         ref={navRef}
-        onReady={updateBgmByRoute}
-        onStateChange={updateBgmByRoute}
+        onReady={updateByRoute}
+        onStateChange={updateByRoute}
       >
         <RootNavigator />
       </NavigationContainer>
 
-      <ThemeToggle />
+      {/* 오버레이 버튼들 — 웰컴에서만 다크모드 숨김 */}
+      {!HIDE_THEME_ON.has(routeName) && <ThemeToggle />}
+      {/* BGM_ON(음소거 플로팅) 전 화면 제거 → 렌더링하지 않음 */}
     </View>
   );
 }
@@ -101,10 +109,7 @@ export default function App() {
     PixelMplus12: require('./assets/fonts/PixelMplus12-Regular.ttf'),
   });
 
-  useEffect(() => {
-    if (fontsLoaded) applyGlobalFontWithLang('DungGeunMo', 'ko');
-  }, [fontsLoaded]);
-
+  useEffect(() => { if (fontsLoaded) applyGlobalFontWithLang('DungGeunMo', 'ko'); }, [fontsLoaded]);
   if (!fontsLoaded) return <Loading />;
 
   return (

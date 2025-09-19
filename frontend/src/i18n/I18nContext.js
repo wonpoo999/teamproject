@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DICT = {
   ko: {
-    LOGIN:'로그인', SIGN_UP:'회원가입', EMAIL:'이메일', EMAIL_PH:'이메일',
+    STORE: '상점', HOME: '홈', LOGIN:'로그인', SIGN_UP:'회원가입', EMAIL:'이메일', EMAIL_PH:'이메일',
     PASSWORD:'비밀번호', PW_PH:'비밀번호 (8자리 이상)', PASSWORD_MIN:'비밀번호 (8자리 이상)',
     PASSWORD_8:'비밀번호 (8자리 이상)', PASSWORD_CONFIRM:'새 비밀번호 확인', INPUT_REQUIRED:'입력 필요',
     ENTER_ID_PW:'아이디와 비밀번호를 입력해주세요.', TRY_AGAIN:'다시 시도해주세요.', CONFIRM:'확인',
@@ -71,7 +71,7 @@ const DICT = {
   },
 
   en: {
-    LOGIN:'Login', SIGN_UP:'Sign up', EMAIL:'Email', EMAIL_PH:'Email',
+    STORE: 'STORE', HOME: 'Home', LOGIN:'Login', SIGN_UP:'Sign up', EMAIL:'Email', EMAIL_PH:'Email',
     PASSWORD:'Password', PW_PH:'Password (min 8 chars)', PASSWORD_MIN:'Password (min 8 chars)',
     PASSWORD_8:'Password (min 8 chars)', PASSWORD_CONFIRM:'Confirm new password',
     INPUT_REQUIRED:'Input required', ENTER_ID_PW:'Please enter email and password.', TRY_AGAIN:'Please try again.',
@@ -129,7 +129,7 @@ const DICT = {
   },
 
   ja: {
-    LOGIN:'ログイン', SIGN_UP:'新規登録', EMAIL:'メール', EMAIL_PH:'メール',
+    STORE: 'ストア', HOME: 'ホーム', LOGIN:'ログイン', SIGN_UP:'新規登録', EMAIL:'メール', EMAIL_PH:'メール',
     PASSWORD:'パスワード', PW_PH:'パスワード（8文字以上）', PASSWORD_MIN:'パスワード（8文字以上）',
     PASSWORD_8:'パスワード（8文字以上）', PASSWORD_CONFIRM:'新しいパスワード（確認）', INPUT_REQUIRED:'入力必須',
     ENTER_ID_PW:'メールとパスワードを入力してください。', TRY_AGAIN:'もう一度お試しください。', CONFIRM:'確認', CANCEL:'キャンセル',
@@ -183,7 +183,7 @@ const DICT = {
   },
 
   zh: {
-    LOGIN:'登录', SIGN_UP:'注册', EMAIL:'邮箱', EMAIL_PH:'邮箱',
+    STORE: '商店', HOME: '首页', LOGIN:'登录', SIGN_UP:'注册', EMAIL:'邮箱', EMAIL_PH:'邮箱',
     PASSWORD:'密码', PW_PH:'密码（至少8位）', PASSWORD_MIN:'密码（至少8位）',
     PASSWORD_8:'密码（至少8位）', PASSWORD_CONFIRM:'确认新密码', INPUT_REQUIRED:'需要输入',
     ENTER_ID_PW:'请输入邮箱和密码。', TRY_AGAIN:'请重试。', CONFIRM:'确定', CANCEL:'取消',

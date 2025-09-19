@@ -1,10 +1,9 @@
-// frontend/src/screens/HomeScreen.js
+// src/screens/HomeScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, ImageBackground, Pressable, Image, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useI18n } from '../i18n/I18nContext';
-import ThemeToggle from '../components/ThemeToggle';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CharacterAvatar from '../components/CharacterAvatar';
@@ -24,7 +23,7 @@ const ICONS = {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { isDark } = useThemeMode();
+  const { isDark, theme } = useThemeMode();
   const { t } = useI18n();
   const nav = useNavigation();
   const BG = isDark ? BG_DARK : BG_LIGHT;
@@ -43,7 +42,11 @@ export default function HomeScreen() {
   }, []);
 
   useFocusEffect(React.useCallback(() => {
-    bgm.play('menu');
+    if (bgm?.muted === true || bgm?.enabled === false) {
+      bgm?.stop?.();
+    } else {
+      bgm?.applyRoute?.('Home');
+    }
     (async () => {
       const st = await getStatus();
       setCoins(Number(st?.coins || 0));
@@ -59,25 +62,38 @@ export default function HomeScreen() {
 
   return (
     <ImageBackground source={BG} style={{ flex: 1 }} resizeMode="cover">
-      <ThemeToggle align="right" style={{ position: 'absolute', top: topY, right: 12, height: TOOLBAR_H }} />
+      <Text
+        style={{
+          position: 'absolute', left: 0, right: 0,
+          top: topY, textAlign: 'center',
+          fontFamily: FONT, fontSize: 26, lineHeight: 32,
+          color: theme.text, textShadowColor: 'rgba(0,0,0,0.25)',
+          textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, zIndex: 5
+        }}
+      >
+        {t('HOME') || 'Home'}
+      </Text>
 
-      {/* 좌상단 코인 */}
-      <View style={{
-        position: 'absolute', top: topY, left: 12, zIndex: 90,
-        backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: 18, paddingHorizontal: 12, height: TOOLBAR_H,
-        flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-      }}>
+      <Pressable
+        onPress={() => nav.navigate('CoinStore')}
+        hitSlop={8}
+        style={{
+          position: 'absolute', top: topY, left: 12, zIndex: 90,
+          backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: 18, paddingHorizontal: 12, height: TOOLBAR_H,
+          flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+        }}
+      >
         <Text style={{ fontFamily: FONT, color: '#ffd369', fontSize: 16 }}>🪙</Text>
         <Text style={{ fontFamily: FONT, color: '#fff', fontSize: 16 }}>{coins}</Text>
-      </View>
+      </Pressable>
 
-      {/* 상단 카드 */}
       <View style={{
         marginTop: insets.top + 120,
         paddingHorizontal: 16,
         flexDirection: 'row',
         justifyContent: 'center',
         gap: 12,
+        flexWrap: 'wrap',
       }}>
         <Pressable style={cardStyle} onPress={() => nav.navigate('DietLog')}>
           <Text style={cardTitle}>{t('HOME_MEAL') || 'Meal Log'}</Text>
@@ -85,9 +101,12 @@ export default function HomeScreen() {
         <Pressable style={cardStyle} onPress={() => nav.navigate('Data')}>
           <Text style={cardTitle}>{t('HOME_OVERALL') || 'Overall'}</Text>
         </Pressable>
+        {/* Mini Game 버튼 */}
+        <Pressable style={cardStyle} onPress={() => nav.navigate('HealthyCatch')}>
+          <Text style={cardTitle}>{'Mini Game'}</Text>
+        </Pressable>
       </View>
 
-      {/* 칼로리 바 */}
       <View style={{ marginTop: 18, paddingHorizontal: 24 }}>
         <View style={{
           height: 26, borderWidth: 2, borderRadius: 12, overflow: 'hidden',
@@ -106,7 +125,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* 캐릭터 */}
       <View style={{
         position: 'absolute',
         left: 0, right: 0,
@@ -116,7 +134,6 @@ export default function HomeScreen() {
         <CharacterAvatar size={AVATAR_SIZE} />
       </View>
 
-      {/* 하단 탭 */}
       <View style={{
         position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 10,
         flexDirection: 'row', justifyContent: 'space-around'

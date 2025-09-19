@@ -1,12 +1,12 @@
+// src/screens/WelcomeScreen.js — 최종본 (화면 내 컨트롤 제거: 전역(App)만 사용)
 import React from 'react';
-import { View, Image, ImageBackground, Pressable, useWindowDimensions} from 'react-native';
+import { View, Image, ImageBackground, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import BgmFab from '../bgm/BgmFab';
 
-const BG = require('../../assets/background/main.png');     
-const LOGIN = require('../../assets/ui/loginbtn.png');        
-const SIGNUP = require('../../assets/ui/signupbtn.png');     
+const BG = require('../../assets/background/main.png');
+const LOGIN = require('../../assets/ui/loginbtn.png');
+const SIGNUP = require('../../assets/ui/signupbtn.png');
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -20,7 +20,6 @@ export default function WelcomeScreen() {
 
   return (
     <ImageBackground source={BG} style={{ flex: 1 }} resizeMode="cover">
-      <BgmFab align="right" />
       <View
         style={{
           position: 'absolute',
@@ -31,25 +30,11 @@ export default function WelcomeScreen() {
           gap: 4,
         }}
       >
-        <Pressable
-          onPress={() => nav.navigate('Login')}
-          hitSlop={8}
-          style={{ alignItems: 'center' }}
-        >
-          <Image
-            source={LOGIN}
-            style={{ width: btnWidth, height: loginH, resizeMode: 'contain' }}
-          />
+        <Pressable onPress={() => nav.navigate('Login')} hitSlop={8} style={{ alignItems: 'center' }}>
+          <Image source={LOGIN} style={{ width: btnWidth, height: loginH, resizeMode: 'contain' }} />
         </Pressable>
-        <Pressable
-          onPress={() => nav.navigate('Signup')}
-          hitSlop={8}
-          style={{ alignItems: 'center' }}
-        >
-          <Image
-            source={SIGNUP}
-            style={{ width: btnWidth, height: signupH, resizeMode: 'contain' }}
-          />
+        <Pressable onPress={() => nav.navigate('Signup')} hitSlop={8} style={{ alignItems: 'center' }}>
+          <Image source={SIGNUP} style={{ width: btnWidth, height: signupH, resizeMode: 'contain' }} />
         </Pressable>
       </View>
     </ImageBackground>

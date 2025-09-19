@@ -1,3 +1,4 @@
+// src/screens/LoginScreen.js — 최종본 (화면 내 컨트롤 제거: 전역(App)만 사용)
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform
@@ -8,12 +9,11 @@ import { useI18n } from '../i18n/I18nContext';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BgmFab from '../bgm/BgmFab';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FONT = 'DungGeunMo';
 
 const langFix = (lang) => ({
-  // 입력 필드만 언어별 패딩 보정
   input: {
     paddingVertical: 16,
     minHeight: 50,
@@ -74,6 +74,7 @@ export default function LoginScreen() {
         const errMsg = (res && typeof res === 'object' && (res.message || res.error)) || (typeof res === 'string' ? res : undefined);
         throw new Error(normalizeLoginError(errMsg));
       }
+      try { await AsyncStorage.setItem('last_user_id', id.trim()); } catch {}
     } catch (e) {
       Alert.alert('LOGIN', normalizeLoginError(e?.message ?? e));
     } finally {
@@ -113,12 +114,10 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <BgmFab align="right" />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1, justifyContent: 'center', paddingBottom: insets.bottom + 220, minHeight: 720 }}
       >
-        {/* 언어 버튼 – 네이티브 표기 */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
           <LangBtn k="ko" label="한국어" />
           <LangBtn k="en" label="English" />
@@ -126,12 +125,11 @@ export default function LoginScreen() {
           <LangBtn k="zh" label="中文" />
         </View>
 
-        {/* 제목: 밑둥 잘림 방지 (넉넉한 lineHeight + 살짝 하단 패딩) */}
         <Text
           style={{
             fontSize: 44,
-            lineHeight: 56,          // 넉넉한 라인박스
-            paddingBottom: 2,        // 글꼴 descender 보정
+            lineHeight: 56,
+            paddingBottom: 2,
             textAlign: 'center',
             marginBottom: 16,
             fontFamily: FONT,
@@ -141,40 +139,15 @@ export default function LoginScreen() {
           {t('LOGIN')}
         </Text>
 
-        <TextInput
-          value={id}
-          onChangeText={setId}
-          placeholder={t('EMAIL_PH')}
-          placeholderTextColor={isDark ? '#9ca3af' : '#9aa0a6'}
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="username"
-          style={inputStyle}
-          returnKeyType="next"
-        />
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder={t('PW_PH')}
-          placeholderTextColor={isDark ? '#9ca3af' : '#9aa0a6'}
-          secureTextEntry
-          textContentType="password"
-          style={inputStyle}
-          returnKeyType="done"
-          onSubmitEditing={onSubmit}
-        />
+        <TextInput value={id} onChangeText={setId} placeholder={t('EMAIL_PH')} placeholderTextColor={isDark ? '#9ca3af' : '#9aa0a6'} autoCapitalize="none" autoCorrect={false} textContentType="username" style={inputStyle} returnKeyType="next" />
+        <TextInput value={password} onChangeText={setPassword} placeholder={t('PW_PH')} placeholderTextColor={isDark ? '#9ca3af' : '#9aa0a6'} secureTextEntry textContentType="password" style={inputStyle} returnKeyType="done" onSubmitEditing={onSubmit} />
 
-        <TouchableOpacity
-          onPress={onSubmit}
-          disabled={loading}
-          style={{ backgroundColor: loading ? '#93c5fd' : '#2563eb', padding: 14, borderRadius: 12, marginTop: 6 }}
-        >
+        <TouchableOpacity onPress={onSubmit} disabled={loading} style={{ backgroundColor: loading ? '#93c5fd' : '#2563eb', padding: 14, borderRadius: 12, marginTop: 6 }}>
           <Text style={{ color: '#fff', textAlign: 'center', fontFamily: FONT }}>
             {loading ? '…' : t('LOGIN')}
           </Text>
         </TouchableOpacity>
 
-        {/* 아이디/비번 찾기 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 14 }}>
           <TouchableOpacity onPress={() => navigation.navigate('RecoveryFlow', { mode: 'findId' })}>
             <Text style={{ fontFamily: FONT, color: '#60a5fa' }}>{t('FIND_ID')}</Text>

@@ -1,3 +1,4 @@
+// src/screens/HealthyCatchGameScreen.js
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

@@ -1,4 +1,4 @@
-// src/screens/ProfileScreen.js — 최종본 (코인 [자세히] & 보너스 예측, attendance 표기 보강)
+// src/screens/ProfileScreen.js — 최종본 (출석 밑에 월 달력 구현 + 기존 로직 유지)
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
@@ -15,7 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useI18n } from '../i18n/I18nContext';
 import { useThemeMode } from '../theme/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
-import { checkInToday, getStatus } from '../utils/attendance';
+import { checkInToday, getStatus, getMonthLog } from '../utils/attendance';
 
 const FONT = 'DungGeunMo';
 
@@ -27,10 +27,7 @@ TextInput.defaultProps.allowFontScaling = false;
 TextInput.defaultProps.maxFontSizeMultiplier = 1;
 
 const fetchWithTimeout = (url, opts, ms = 8000) =>
-  Promise.race([
-    fetch(url, opts),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)),
-  ]);
+  Promise.race([fetch(url, opts), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
 function Row({ k, v }) {
   const { theme } = useThemeMode();
@@ -41,6 +38,92 @@ function Row({ k, v }) {
     </View>
   );
 }
+
+/* ──────────────── 월 달력 ──────────────── */
+function pad(n){ return n<10 ? `0${n}` : `${n}`; }
+function ymOf(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+function AttendanceCalendar({ theme, onMonthChange }) {
+  const [ym, setYm] = useState(ymOf(new Date()));
+  const [days, setDays] = useState([]); // 서버의 출석 일자 배열 (["2025-09-18", ...])
+
+  const load = useCallback(async(_ym = ym) => {
+    try { const arr = await getMonthLog(_ym); setDays(Array.isArray(arr)?arr:[]); } catch { setDays([]); }
+  }, [ym]);
+
+  useEffect(()=>{ load(ym); },[ym, load]);
+
+  const go = (delta) => {
+    const [y,m] = ym.split('-').map(Number);
+    const d = new Date(y, m-1 + delta, 1);
+    const nextYM = ymOf(d);
+    setYm(nextYM);
+    onMonthChange?.(nextYM);
+  };
+
+  // 렌더 준비
+  const [y,m] = ym.split('-').map(Number);
+  const dim = daysInMonth(y, m-1);
+  const firstWeekday = new Date(y, m-1, 1).getDay(); // 0=Sun
+  const cells = [];
+  for(let i=0;i<firstWeekday;i++) cells.push(null);
+  for(let d=1; d<=dim; d++) cells.push(d);
+
+  const today = new Date();
+  const isTodayYM = today.getFullYear()===y && (today.getMonth()+1)===m;
+
+  return (
+    <View style={{ borderWidth:1, borderColor: theme.cardBorder, borderRadius: 12, padding: 12, gap: 8 }}>
+      <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between' }}>
+        <Pressable onPress={()=>go(-1)} hitSlop={8}><Text style={{ fontFamily:FONT, color: theme.text }}>◀</Text></Pressable>
+        <Text style={{ fontFamily:FONT, fontSize:16, color: theme.text }}>{ym}</Text>
+        <Pressable onPress={()=>go(1)} hitSlop={8}><Text style={{ fontFamily:FONT, color: theme.text }}>▶</Text></Pressable>
+      </View>
+
+{/* 요일 헤더 (키 고유값 보장) */}
+<View style={{ flexDirection:'row', justifyContent:'space-between', opacity:0.7 }}>
+  {['S','M','T','W','T','F','S'].map((ch, i) => (
+    <Text
+      key={`${ch}-${i}`}               // ← 인덱스를 붙여 고유화
+      style={{ width:'14.28%', textAlign:'center', fontFamily:FONT, color: theme.mutedText }}
+    >
+      {ch}
+    </Text>
+  ))}
+</View>
+
+
+      <View style={{ flexDirection:'row', flexWrap:'wrap' }}>
+        {cells.map((d, idx) => {
+          const key = d==null?`e${idx}`:`${y}-${pad(m)}-${pad(d)}`;
+          const checked = d!=null && days.includes(key);
+          const isToday = isTodayYM && d===today.getDate();
+          return (
+            <View key={key} style={{ width:'14.28%', height:38, alignItems:'center', justifyContent:'center' }}>
+              {d==null ? null : (
+                <View style={{ alignItems:'center', justifyContent:'center' }}>
+                  <View style={{
+                    position:'absolute',
+                    width: checked ? 28 : (isToday ? 26 : 0),
+                    height: checked ? 28 : (isToday ? 26 : 0),
+                    borderRadius: 14,
+                    backgroundColor: checked ? '#10b981' : 'transparent',
+                    borderWidth: isToday ? 2 : 0,
+                    borderColor: isToday ? (checked ? '#064e3b' : theme.inputBorder) : 'transparent',
+                    opacity: checked ? 0.9 : 1,
+                  }}/>
+                  <Text style={{ fontFamily:FONT, color: theme.text }}>{d}</Text>
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+/* ──────────────────────────────────────── */
 
 export default function ProfileScreen() {
   const { t } = useI18n();
@@ -83,7 +166,6 @@ export default function ProfileScreen() {
   const [pwModal, setPwModal] = useState(false);
   const [pwInput, setPwInput] = useState('');
 
-  // 코인 자세히 모달
   const [coinModal, setCoinModal] = useState(false);
 
   const getAuth = useCallback(async () => {
@@ -107,8 +189,12 @@ export default function ProfileScreen() {
   }, [auth]);
 
   const logoutToWelcome = useCallback(async () => {
-    try { await AsyncStorage.multiRemove(['token','authToken','accessToken','@auth/token','@profile/prefill']) } catch {}
-    try { await auth?.logout?.() } catch {}
+    try {
+      await AsyncStorage.multiRemove(['token', 'authToken', 'accessToken', '@auth/token', '@profile/prefill']);
+    } catch {}
+    try {
+      await auth?.logout?.();
+    } catch {}
   }, [auth]);
 
   const fetchFirstOK = useCallback(
@@ -129,14 +215,20 @@ export default function ProfileScreen() {
           });
           if (res.ok) {
             const ttxt = await res.text();
-            try { return { data: JSON.parse(ttxt), used: p }; } catch { return { data: null, used: p }; }
+            try {
+              return { data: JSON.parse(ttxt), used: p };
+            } catch {
+              return { data: null, used: p };
+            }
           }
           if (res.status === 401 || res.status === 403) {
             const ttxt = await res.text();
             throw new Error(ttxt || '401');
           }
           lastErr = new Error(await res.text());
-        } catch (e) { lastErr = e; }
+        } catch (e) {
+          lastErr = e;
+        }
       }
       throw lastErr || new Error('요청 실패');
     },
@@ -164,24 +256,23 @@ export default function ProfileScreen() {
       confirmPassword: '',
     });
 
-    // 서버가 출석을 같이 주는 경우 흡수
     const att = {
       firstDay: obj?.firstDay ?? obj?.firstDate,
       totalDays: obj?.totalDays ?? obj?.attendanceTotal,
-      streak: (obj?.streak ?? obj?.currentStreak),
+      streak: obj?.streak ?? obj?.currentStreak,
       coins: obj?.coins,
       todayCoins: obj?.todayCoins,
       monthKey: obj?.monthKey,
       monthStreak: obj?.monthStreak,
       monthDays: obj?.monthDays,
     };
-    const merged = Object.fromEntries(Object.entries(att).filter(([,v]) => v !== undefined));
-    if (Object.keys(merged).length) setAttendance(prev => ({ ...prev, ...merged }));
+    const merged = Object.fromEntries(Object.entries(att).filter(([, v]) => v !== undefined));
+    if (Object.keys(merged).length) setAttendance((prev) => ({ ...prev, ...merged }));
   }, []);
 
   const loadAttendance = useCallback(async () => {
     try {
-      await checkInToday(); // 오늘 접속 반영
+      await checkInToday();
       const st = await getStatus();
       setAttendance({
         firstDay: st.firstDate || '-',
@@ -193,13 +284,14 @@ export default function ProfileScreen() {
         monthStreak: st.monthStreak ?? 0,
         monthDays: st.monthDays ?? 0,
       });
-    } catch {
-      // 실패해도 화면 유지
-    }
+    } catch {}
   }, []);
 
   const load = useCallback(async () => {
-    setErrAccount(''); setErrProfile(''); setOkAccount(''); setOkProfile('');
+    setErrAccount('');
+    setErrProfile('');
+    setOkAccount('');
+    setOkProfile('');
     await loadAttendance();
 
     let showedPrefill = false;
@@ -215,7 +307,9 @@ export default function ProfileScreen() {
       const { data } = await fetchFirstOK('GET', ['/api/profile', '/api/profile/']);
       if (data) applyToState(data);
       setLoading(false);
-      try { await AsyncStorage.removeItem('@profile/prefill'); } catch {}
+      try {
+        await AsyncStorage.removeItem('@profile/prefill');
+      } catch {}
     } catch (e) {
       const msg = (e?.message || '').toLowerCase();
       if (msg.includes('forbidden') || msg.includes('401') || msg.includes('403')) {
@@ -232,11 +326,12 @@ export default function ProfileScreen() {
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { loadAttendance(); }, [loadAttendance]));
 
-  const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+  const update = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
 
   const saveAccount = async () => {
     setSavingAccount(true);
-    setErrAccount(''); setOkAccount('');
+    setErrAccount('');
+    setOkAccount('');
     try {
       const nextId = (form.newId || current.id || '').trim();
       if (!nextId || !/^\S+@\S+\.\S+$/.test(nextId)) throw new Error(t('EMAIL_INVALID'));
@@ -250,8 +345,8 @@ export default function ProfileScreen() {
       await fetchFirstOK('PUT', candidates, payload);
       setOkAccount(t('UPDATE_OK'));
       setEditingAccount(false);
-      setCurrent(c => ({ ...c, id: nextId }));
-      setForm(f => ({ ...f, newPassword: '', confirmPassword: '' }));
+      setCurrent((c) => ({ ...c, id: nextId }));
+      setForm((f) => ({ ...f, newPassword: '', confirmPassword: '' }));
       await AsyncStorage.removeItem('@profile/prefill');
       await load();
     } catch (e) {
@@ -261,14 +356,17 @@ export default function ProfileScreen() {
         return;
       }
       setErrAccount(e?.message || t('UPDATE_FAIL'));
-    } finally { setSavingAccount(false); }
+    } finally {
+      setSavingAccount(false);
+    }
   };
 
   const saveProfile = async () => {
     setSavingProfile(true);
-    setErrProfile(''); setOkProfile('');
+    setErrProfile('');
+    setOkProfile('');
     try {
-      const numOk = v => v === '' || !Number.isNaN(Number(v));
+      const numOk = (v) => v === '' || !Number.isNaN(Number(v));
       if (!numOk(form.weight) || !numOk(form.height) || !numOk(form.age) || !numOk(form.targetWeight) || !numOk(form.targetCalories)) {
         throw new Error(t('NUM_ONLY'));
       }
@@ -294,7 +392,9 @@ export default function ProfileScreen() {
         return;
       }
       setErrProfile(e?.message || t('UPDATE_FAIL'));
-    } finally { setSavingProfile(false); }
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const openRecovery = () => setPwModal(true);
@@ -312,12 +412,11 @@ export default function ProfileScreen() {
     }
   };
 
-  // ----- 코인 보너스 예측 -----
   const coinForecast = useMemo(() => {
     const total = attendance.totalDays || 0;
     const mod30 = total % 30;
-    const evenNextIn = (total % 2 === 0) ? 2 : 1;          // 2일마다 +1 (짝수날)
-    const next30In = (mod30 === 0) ? 30 : (30 - mod30);    // 30일마다 +30
+    const evenNextIn = total % 2 === 0 ? 2 : 1;
+    const next30In = mod30 === 0 ? 30 : 30 - mod30;
 
     const now = new Date();
     const year = now.getFullYear();
@@ -326,10 +425,8 @@ export default function ProfileScreen() {
     const day = now.getDate();
     const leftToMonthEnd = dim - day;
 
-    // 이번 달 지금까지 "개근 유지" 여부 추정:
-    // our tracker: monthDays == 오늘날짜, 그리고 monthStreak == monthDays 면 지금까지 안 빠짐
-    const perfectSoFar = (attendance.monthDays === day) && (attendance.monthStreak === attendance.monthDays);
-    const monthBonusIn = perfectSoFar ? leftToMonthEnd : null; // null이면 이번 달 개근 보너스는 이미 불가
+    const perfectSoFar = attendance.monthDays === day && attendance.monthStreak === attendance.monthDays;
+    const monthBonusIn = perfectSoFar ? leftToMonthEnd : null;
 
     return { evenNextIn, next30In, monthBonusIn, day, dim, leftToMonthEnd, perfectSoFar, total };
   }, [attendance]);
@@ -364,10 +461,10 @@ export default function ProfileScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
               <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{t('COINS')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-               <Text style={{ fontFamily: FONT, color: theme.text }}>
-                 {(attendance.coins ?? 0)}
-                 {attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
-               </Text>
+                <Text style={{ fontFamily: FONT, color: theme.text }}>
+                  {attendance.coins ?? 0}
+                  {attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
+                </Text>
                 <TouchableOpacity onPress={() => setCoinModal(true)} hitSlop={8}>
                   <Text style={{ fontFamily: FONT, color: theme.mutedText, textDecorationLine: 'underline' }}>
                     {t('DETAILS') || '자세히'}
@@ -375,6 +472,12 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* ▼ 달력 */}
+            <AttendanceCalendar
+              theme={theme}
+              onMonthChange={()=>{}}
+            />
           </View>
 
           {/* Account */}
@@ -388,25 +491,41 @@ export default function ProfileScreen() {
                 </View>
                 {!!errAccount && <Text style={[styles.error]}>{errAccount}</Text>}
                 {!!okAccount && <Text style={[styles.ok]}>{okAccount}</Text>}
-                <Pressable onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true); }} style={[styles.primaryBtn, { backgroundColor: theme.primary }]}>
+                <Pressable
+                  onPress={() => { setErrAccount(''); setOkAccount(''); setEditingAccount(true); }}
+                  style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
+                >
                   <Text style={styles.primaryBtnText}>{t('EDIT')}</Text>
                 </Pressable>
 
-                <Pressable onPress={openRecovery} style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder }]}>
+                <Pressable onPress={() => setPwModal(true)} style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder }]}>
                   <Text style={[styles.ghostBtnText, { color: theme.text }]}>{t('SECURITY_QNA')}</Text>
                 </Pressable>
               </>
             ) : (
               <>
                 <Text style={[styles.label, { color: theme.text }]}>{t('EMAIL')}</Text>
-                <TextInput value={form.newId} onChangeText={v => update('newId', v)} autoCapitalize="none" keyboardType="email-address"
-                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                <TextInput
+                  value={form.newId}
+                  onChangeText={(v) => update('newId', v)}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                />
                 <Text style={[styles.label, { color: theme.text }]}>{t('PASSWORD')}</Text>
-                <TextInput value={form.newPassword} onChangeText={v => update('newPassword', v)} secureTextEntry
-                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                <TextInput
+                  value={form.newPassword}
+                  onChangeText={(v) => update('newPassword', v)}
+                  secureTextEntry
+                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                />
                 <Text style={[styles.label, { color: theme.text }]}>{t('PASSWORD_CONFIRM')}</Text>
-                <TextInput value={form.confirmPassword} onChangeText={v => update('confirmPassword', v)} secureTextEntry
-                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                <TextInput
+                  value={form.confirmPassword}
+                  onChangeText={(v) => update('confirmPassword', v)}
+                  secureTextEntry
+                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                />
                 {!!errAccount && <Text style={styles.error}>{errAccount}</Text>}
                 {!!okAccount && <Text style={styles.ok}>{okAccount}</Text>}
                 <View style={styles.row}>
@@ -416,7 +535,7 @@ export default function ProfileScreen() {
                   <Pressable
                     onPress={() => {
                       setEditingAccount(false);
-                      setForm(f => ({ ...f, newId: current.id || '', newPassword: '', confirmPassword: '' }));
+                      setForm((f) => ({ ...f, newId: current.id || '', newPassword: '', confirmPassword: '' }));
                     }}
                     style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder }]}
                   >
@@ -432,13 +551,28 @@ export default function ProfileScreen() {
             <Text style={[styles.cardTitle, { color: theme.text }]}>{t('PROFILE')}</Text>
             {!editingProfile ? (
               <>
-                <View style={styles.rowBetween}><Text style={[styles.label, { color: theme.text }]}>{t('WEIGHT')}</Text><Text style={[styles.value, { color: theme.text }]}>{current.weight !== '' ? String(current.weight) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={[styles.label, { color: theme.text }]}>{t('HEIGHT')}</Text><Text style={[styles.value, { color: theme.text }]}>{current.height !== '' ? String(current.height) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={[styles.label, { color: theme.text }]}>{t('AGE')}</Text><Text style={[styles.value, { color: theme.text }]}>{current.age !== '' ? String(current.age) : '-'}</Text></View>
-                <View style={styles.rowBetween}><Text style={[styles.label, { color: theme.text }]}>{t('GENDER')}</Text><Text style={[styles.value, { color: theme.text }]}>{current.gender === 'M' ? t('MALE') : current.gender === 'F' ? t('FEMALE') : '-'}</Text></View>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.label, { color: theme.text }]}>{t('WEIGHT')}</Text>
+                  <Text style={[styles.value, { color: theme.text }]}>{current.weight !== '' ? String(current.weight) : '-'}</Text>
+                </View>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.label, { color: theme.text }]}>{t('HEIGHT')}</Text>
+                  <Text style={[styles.value, { color: theme.text }]}>{current.height !== '' ? String(current.height) : '-'}</Text>
+                </View>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.label, { color: theme.text }]}>{t('AGE')}</Text>
+                  <Text style={[styles.value, { color: theme.text }]}>{current.age !== '' ? String(current.age) : '-'}</Text>
+                </View>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.label, { color: theme.text }]}>{t('GENDER')}</Text>
+                  <Text style={[styles.value, { color: theme.text }]}>{current.gender === 'M' ? t('MALE') : current.gender === 'F' ? t('FEMALE') : '-'}</Text>
+                </View>
                 {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
                 {!!okProfile && <Text style={styles.ok}>{okProfile}</Text>}
-                <Pressable onPress={() => { setErrProfile(''); setOkProfile(''); setEditingProfile(true); }} style={[styles.primaryBtn, { backgroundColor: theme.primary }]}>
+                <Pressable
+                  onPress={() => { setErrProfile(''); setOkProfile(''); setEditingProfile(true); }}
+                  style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
+                >
                   <Text style={styles.primaryBtnText}>{t('EDIT')}</Text>
                 </Pressable>
               </>
@@ -447,20 +581,32 @@ export default function ProfileScreen() {
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('WEIGHT')}</Text>
-                    <TextInput value={form.weight} onChangeText={v => update('weight', v)} keyboardType="decimal-pad"
-                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                    <TextInput
+                      value={form.weight}
+                      onChangeText={(v) => update('weight', v)}
+                      keyboardType="decimal-pad"
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('HEIGHT')}</Text>
-                    <TextInput value={form.height} onChangeText={v => update('height', v)} keyboardType="number-pad"
-                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                    <TextInput
+                      value={form.height}
+                      onChangeText={(v) => update('height', v)}
+                      keyboardType="number-pad"
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                    />
                   </View>
                 </View>
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('AGE')}</Text>
-                    <TextInput value={form.age} onChangeText={v => update('age', v)} keyboardType="number-pad"
-                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                    <TextInput
+                      value={form.age}
+                      onChangeText={(v) => update('age', v)}
+                      keyboardType="number-pad"
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('GENDER')}</Text>
@@ -477,13 +623,21 @@ export default function ProfileScreen() {
                 <View style={styles.row2}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('TARGET_WEIGHT')}</Text>
-                    <TextInput value={form.targetWeight} onChangeText={v => update('targetWeight', v)} keyboardType="decimal-pad"
-                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                    <TextInput
+                      value={form.targetWeight}
+                      onChangeText={(v) => update('targetWeight', v)}
+                      keyboardType="decimal-pad"
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.label, { color: theme.text }]}>{t('TARGET_CALORIES')}</Text>
-                    <TextInput value={form.targetCalories} onChangeText={v => update('targetCalories', v)} keyboardType="number-pad"
-                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]} />
+                    <TextInput
+                      value={form.targetCalories}
+                      onChangeText={(v) => update('targetCalories', v)}
+                      keyboardType="number-pad"
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }]}
+                    />
                   </View>
                 </View>
                 {!!errProfile && <Text style={styles.error}>{errProfile}</Text>}
@@ -495,7 +649,7 @@ export default function ProfileScreen() {
                   <Pressable
                     onPress={() => {
                       setEditingProfile(false);
-                      setForm(f => ({
+                      setForm((f) => ({
                         ...f,
                         weight: current.weight === '' ? '' : String(current.weight),
                         height: current.height === '' ? '' : String(current.height),
@@ -515,16 +669,20 @@ export default function ProfileScreen() {
 
         {/* 비밀번호 확인 모달 */}
         <Modal visible={pwModal} transparent animationType="fade" onRequestClose={() => setPwModal(false)}>
-          <View style={{ flex:1, backgroundColor: theme.scrim, alignItems:'center', justifyContent:'center', padding:16 }}>
-            <View style={{ width:'100%', borderRadius:16, backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth:1, padding:16, gap:10 }}>
+          <View style={{ flex: 1, backgroundColor: theme.scrim, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+            <View style={{ width: '100%', borderRadius: 16, backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: 1, padding: 16, gap: 10 }}>
               <Text style={{ fontFamily: FONT, color: theme.text, fontSize: 18 }}> {t('PASSWORD')} </Text>
-              <TextInput value={pwInput} onChangeText={setPwInput} secureTextEntry
-                style={{ borderWidth:1, borderColor: theme.inputBorder, borderRadius:10, padding:10, backgroundColor: theme.inputBg, color: theme.text, fontFamily: FONT }} />
-              <View style={{ flexDirection:'row', gap:10 }}>
-                <TouchableOpacity onPress={() => setPwModal(false)} style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder, flex:1 }]}>
+              <TextInput
+                value={pwInput}
+                onChangeText={setPwInput}
+                secureTextEntry
+                style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 10, padding: 10, backgroundColor: theme.inputBg, color: theme.text, fontFamily: FONT }}
+              />
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity onPress={() => setPwModal(false)} style={[styles.ghostBtn, { backgroundColor: theme.ghostBg, borderColor: theme.inputBorder, flex: 1 }]}>
                   <Text style={[styles.ghostBtnText, { color: theme.text }]}>{t('CANCEL')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={verifyPwAndGo} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex:1 }]}>
+                <TouchableOpacity onPress={verifyPwAndGo} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex: 1 }]}>
                   <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>
                 </TouchableOpacity>
               </View>
@@ -534,39 +692,31 @@ export default function ProfileScreen() {
 
         {/* 코인 자세히 모달 */}
         <Modal visible={coinModal} transparent animationType="fade" onRequestClose={() => setCoinModal(false)}>
-          <View style={{ flex:1, backgroundColor: theme.scrim, alignItems:'center', justifyContent:'center', padding:16 }}>
-            <View style={{ width:'100%', borderRadius:16, backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth:1, padding:16, gap:10 }}>
+          <View style={{ flex: 1, backgroundColor: theme.scrim, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+            <View style={{ width: '100%', borderRadius: 16, backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: 1, padding: 16, gap: 10 }}>
               <Text style={{ fontFamily: FONT, color: theme.text, fontSize: 18, marginBottom: 4 }}>
-                {t('COINS')} {`· ${attendance.coins ?? 0}`}{attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
+                {t('COINS')} · {attendance.coins ?? 0}
+                {attendance.todayCoins > 0 ? ` (+${attendance.todayCoins})` : ''}
               </Text>
 
-              <Text style={{ fontFamily: FONT, color: theme.mutedText }}>
-                {`보너스 규칙: 2일마다 +1, 30일마다 +30, 이달 개근 시 +15`}
-              </Text>
+              <Text style={{ fontFamily: FONT, color: theme.mutedText }}>{`보너스 규칙: 2일마다 +1, 30일마다 +30, 이달 개근 시 +15`}</Text>
 
               <View style={{ height: 10 }} />
 
+              <Text style={{ fontFamily: FONT, color: theme.text }}>{`다음 +1 코인(2일마다): ${coinForecast.evenNextIn}일 후 (통산 ${coinForecast.total + coinForecast.evenNextIn}일째)`}</Text>
+              <Text style={{ fontFamily: FONT, color: theme.text }}>{`다음 +30 코인(30일마다): ${coinForecast.next30In}일 후 (통산 ${coinForecast.total + coinForecast.next30In}일째)`}</Text>
               <Text style={{ fontFamily: FONT, color: theme.text }}>
-                {`다음 +1 코인(2일마다): ${coinForecast.evenNextIn}일 후 (통산 ${coinForecast.total + coinForecast.evenNextIn}일째)`}
-              </Text>
-              <Text style={{ fontFamily: FONT, color: theme.text }}>
-                {`다음 +30 코인(30일마다): ${coinForecast.next30In}일 후 (통산 ${coinForecast.total + coinForecast.next30In}일째)`}
-              </Text>
-              <Text style={{ fontFamily: FONT, color: theme.text }}>
-                {coinForecast.monthBonusIn == null
-                  ? `이달 개근 +15: 이번 달은 개근 불가 (중간 누락 존재)`
-                  : `이달 개근 +15: ${coinForecast.monthBonusIn}일 후 (월말)`}
+                {coinForecast.monthBonusIn == null ? `이달 개근 +15: 이번 달은 개근 불가 (중간 누락 존재)` : `이달 개근 +15: ${coinForecast.monthBonusIn}일 후 (월말)`}
               </Text>
 
-              <View style={{ flexDirection:'row', gap:10, marginTop: 12 }}>
-                <TouchableOpacity onPress={() => setCoinModal(false)} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex:1 }]}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <TouchableOpacity onPress={() => setCoinModal(false)} style={[styles.primaryBtn, { backgroundColor: theme.primary, flex: 1 }]}>
                   <Text style={styles.primaryBtnText}>{t('CONFIRM')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-
       </ImageBackground>
     </KeyboardAvoidingView>
   );
@@ -574,15 +724,43 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   screenTitle: {
-    position: 'absolute', left: 0, right: 0, textAlign: 'center',
-    fontSize: 26, lineHeight: 32, textShadowColor: 'rgba(0,0,0,0.25)',
-    textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, zIndex: 10,
-    fontFamily: FONT, fontWeight: 'normal', includeFontPadding: true,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 26,
+    lineHeight: 32,
+    textShadowColor: 'rgba(0,0,0,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    zIndex: 10,
+    fontFamily: FONT,
+    fontWeight: 'normal',
+    includeFontPadding: true,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { paddingHorizontal: 16, gap: 16 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  cardTitle: { fontSize: 18, lineHeight: 22, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', fontFamily: FONT, fontWeight: 'normal', includeFontPadding: true },
+  card: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    lineHeight: 22,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+    fontFamily: FONT,
+    fontWeight: 'normal',
+    includeFontPadding: true,
+  },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   label: { fontFamily: FONT, fontWeight: 'normal', fontSize: 16, lineHeight: 20, includeFontPadding: true },
   value: { fontFamily: FONT, fontWeight: 'normal', fontSize: 16, lineHeight: 20, includeFontPadding: true },

@@ -1,4 +1,4 @@
-// src/screens/SettingsScreen.js
+// src/screens/SettingsScreen.jsx — 최종본 (폰트 로드/잘못된 경로/루프 제거)
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ImageBackground, StyleSheet, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,10 +25,16 @@ export default function SettingsScreen() {
   const contentTop = insets.top + 100;
 
   const [sfx, setSfx] = useState(true);
-  useEffect(()=>{ (async()=>{ const v = await AsyncStorage.getItem('@sfx/on'); if (v != null) setSfx(v==='1'); })(); },[]);
-  const onSfx = async (v)=>{ setSfx(v); try{ await AsyncStorage.setItem('@sfx/on', v?'1':'0'); }catch{} };
+  useEffect(() => { (async () => {
+    const v = await AsyncStorage.getItem('@sfx/on');
+    if (v != null) setSfx(v === '1');
+  })(); }, []);
+  const onSfx = async (v) => { setSfx(v); try { await AsyncStorage.setItem('@sfx/on', v ? '1' : '0'); } catch {} };
 
-  const onLogout = async () => { try { await AsyncStorage.multiRemove(['@token','@coins']); } catch {} await logout(); };
+  const onLogout = async () => {
+    try { await AsyncStorage.multiRemove(['@token','@coins']); } catch {}
+    await logout();
+  };
 
   const langChips = [
     { k:'ko', label: t('LANG_KO_NATIVE') },
